@@ -1,0 +1,363 @@
+<!doctype html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1" charset="UTF-8">
+    <title>SecurityLattice</title>
+<link href="../../../images/logo-icon.svg" rel="icon" type="image/svg"><script>var pathToRoot = "../../../";</script>    <script>const storage = localStorage.getItem("dokka-dark-mode")
+    if (storage == null) {
+        const osDarkSchemePreferred = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+        if (osDarkSchemePreferred === true) {
+            document.getElementsByTagName("html")[0].classList.add("theme-dark")
+        }
+    } else {
+        const savedDarkMode = JSON.parse(storage)
+        if(savedDarkMode === true) {
+            document.getElementsByTagName("html")[0].classList.add("theme-dark")
+        }
+    }
+    </script>
+<script type="text/javascript" src="../../../scripts/sourceset_dependencies.js" async></script>
+<link href="../../../styles/style.css" rel="Stylesheet">
+<link href="../../../styles/jetbrains-mono.css" rel="Stylesheet">
+<link href="../../../styles/main.css" rel="Stylesheet">
+<link href="../../../styles/prism.css" rel="Stylesheet">
+<link href="../../../styles/logo-styles.css" rel="Stylesheet">
+<script type="text/javascript" src="../../../scripts/clipboard.js" async></script>
+<script type="text/javascript" src="../../../scripts/navigation-loader.js" async></script>
+<script type="text/javascript" src="../../../scripts/platform-content-handler.js" async></script>
+<script type="text/javascript" src="../../../scripts/main.js" defer></script>
+<script type="text/javascript" src="../../../scripts/prism.js" async></script>
+<script type="text/javascript" src="../../../scripts/symbol-parameters-wrapper_deferred.js" defer></script></head>
+<body>
+<div class="navigation-wrapper" id="navigation-wrapper">
+    <div id="leftToggler"><span class="icon-toggler"></span></div>
+    <div class="library-name">
+<a href="../../../index.html">
+<span>viaduct</span>            </a>    </div>
+    <div>0.3.0
+    </div>
+    <div class="pull-right d-flex">
+        <button id="theme-toggle-button"><span id="theme-toggle"></span></button>
+        <div id="searchBar"></div>
+    </div>
+</div>
+<div id="container">
+    <div id="leftColumn">
+        <div id="sideMenu"></div>
+    </div>
+    <div id="main">
+<div class="main-content" id="content" pageids="compiler::io.github.aplcornell.viaduct.security/SecurityLattice///PointingToDeclaration//-971379511">
+  <div class="breadcrumbs"><a href="../../index.html">compiler</a><span class="delimiter">/</span><a href="../index.html">io.github.aplcornell.viaduct.security</a><span class="delimiter">/</span><span class="current">SecurityLattice</span></div>
+  <div class="cover ">
+    <h1 class="cover"><span>Security</span><wbr><span><span>Lattice</span></span></h1>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":compiler:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">class </span><a href="index.html">SecurityLattice</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="index.html">T</a><span class="token operator"> : </span><a href="../../io.github.aplcornell.viaduct.algebra/-lattice/index.html">Lattice</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="index.html">T</a><span class="token operator">&gt;</span><span class="token operator">&gt;</span><span class="token punctuation">(</span><span class="parameters "><span class="parameter "><span class="token keyword">val </span>confidentialityComponent<span class="token operator">: </span><a href="index.html">T</a><span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>integrityComponent<span class="token operator">: </span><a href="index.html">T</a></span></span><span class="token punctuation">)</span> : <a href="../../io.github.aplcornell.viaduct.algebra/-lattice/index.html">Lattice</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="index.html">SecurityLattice</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="index.html">T</a><span class="token operator">&gt;</span><span class="token operator">&gt; </span>, <a href="../-trust-lattice/index.html">TrustLattice</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="index.html">SecurityLattice</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="index.html">T</a><span class="token operator">&gt;</span><span class="token operator">&gt; </span>, <a href="../../../shared/io.github.aplcornell.viaduct.prettyprinting/-pretty-printable/index.html">PrettyPrintable</a></div><p class="paragraph">A lattice for information flow security. This is a product lattice with confidentiality and integrity components. Information flows from less restrictive contexts to more restrictive ones.</p><p class="paragraph">Elements of <a href="index.html">T</a> are interpreted as principals.</p><p class="paragraph"><a href="meet.html">meet</a> and <a href="join.html">join</a> talk about information flow.</p><p class="paragraph"><a href="and.html">and</a> and <a href="or.html">or</a> talk about trust.</p></div></div>
+  </div>
+  <div class="tabbedcontent">
+    <div class="tabs-section" tabs-section="tabs-section"><button class="section-tab" data-active="" data-togglable="Types">Types</button><button class="section-tab" data-togglable="Constructors">Constructors</button><button class="section-tab" data-togglable="Functions">Functions</button><button class="section-tab" data-togglable="Properties">Properties</button><button class="section-tab" data-togglable="Extensions">Extensions</button></div>
+    <div class="tabs-section-body">
+      <h2 class="tabbedcontent">Constructors</h2>
+      <div class="table" data-togglable="Constructors"><a data-name="-566076283%2FConstructors%2F-971379511" anchor-label="SecurityLattice" id="-566076283%2FConstructors%2F-971379511" data-filterable-set=":compiler:dokkaHtmlPartial/main"></a>
+        <div class="table-row" data-filterable-current=":compiler:dokkaHtmlPartial/main" data-filterable-set=":compiler:dokkaHtmlPartial/main">
+          <div class="main-subrow keyValue TabbedContent">
+            <div class=""><span class="inline-flex">
+                <div><a href="-security-lattice.html"><span>Security</span><wbr><span><span>Lattice</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-566076283%2FConstructors%2F-971379511"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":compiler:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><span class="token operator">&lt;</span><span class="token keyword"></span><a href="index.html">T</a><span class="token operator"> : </span><a href="../../io.github.aplcornell.viaduct.algebra/-lattice/index.html">Lattice</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="index.html">T</a><span class="token operator">&gt;</span><span class="token operator">&gt; </span><a href="-security-lattice.html"><span class="token function">SecurityLattice</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">principal<span class="token operator">: </span><a href="index.html">T</a></span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Returns an element with <a href="confidentiality-component.html">confidentialityComponent</a> and <a href="integrity-component.html">integrityComponent</a> equal to <a href="../../../compiler/io.github.aplcornell.viaduct.security/-security-lattice/[60]init[62].html">principal</a>.</p></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="-504213007%2FConstructors%2F-971379511" anchor-label="SecurityLattice" id="-504213007%2FConstructors%2F-971379511" data-filterable-set=":compiler:dokkaHtmlPartial/main"></a>
+        <div class="table-row" data-filterable-current=":compiler:dokkaHtmlPartial/main" data-filterable-set=":compiler:dokkaHtmlPartial/main">
+          <div class="main-subrow keyValue TabbedContent">
+            <div class=""><span class="inline-flex">
+                <div><a href="-security-lattice.html"><span>Security</span><wbr><span><span>Lattice</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-504213007%2FConstructors%2F-971379511"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":compiler:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><span class="token operator">&lt;</span><span class="token keyword"></span><a href="index.html">T</a><span class="token operator"> : </span><a href="../../io.github.aplcornell.viaduct.algebra/-lattice/index.html">Lattice</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="index.html">T</a><span class="token operator">&gt;</span><span class="token operator">&gt; </span><a href="-security-lattice.html"><span class="token function">SecurityLattice</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">confidentialityComponent<span class="token operator">: </span><a href="index.html">T</a><span class="token punctuation">, </span></span><span class="parameter ">integrityComponent<span class="token operator">: </span><a href="index.html">T</a></span></span><span class="token punctuation">)</span></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <h2 class="">Types</h2>
+      <div class="table" data-togglable="Types"><a data-name="412537342%2FClasslikes%2F-971379511" anchor-label="Bounds" id="412537342%2FClasslikes%2F-971379511" data-filterable-set=":compiler:dokkaHtmlPartial/main"></a>
+        <div class="table-row" data-filterable-current=":compiler:dokkaHtmlPartial/main" data-filterable-set=":compiler:dokkaHtmlPartial/main">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="-bounds/index.html"><span><span>Bounds</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="412537342%2FClasslikes%2F-971379511"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":compiler:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">class </span><a href="-bounds/index.html">Bounds</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="-bounds/index.html">T</a><span class="token operator"> : </span><a href="../../io.github.aplcornell.viaduct.algebra/-lattice/index.html">Lattice</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="-bounds/index.html">T</a><span class="token operator">&gt;</span><span class="token operator">&gt;</span><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">bounds<span class="token operator">: </span><a href="../../io.github.aplcornell.viaduct.algebra/-bounded-lattice/index.html">BoundedLattice</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="-bounds/index.html">T</a><span class="token operator">&gt;</span></span></span><span class="token punctuation">)</span> : <a href="../../io.github.aplcornell.viaduct.algebra/-bounded-lattice/index.html">BoundedLattice</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="index.html">SecurityLattice</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="-bounds/index.html">T</a><span class="token operator">&gt;</span><span class="token operator">&gt; </span>, <a href="../-bounded-trust-lattice/index.html">BoundedTrustLattice</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="index.html">SecurityLattice</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="-bounds/index.html">T</a><span class="token operator">&gt;</span><span class="token operator">&gt; </span></div><div class="brief "><p class="paragraph">Provides bounds for a <a href="index.html">SecurityLattice</a> given bounds for <a href="-bounds/index.html">T</a>.</p></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <h2 class="">Functions</h2>
+      <div class="table" data-togglable="Functions"><a data-name="-417766667%2FFunctions%2F-971379511" anchor-label="and" id="-417766667%2FFunctions%2F-971379511" data-filterable-set=":compiler:dokkaHtmlPartial/main"></a>
+        <div class="table-row" data-filterable-current=":compiler:dokkaHtmlPartial/main" data-filterable-set=":compiler:dokkaHtmlPartial/main">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="and.html"><span><span>and</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-417766667%2FFunctions%2F-971379511"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":compiler:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">infix override </span><span class="token keyword">fun </span><a href="and.html"><span class="token function">and</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">that<span class="token operator">: </span><a href="index.html">SecurityLattice</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="index.html">T</a><span class="token operator">&gt;</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="index.html">SecurityLattice</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="index.html">T</a><span class="token operator">&gt;</span></div><div class="brief "><p class="paragraph">The least powerful principal that can act for both <code class="lang-kotlin">this</code> and <a href="and.html">that</a>. This denotes a conjunction of authority.</p></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="523275069%2FFunctions%2F-971379511" anchor-label="confidentiality" id="523275069%2FFunctions%2F-971379511" data-filterable-set=":compiler:dokkaHtmlPartial/main"></a>
+        <div class="table-row" data-filterable-current=":compiler:dokkaHtmlPartial/main" data-filterable-set=":compiler:dokkaHtmlPartial/main">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="confidentiality.html"><span><span>confidentiality</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="523275069%2FFunctions%2F-971379511"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":compiler:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="confidentiality.html"><span class="token function">confidentiality</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">bounds<span class="token operator">: </span><a href="../../io.github.aplcornell.viaduct.algebra/-bounded-lattice/index.html">BoundedLattice</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="index.html">T</a><span class="token operator">&gt;</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="index.html">SecurityLattice</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="index.html">T</a><span class="token operator">&gt;</span></div><div class="brief "><p class="paragraph">Returns an element that represents the confidentiality component.</p></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="-1247003594%2FFunctions%2F-971379511" anchor-label="integrity" id="-1247003594%2FFunctions%2F-971379511" data-filterable-set=":compiler:dokkaHtmlPartial/main"></a>
+        <div class="table-row" data-filterable-current=":compiler:dokkaHtmlPartial/main" data-filterable-set=":compiler:dokkaHtmlPartial/main">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="integrity.html"><span><span>integrity</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1247003594%2FFunctions%2F-971379511"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":compiler:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="integrity.html"><span class="token function">integrity</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">bounds<span class="token operator">: </span><a href="../../io.github.aplcornell.viaduct.algebra/-bounded-lattice/index.html">BoundedLattice</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="index.html">T</a><span class="token operator">&gt;</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="index.html">SecurityLattice</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="index.html">T</a><span class="token operator">&gt;</span></div><div class="brief "><p class="paragraph">Returns an element that represents the integrity component.</p></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="-1568621404%2FFunctions%2F-971379511" anchor-label="join" id="-1568621404%2FFunctions%2F-971379511" data-filterable-set=":compiler:dokkaHtmlPartial/main"></a>
+        <div class="table-row" data-filterable-current=":compiler:dokkaHtmlPartial/main" data-filterable-set=":compiler:dokkaHtmlPartial/main">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="join.html"><span><span>join</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1568621404%2FFunctions%2F-971379511"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":compiler:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">infix override </span><span class="token keyword">fun </span><a href="join.html"><span class="token function">join</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">that<span class="token operator">: </span><a href="index.html">SecurityLattice</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="index.html">T</a><span class="token operator">&gt;</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="index.html">SecurityLattice</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="index.html">T</a><span class="token operator">&gt;</span></div><div class="brief "><p class="paragraph">The least upper bound of <code class="lang-kotlin">this</code> and <a href="join.html">that</a>.</p></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="-643547545%2FFunctions%2F-971379511" anchor-label="meet" id="-643547545%2FFunctions%2F-971379511" data-filterable-set=":compiler:dokkaHtmlPartial/main"></a>
+        <div class="table-row" data-filterable-current=":compiler:dokkaHtmlPartial/main" data-filterable-set=":compiler:dokkaHtmlPartial/main">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="meet.html"><span><span>meet</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-643547545%2FFunctions%2F-971379511"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":compiler:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">infix override </span><span class="token keyword">fun </span><a href="meet.html"><span class="token function">meet</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">that<span class="token operator">: </span><a href="index.html">SecurityLattice</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="index.html">T</a><span class="token operator">&gt;</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="index.html">SecurityLattice</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="index.html">T</a><span class="token operator">&gt;</span></div><div class="brief "><p class="paragraph">The greatest lower bound of <code class="lang-kotlin">this</code> and <a href="meet.html">that</a>.</p></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="1074072459%2FFunctions%2F-971379511" anchor-label="or" id="1074072459%2FFunctions%2F-971379511" data-filterable-set=":compiler:dokkaHtmlPartial/main"></a>
+        <div class="table-row" data-filterable-current=":compiler:dokkaHtmlPartial/main" data-filterable-set=":compiler:dokkaHtmlPartial/main">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="or.html"><span><span>or</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1074072459%2FFunctions%2F-971379511"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":compiler:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">infix override </span><span class="token keyword">fun </span><a href="or.html"><span class="token function">or</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">that<span class="token operator">: </span><a href="index.html">SecurityLattice</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="index.html">T</a><span class="token operator">&gt;</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="index.html">SecurityLattice</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="index.html">T</a><span class="token operator">&gt;</span></div><div class="brief "><p class="paragraph">The most powerful principal both <code class="lang-kotlin">this</code> and <a href="or.html">that</a> can act for. This denotes a disjunction of authority.</p></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="778462891%2FFunctions%2F-971379511" anchor-label="swap" id="778462891%2FFunctions%2F-971379511" data-filterable-set=":compiler:dokkaHtmlPartial/main"></a>
+        <div class="table-row" data-filterable-current=":compiler:dokkaHtmlPartial/main" data-filterable-set=":compiler:dokkaHtmlPartial/main">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="swap.html"><span><span>swap</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="778462891%2FFunctions%2F-971379511"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":compiler:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="swap.html"><span class="token function">swap</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="index.html">SecurityLattice</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="index.html">T</a><span class="token operator">&gt;</span></div><div class="brief "><p class="paragraph">Switches the confidentiality and integrity components.</p></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="-590544856%2FFunctions%2F-971379511" anchor-label="toDocument" id="-590544856%2FFunctions%2F-971379511" data-filterable-set=":compiler:dokkaHtmlPartial/main"></a>
+        <div class="table-row" data-filterable-current=":compiler:dokkaHtmlPartial/main" data-filterable-set=":compiler:dokkaHtmlPartial/main">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="to-document.html"><span>to</span><wbr><span><span>Document</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-590544856%2FFunctions%2F-971379511"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":compiler:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="to-document.html"><span class="token function">toDocument</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="../../../shared/io.github.aplcornell.viaduct.prettyprinting/-document/index.html">Document</a></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="-1758321806%2FFunctions%2F-971379511" anchor-label="toString" id="-1758321806%2FFunctions%2F-971379511" data-filterable-set=":compiler:dokkaHtmlPartial/main"></a>
+        <div class="table-row" data-filterable-current=":compiler:dokkaHtmlPartial/main" data-filterable-set=":compiler:dokkaHtmlPartial/main">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="to-string.html"><span>to</span><wbr><span><span>String</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1758321806%2FFunctions%2F-971379511"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":compiler:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="to-string.html"><span class="token function">toString</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <h2 class="">Properties</h2>
+      <div class="table" data-togglable="Properties"><a data-name="1510854855%2FProperties%2F-971379511" anchor-label="confidentialityComponent" id="1510854855%2FProperties%2F-971379511" data-filterable-set=":compiler:dokkaHtmlPartial/main"></a>
+        <div class="table-row" data-filterable-current=":compiler:dokkaHtmlPartial/main" data-filterable-set=":compiler:dokkaHtmlPartial/main">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="confidentiality-component.html"><span>confidentiality</span><wbr><span><span>Component</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1510854855%2FProperties%2F-971379511"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted" data-togglable="Properties"><div class="content sourceset-dependent-content" data-active="" data-togglable=":compiler:dokkaHtmlPartial/main"><a data-name="1510854855%2FProperties%2F-971379511" anchor-label="confidentialityComponent" id="1510854855%2FProperties%2F-971379511" data-filterable-set=":compiler:dokkaHtmlPartial/main"></a><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">val </span><a href="confidentiality-component.html">confidentialityComponent</a><span class="token operator">: </span><a href="index.html">T</a></div><div class="brief "><a data-name="1510854855%2FProperties%2F-971379511" anchor-label="confidentialityComponent" id="1510854855%2FProperties%2F-971379511" data-filterable-set=":compiler:dokkaHtmlPartial/main"></a><p class="paragraph">The confidentiality component in the underlying lattice.</p></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="792101102%2FProperties%2F-971379511" anchor-label="integrityComponent" id="792101102%2FProperties%2F-971379511" data-filterable-set=":compiler:dokkaHtmlPartial/main"></a>
+        <div class="table-row" data-filterable-current=":compiler:dokkaHtmlPartial/main" data-filterable-set=":compiler:dokkaHtmlPartial/main">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="integrity-component.html"><span>integrity</span><wbr><span><span>Component</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="792101102%2FProperties%2F-971379511"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted" data-togglable="Properties"><div class="content sourceset-dependent-content" data-active="" data-togglable=":compiler:dokkaHtmlPartial/main"><a data-name="792101102%2FProperties%2F-971379511" anchor-label="integrityComponent" id="792101102%2FProperties%2F-971379511" data-filterable-set=":compiler:dokkaHtmlPartial/main"></a><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">val </span><a href="integrity-component.html">integrityComponent</a><span class="token operator">: </span><a href="index.html">T</a></div><div class="brief "><a data-name="792101102%2FProperties%2F-971379511" anchor-label="integrityComponent" id="792101102%2FProperties%2F-971379511" data-filterable-set=":compiler:dokkaHtmlPartial/main"></a><p class="paragraph">The integrity component in the underlying lattice.</p></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <h2 class="tabbedcontent">Extensions</h2>
+      <div class="table" data-togglable="Extensions"><a data-name="1522023837%2FExtensions%2F-971379511" anchor-label="confidentiality" id="1522023837%2FExtensions%2F-971379511" data-filterable-set=":compiler:dokkaHtmlPartial/main"></a>
+        <div class="table-row" data-filterable-current=":compiler:dokkaHtmlPartial/main" data-filterable-set=":compiler:dokkaHtmlPartial/main">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="../confidentiality.html"><span><span>confidentiality</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1522023837%2FExtensions%2F-971379511"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":compiler:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="../index.html#-432352285%2FClasslikes%2F-971379511">Label</a><span class="token punctuation">.</span><a href="../confidentiality.html"><span class="token function">confidentiality</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="../index.html#-432352285%2FClasslikes%2F-971379511">Label</a></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="297386933%2FExtensions%2F-971379511" anchor-label="confidentialityFlowsTo" id="297386933%2FExtensions%2F-971379511" data-filterable-set=":compiler:dokkaHtmlPartial/main"></a>
+        <div class="table-row" data-filterable-current=":compiler:dokkaHtmlPartial/main" data-filterable-set=":compiler:dokkaHtmlPartial/main">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="../../io.github.aplcornell.viaduct.security.solver/confidentiality-flows-to.html"><span>confidentiality</span><wbr><span>Flows</span><wbr><span><span>To</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="297386933%2FExtensions%2F-971379511"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":compiler:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><span class="token operator">&lt;</span><span class="token keyword"></span><a href="../../io.github.aplcornell.viaduct.security.solver/confidentiality-flows-to.html">C</a><span class="token operator"> : </span><a href="../../io.github.aplcornell.viaduct.algebra/-heyting-algebra/index.html">HeytingAlgebra</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="../../io.github.aplcornell.viaduct.security.solver/confidentiality-flows-to.html">C</a><span class="token operator">&gt;</span><span class="token punctuation">, </span><span class="token keyword"></span><a href="../../io.github.aplcornell.viaduct.security.solver/confidentiality-flows-to.html">V</a><span class="token punctuation">, </span><span class="token keyword"></span><a href="../../io.github.aplcornell.viaduct.security.solver/confidentiality-flows-to.html">T</a><span class="token operator">&gt; </span><a href="../../io.github.aplcornell.viaduct.security.solver/index.html#872372270%2FClasslikes%2F-971379511">Term</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="../../io.github.aplcornell.viaduct.security.solver/confidentiality-flows-to.html">C</a><span class="token punctuation">, </span><span class="token keyword"></span><a href="../../io.github.aplcornell.viaduct.security.solver/confidentiality-flows-to.html">V</a><span class="token operator">&gt;</span><span class="token punctuation">.</span><a href="../../io.github.aplcornell.viaduct.security.solver/confidentiality-flows-to.html"><span class="token function">confidentialityFlowsTo</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">that<span class="token operator">: </span><a href="../../io.github.aplcornell.viaduct.security.solver/index.html#872372270%2FClasslikes%2F-971379511">Term</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="../../io.github.aplcornell.viaduct.security.solver/confidentiality-flows-to.html">C</a><span class="token punctuation">, </span><span class="token keyword"></span><a href="../../io.github.aplcornell.viaduct.security.solver/confidentiality-flows-to.html">V</a><span class="token operator">&gt;</span><span class="token punctuation">, </span></span><span class="parameter ">bounds<span class="token operator">: </span><a href="../../io.github.aplcornell.viaduct.algebra/-bounded-lattice/index.html">BoundedLattice</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="../../io.github.aplcornell.viaduct.security.solver/confidentiality-flows-to.html">C</a><span class="token operator">&gt;</span><span class="token punctuation">, </span></span><span class="parameter ">failWith<span class="token operator">: </span><span class="token punctuation">(</span><span class="token keyword"></span><a href="index.html">SecurityLattice</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="../../io.github.aplcornell.viaduct.security.solver/confidentiality-flows-to.html">C</a><span class="token operator">&gt;</span><span class="token punctuation">, </span><span class="token keyword"></span><a href="index.html">SecurityLattice</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="../../io.github.aplcornell.viaduct.security.solver/confidentiality-flows-to.html">C</a><span class="token operator">&gt;</span><span class="token punctuation">)</span><span class="token operator"> -&gt; </span><span class="token keyword"></span><a href="../../io.github.aplcornell.viaduct.security.solver/confidentiality-flows-to.html">T</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-iterable/index.html">Iterable</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="../../io.github.aplcornell.viaduct.security.solver/index.html#827213085%2FClasslikes%2F-971379511">Constraint</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="../../io.github.aplcornell.viaduct.security.solver/confidentiality-flows-to.html">C</a><span class="token punctuation">, </span><span class="token keyword"></span><a href="../../io.github.aplcornell.viaduct.security.solver/confidentiality-flows-to.html">V</a><span class="token punctuation">, </span><span class="token keyword"></span><a href="../../io.github.aplcornell.viaduct.security.solver/confidentiality-flows-to.html">T</a><span class="token operator">&gt;</span><span class="token operator">&gt;</span></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="-1256402209%2FExtensions%2F-971379511" anchor-label="flowsTo" id="-1256402209%2FExtensions%2F-971379511" data-filterable-set=":compiler:dokkaHtmlPartial/main"></a>
+        <div class="table-row" data-filterable-current=":compiler:dokkaHtmlPartial/main" data-filterable-set=":compiler:dokkaHtmlPartial/main">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="../../io.github.aplcornell.viaduct.security.solver/flows-to.html"><span>flows</span><wbr><span><span>To</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1256402209%2FExtensions%2F-971379511"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":compiler:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><span class="token operator">&lt;</span><span class="token keyword"></span><a href="../../io.github.aplcornell.viaduct.security.solver/flows-to.html">C</a><span class="token operator"> : </span><a href="../../io.github.aplcornell.viaduct.algebra/-heyting-algebra/index.html">HeytingAlgebra</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="../../io.github.aplcornell.viaduct.security.solver/flows-to.html">C</a><span class="token operator">&gt;</span><span class="token punctuation">, </span><span class="token keyword"></span><a href="../../io.github.aplcornell.viaduct.security.solver/flows-to.html">V</a><span class="token punctuation">, </span><span class="token keyword"></span><a href="../../io.github.aplcornell.viaduct.security.solver/flows-to.html">T</a><span class="token operator">&gt; </span><a href="../../io.github.aplcornell.viaduct.security.solver/index.html#872372270%2FClasslikes%2F-971379511">Term</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="../../io.github.aplcornell.viaduct.security.solver/flows-to.html">C</a><span class="token punctuation">, </span><span class="token keyword"></span><a href="../../io.github.aplcornell.viaduct.security.solver/flows-to.html">V</a><span class="token operator">&gt;</span><span class="token punctuation">.</span><a href="../../io.github.aplcornell.viaduct.security.solver/flows-to.html"><span class="token function">flowsTo</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">that<span class="token operator">: </span><a href="../../io.github.aplcornell.viaduct.security.solver/index.html#872372270%2FClasslikes%2F-971379511">Term</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="../../io.github.aplcornell.viaduct.security.solver/flows-to.html">C</a><span class="token punctuation">, </span><span class="token keyword"></span><a href="../../io.github.aplcornell.viaduct.security.solver/flows-to.html">V</a><span class="token operator">&gt;</span><span class="token punctuation">, </span></span><span class="parameter ">bounds<span class="token operator">: </span><a href="../../io.github.aplcornell.viaduct.algebra/-bounded-lattice/index.html">BoundedLattice</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="../../io.github.aplcornell.viaduct.security.solver/flows-to.html">C</a><span class="token operator">&gt;</span><span class="token punctuation">, </span></span><span class="parameter ">failWith<span class="token operator">: </span><span class="token punctuation">(</span><span class="token keyword"></span><a href="index.html">SecurityLattice</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="../../io.github.aplcornell.viaduct.security.solver/flows-to.html">C</a><span class="token operator">&gt;</span><span class="token punctuation">, </span><span class="token keyword"></span><a href="index.html">SecurityLattice</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="../../io.github.aplcornell.viaduct.security.solver/flows-to.html">C</a><span class="token operator">&gt;</span><span class="token punctuation">)</span><span class="token operator"> -&gt; </span><span class="token keyword"></span><a href="../../io.github.aplcornell.viaduct.security.solver/flows-to.html">T</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-iterable/index.html">Iterable</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="../../io.github.aplcornell.viaduct.security.solver/index.html#827213085%2FClasslikes%2F-971379511">Constraint</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="../../io.github.aplcornell.viaduct.security.solver/flows-to.html">C</a><span class="token punctuation">, </span><span class="token keyword"></span><a href="../../io.github.aplcornell.viaduct.security.solver/flows-to.html">V</a><span class="token punctuation">, </span><span class="token keyword"></span><a href="../../io.github.aplcornell.viaduct.security.solver/flows-to.html">T</a><span class="token operator">&gt;</span><span class="token operator">&gt;</span></div><div class="brief "><p class="paragraph">Returns a constraint that represents <code class="lang-kotlin">[this] flowsTo [that]</code>.</p></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="-296137788%2FExtensions%2F-971379511" anchor-label="integrity" id="-296137788%2FExtensions%2F-971379511" data-filterable-set=":compiler:dokkaHtmlPartial/main"></a>
+        <div class="table-row" data-filterable-current=":compiler:dokkaHtmlPartial/main" data-filterable-set=":compiler:dokkaHtmlPartial/main">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="../integrity.html"><span><span>integrity</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-296137788%2FExtensions%2F-971379511"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":compiler:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="../index.html#-432352285%2FClasslikes%2F-971379511">Label</a><span class="token punctuation">.</span><a href="../integrity.html"><span class="token function">integrity</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="../index.html#-432352285%2FClasslikes%2F-971379511">Label</a></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="1380430428%2FExtensions%2F-971379511" anchor-label="integrityFlowsTo" id="1380430428%2FExtensions%2F-971379511" data-filterable-set=":compiler:dokkaHtmlPartial/main"></a>
+        <div class="table-row" data-filterable-current=":compiler:dokkaHtmlPartial/main" data-filterable-set=":compiler:dokkaHtmlPartial/main">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="../../io.github.aplcornell.viaduct.security.solver/integrity-flows-to.html"><span>integrity</span><wbr><span>Flows</span><wbr><span><span>To</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1380430428%2FExtensions%2F-971379511"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":compiler:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><span class="token operator">&lt;</span><span class="token keyword"></span><a href="../../io.github.aplcornell.viaduct.security.solver/integrity-flows-to.html">C</a><span class="token operator"> : </span><a href="../../io.github.aplcornell.viaduct.algebra/-heyting-algebra/index.html">HeytingAlgebra</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="../../io.github.aplcornell.viaduct.security.solver/integrity-flows-to.html">C</a><span class="token operator">&gt;</span><span class="token punctuation">, </span><span class="token keyword"></span><a href="../../io.github.aplcornell.viaduct.security.solver/integrity-flows-to.html">V</a><span class="token punctuation">, </span><span class="token keyword"></span><a href="../../io.github.aplcornell.viaduct.security.solver/integrity-flows-to.html">T</a><span class="token operator">&gt; </span><a href="../../io.github.aplcornell.viaduct.security.solver/index.html#872372270%2FClasslikes%2F-971379511">Term</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="../../io.github.aplcornell.viaduct.security.solver/integrity-flows-to.html">C</a><span class="token punctuation">, </span><span class="token keyword"></span><a href="../../io.github.aplcornell.viaduct.security.solver/integrity-flows-to.html">V</a><span class="token operator">&gt;</span><span class="token punctuation">.</span><a href="../../io.github.aplcornell.viaduct.security.solver/integrity-flows-to.html"><span class="token function">integrityFlowsTo</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">that<span class="token operator">: </span><a href="../../io.github.aplcornell.viaduct.security.solver/index.html#872372270%2FClasslikes%2F-971379511">Term</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="../../io.github.aplcornell.viaduct.security.solver/integrity-flows-to.html">C</a><span class="token punctuation">, </span><span class="token keyword"></span><a href="../../io.github.aplcornell.viaduct.security.solver/integrity-flows-to.html">V</a><span class="token operator">&gt;</span><span class="token punctuation">, </span></span><span class="parameter ">bounds<span class="token operator">: </span><a href="../../io.github.aplcornell.viaduct.algebra/-bounded-lattice/index.html">BoundedLattice</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="../../io.github.aplcornell.viaduct.security.solver/integrity-flows-to.html">C</a><span class="token operator">&gt;</span><span class="token punctuation">, </span></span><span class="parameter ">failWith<span class="token operator">: </span><span class="token punctuation">(</span><span class="token keyword"></span><a href="index.html">SecurityLattice</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="../../io.github.aplcornell.viaduct.security.solver/integrity-flows-to.html">C</a><span class="token operator">&gt;</span><span class="token punctuation">, </span><span class="token keyword"></span><a href="index.html">SecurityLattice</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="../../io.github.aplcornell.viaduct.security.solver/integrity-flows-to.html">C</a><span class="token operator">&gt;</span><span class="token punctuation">)</span><span class="token operator"> -&gt; </span><span class="token keyword"></span><a href="../../io.github.aplcornell.viaduct.security.solver/integrity-flows-to.html">T</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-iterable/index.html">Iterable</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="../../io.github.aplcornell.viaduct.security.solver/index.html#827213085%2FClasslikes%2F-971379511">Constraint</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="../../io.github.aplcornell.viaduct.security.solver/integrity-flows-to.html">C</a><span class="token punctuation">, </span><span class="token keyword"></span><a href="../../io.github.aplcornell.viaduct.security.solver/integrity-flows-to.html">V</a><span class="token punctuation">, </span><span class="token keyword"></span><a href="../../io.github.aplcornell.viaduct.security.solver/integrity-flows-to.html">T</a><span class="token operator">&gt;</span><span class="token operator">&gt;</span></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      <div class="footer">
+        <span class="go-to-top-icon"><a href="#content" id="go-to-top-link"></a></span><span>© 2023 Copyright</span><span class="pull-right"><span>Generated by </span><a href="https://github.com/Kotlin/dokka"><span>dokka</span><span class="padded-icon"></span></a></span>
+      </div>
+    </div>
+</div>
+
+</body></html>
+

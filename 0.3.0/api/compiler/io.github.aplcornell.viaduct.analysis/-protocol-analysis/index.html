@@ -1,0 +1,224 @@
+<!doctype html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1" charset="UTF-8">
+    <title>ProtocolAnalysis</title>
+<link href="../../../images/logo-icon.svg" rel="icon" type="image/svg"><script>var pathToRoot = "../../../";</script>    <script>const storage = localStorage.getItem("dokka-dark-mode")
+    if (storage == null) {
+        const osDarkSchemePreferred = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+        if (osDarkSchemePreferred === true) {
+            document.getElementsByTagName("html")[0].classList.add("theme-dark")
+        }
+    } else {
+        const savedDarkMode = JSON.parse(storage)
+        if(savedDarkMode === true) {
+            document.getElementsByTagName("html")[0].classList.add("theme-dark")
+        }
+    }
+    </script>
+<script type="text/javascript" src="../../../scripts/sourceset_dependencies.js" async></script>
+<link href="../../../styles/style.css" rel="Stylesheet">
+<link href="../../../styles/jetbrains-mono.css" rel="Stylesheet">
+<link href="../../../styles/main.css" rel="Stylesheet">
+<link href="../../../styles/prism.css" rel="Stylesheet">
+<link href="../../../styles/logo-styles.css" rel="Stylesheet">
+<script type="text/javascript" src="../../../scripts/clipboard.js" async></script>
+<script type="text/javascript" src="../../../scripts/navigation-loader.js" async></script>
+<script type="text/javascript" src="../../../scripts/platform-content-handler.js" async></script>
+<script type="text/javascript" src="../../../scripts/main.js" defer></script>
+<script type="text/javascript" src="../../../scripts/prism.js" async></script>
+<script type="text/javascript" src="../../../scripts/symbol-parameters-wrapper_deferred.js" defer></script></head>
+<body>
+<div class="navigation-wrapper" id="navigation-wrapper">
+    <div id="leftToggler"><span class="icon-toggler"></span></div>
+    <div class="library-name">
+<a href="../../../index.html">
+<span>viaduct</span>            </a>    </div>
+    <div>0.3.0
+    </div>
+    <div class="pull-right d-flex">
+        <button id="theme-toggle-button"><span id="theme-toggle"></span></button>
+        <div id="searchBar"></div>
+    </div>
+</div>
+<div id="container">
+    <div id="leftColumn">
+        <div id="sideMenu"></div>
+    </div>
+    <div id="main">
+<div class="main-content" id="content" pageids="compiler::io.github.aplcornell.viaduct.analysis/ProtocolAnalysis///PointingToDeclaration//-971379511">
+  <div class="breadcrumbs"><a href="../../index.html">compiler</a><span class="delimiter">/</span><a href="../index.html">io.github.aplcornell.viaduct.analysis</a><span class="delimiter">/</span><span class="current">ProtocolAnalysis</span></div>
+  <div class="cover ">
+    <h1 class="cover"><span>Protocol</span><wbr><span><span>Analysis</span></span></h1>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":compiler:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">class </span><a href="index.html">ProtocolAnalysis</a><span class="token punctuation">(</span><span class="parameters "><span class="parameter "><span class="token keyword">val </span>program<span class="token operator">: </span><a href="../../io.github.aplcornell.viaduct.syntax.intermediate/-program-node/index.html">ProgramNode</a><span class="token punctuation">, </span></span><span class="parameter ">protocolComposer<span class="token operator">: </span><a href="../../io.github.aplcornell.viaduct.selection/-protocol-composer/index.html">ProtocolComposer</a></span></span><span class="token punctuation">)</span></div><p class="paragraph">Associates each <a href="../../io.github.aplcornell.viaduct.syntax.intermediate/-statement-node/index.html">StatementNode</a> with the <a href="../../io.github.aplcornell.viaduct.syntax/-protocol/index.html">Protocol</a>s involved in its execution.</p></div></div>
+  </div>
+  <div class="tabbedcontent">
+    <div class="tabs-section" tabs-section="tabs-section"><button class="section-tab" data-active="" data-togglable="Constructors">Constructors</button><button class="section-tab" data-togglable="Functions">Functions</button><button class="section-tab" data-togglable="Properties">Properties</button></div>
+    <div class="tabs-section-body">
+      <h2 class="tabbedcontent">Constructors</h2>
+      <div class="table" data-togglable="Constructors"><a data-name="-1475516155%2FConstructors%2F-971379511" anchor-label="ProtocolAnalysis" id="-1475516155%2FConstructors%2F-971379511" data-filterable-set=":compiler:dokkaHtmlPartial/main"></a>
+        <div class="table-row" data-filterable-current=":compiler:dokkaHtmlPartial/main" data-filterable-set=":compiler:dokkaHtmlPartial/main">
+          <div class="main-subrow keyValue TabbedContent">
+            <div class=""><span class="inline-flex">
+                <div><a href="-protocol-analysis.html"><span>Protocol</span><wbr><span><span>Analysis</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1475516155%2FConstructors%2F-971379511"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":compiler:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="-protocol-analysis.html"><span class="token function">ProtocolAnalysis</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">program<span class="token operator">: </span><a href="../../io.github.aplcornell.viaduct.syntax.intermediate/-program-node/index.html">ProgramNode</a><span class="token punctuation">, </span></span><span class="parameter ">protocolComposer<span class="token operator">: </span><a href="../../io.github.aplcornell.viaduct.selection/-protocol-composer/index.html">ProtocolComposer</a></span></span><span class="token punctuation">)</span></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <h2 class="">Functions</h2>
+      <div class="table" data-togglable="Functions"><a data-name="2024439189%2FFunctions%2F-971379511" anchor-label="directReaderProtocols" id="2024439189%2FFunctions%2F-971379511" data-filterable-set=":compiler:dokkaHtmlPartial/main"></a>
+        <div class="table-row" data-filterable-current=":compiler:dokkaHtmlPartial/main" data-filterable-set=":compiler:dokkaHtmlPartial/main">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="direct-reader-protocols.html"><span>direct</span><wbr><span>Reader</span><wbr><span><span>Protocols</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="2024439189%2FFunctions%2F-971379511"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":compiler:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="direct-reader-protocols.html"><span class="token function">directReaderProtocols</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">letNode<span class="token operator">: </span><a href="../../io.github.aplcornell.viaduct.syntax.intermediate/-let-node/index.html">LetNode</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-set/index.html">Set</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="../../io.github.aplcornell.viaduct.syntax/-protocol/index.html">Protocol</a><span class="token operator">&gt;</span></div><div class="brief "><p class="paragraph">Returns the set of protocols that direct read the let binding.</p></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="-111168317%2FFunctions%2F-971379511" anchor-label="directRemoteReaders" id="-111168317%2FFunctions%2F-971379511" data-filterable-set=":compiler:dokkaHtmlPartial/main"></a>
+        <div class="table-row" data-filterable-current=":compiler:dokkaHtmlPartial/main" data-filterable-set=":compiler:dokkaHtmlPartial/main">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="direct-remote-readers.html"><span>direct</span><wbr><span>Remote</span><wbr><span><span>Readers</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-111168317%2FFunctions%2F-971379511"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":compiler:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="direct-remote-readers.html"><span class="token function">directRemoteReaders</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">letNode<span class="token operator">: </span><a href="../../io.github.aplcornell.viaduct.syntax.intermediate/-let-node/index.html">LetNode</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-set/index.html">Set</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="../../io.github.aplcornell.viaduct.syntax.intermediate/-simple-statement-node/index.html">SimpleStatementNode</a><span class="token operator">&gt;</span></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="1358742223%2FFunctions%2F-971379511" anchor-label="hostsToSync" id="1358742223%2FFunctions%2F-971379511" data-filterable-set=":compiler:dokkaHtmlPartial/main"></a>
+        <div class="table-row" data-filterable-current=":compiler:dokkaHtmlPartial/main" data-filterable-set=":compiler:dokkaHtmlPartial/main">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="hosts-to-sync.html"><span>hosts</span><wbr><span>To</span><wbr><span><span>Sync</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1358742223%2FFunctions%2F-971379511"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":compiler:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="hosts-to-sync.html"><span class="token function">hostsToSync</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">statement<span class="token operator">: </span><a href="../../io.github.aplcornell.viaduct.syntax.intermediate/-statement-node/index.html">StatementNode</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-set/index.html">Set</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="../../../compiler/io.github.aplcornell.viaduct.syntax/-host/index.html">Host</a><span class="token operator">&gt;</span></div><div class="brief "><p class="paragraph">Returns the set of hosts that will synchronize with <a href="hosts-to-sync.html">statement</a>.</p></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="1126669726%2FFunctions%2F-971379511" anchor-label="participatingHosts" id="1126669726%2FFunctions%2F-971379511" data-filterable-set=":compiler:dokkaHtmlPartial/main"></a>
+        <div class="table-row" data-filterable-current=":compiler:dokkaHtmlPartial/main" data-filterable-set=":compiler:dokkaHtmlPartial/main">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="participating-hosts.html"><span>participating</span><wbr><span><span>Hosts</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1126669726%2FFunctions%2F-971379511"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":compiler:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="participating-hosts.html"><span class="token function">participatingHosts</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">statement<span class="token operator">: </span><a href="../../io.github.aplcornell.viaduct.syntax.intermediate/-statement-node/index.html">StatementNode</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-set/index.html">Set</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="../../../compiler/io.github.aplcornell.viaduct.syntax/-host/index.html">Host</a><span class="token operator">&gt;</span></div><div class="brief "><p class="paragraph">Returns the set of hosts that participate in the execution of <a href="participating-hosts.html">statement</a>.</p></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="-490425503%2FFunctions%2F-971379511" anchor-label="participatingProtocols" id="-490425503%2FFunctions%2F-971379511" data-filterable-set=":compiler:dokkaHtmlPartial/main"></a>
+        <div class="table-row" data-filterable-current=":compiler:dokkaHtmlPartial/main" data-filterable-set=":compiler:dokkaHtmlPartial/main">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="participating-protocols.html"><span>participating</span><wbr><span><span>Protocols</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-490425503%2FFunctions%2F-971379511"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":compiler:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="participating-protocols.html"><span class="token function">participatingProtocols</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">node<span class="token operator">: </span><a href="../../io.github.aplcornell.viaduct.syntax.intermediate/-node/index.html">Node</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-set/index.html">Set</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="../../io.github.aplcornell.viaduct.syntax/-protocol/index.html">Protocol</a><span class="token operator">&gt;</span></div><div class="brief "><p class="paragraph">Return the protocols participating for <a href="participating-protocols.html">node</a>.</p></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="-1270218951%2FFunctions%2F-971379511" anchor-label="primaryProtocol" id="-1270218951%2FFunctions%2F-971379511" data-filterable-set=":compiler:dokkaHtmlPartial/main"></a>
+        <div class="table-row" data-filterable-current=":compiler:dokkaHtmlPartial/main" data-filterable-set=":compiler:dokkaHtmlPartial/main">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="primary-protocol.html"><span>primary</span><wbr><span><span>Protocol</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1270218951%2FFunctions%2F-971379511"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":compiler:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="primary-protocol.html"><span class="token function">primaryProtocol</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">argument<span class="token operator">: </span><a href="../../io.github.aplcornell.viaduct.syntax.intermediate/-function-argument-node/index.html">FunctionArgumentNode</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="../../io.github.aplcornell.viaduct.syntax/-protocol/index.html">Protocol</a></div><div class="brief "><p class="paragraph">Returns the protocol that coordinates the execution of <a href="primary-protocol.html">argument</a>.</p></div><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="primary-protocol.html"><span class="token function">primaryProtocol</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">parameter<span class="token operator">: </span><a href="../../io.github.aplcornell.viaduct.syntax.intermediate/-parameter-node/index.html">ParameterNode</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="../../io.github.aplcornell.viaduct.syntax/-protocol/index.html">Protocol</a></div><div class="brief "><p class="paragraph">Returns the protocol that coordinates the execution of <a href="primary-protocol.html">parameter</a>.</p></div><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="primary-protocol.html"><span class="token function">primaryProtocol</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">read<span class="token operator">: </span><a href="../../io.github.aplcornell.viaduct.syntax.intermediate/-read-node/index.html">ReadNode</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="../../io.github.aplcornell.viaduct.syntax/-protocol/index.html">Protocol</a></div><div class="brief "><p class="paragraph">Returns the protocol that coordinates the execution of the let node read by <a href="primary-protocol.html">read</a>.</p></div><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="primary-protocol.html"><span class="token function">primaryProtocol</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">statement<span class="token operator">: </span><a href="../../io.github.aplcornell.viaduct.syntax.intermediate/-simple-statement-node/index.html">SimpleStatementNode</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="../../io.github.aplcornell.viaduct.syntax/-protocol/index.html">Protocol</a></div><div class="brief "><p class="paragraph">Returns the protocol that coordinates the execution of <a href="primary-protocol.html">statement</a>.</p></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="220982655%2FFunctions%2F-971379511" anchor-label="protocols" id="220982655%2FFunctions%2F-971379511" data-filterable-set=":compiler:dokkaHtmlPartial/main"></a>
+        <div class="table-row" data-filterable-current=":compiler:dokkaHtmlPartial/main" data-filterable-set=":compiler:dokkaHtmlPartial/main">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="protocols.html"><span><span>protocols</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="220982655%2FFunctions%2F-971379511"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":compiler:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="protocols.html"><span class="token function">protocols</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">function<span class="token operator">: </span><a href="../../io.github.aplcornell.viaduct.syntax.intermediate/-function-declaration-node/index.html">FunctionDeclarationNode</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-set/index.html">Set</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="../../io.github.aplcornell.viaduct.syntax/-protocol/index.html">Protocol</a><span class="token operator">&gt;</span></div><div class="brief "><p class="paragraph">Returns the set of protocols that execute <a href="protocols.html">function</a>.</p></div><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="protocols.html"><span class="token function">protocols</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">statement<span class="token operator">: </span><a href="../../io.github.aplcornell.viaduct.syntax.intermediate/-statement-node/index.html">StatementNode</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-set/index.html">Set</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="../../io.github.aplcornell.viaduct.syntax/-protocol/index.html">Protocol</a><span class="token operator">&gt;</span></div><div class="brief "><p class="paragraph">Returns the set of protocols that execute <a href="protocols.html">statement</a>.</p></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="996203120%2FFunctions%2F-971379511" anchor-label="relevantCommunicationEvents" id="996203120%2FFunctions%2F-971379511" data-filterable-set=":compiler:dokkaHtmlPartial/main"></a>
+        <div class="table-row" data-filterable-current=":compiler:dokkaHtmlPartial/main" data-filterable-set=":compiler:dokkaHtmlPartial/main">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="relevant-communication-events.html"><span>relevant</span><wbr><span>Communication</span><wbr><span><span>Events</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="996203120%2FFunctions%2F-971379511"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":compiler:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="relevant-communication-events.html"><span class="token function">relevantCommunicationEvents</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">read<span class="token operator">: </span><a href="../../io.github.aplcornell.viaduct.syntax.intermediate/-read-node/index.html">ReadNode</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="../../io.github.aplcornell.viaduct.selection/-protocol-communication/index.html">ProtocolCommunication</a></div><div class="brief "><p class="paragraph">Return the relevant communication events for the <a href="relevant-communication-events.html">read</a>.</p></div><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="relevant-communication-events.html"><span class="token function">relevantCommunicationEvents</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">letNode<span class="token operator">: </span><a href="../../io.github.aplcornell.viaduct.syntax.intermediate/-let-node/index.html">LetNode</a><span class="token punctuation">, </span></span><span class="parameter ">reader<span class="token operator">: </span><a href="../../io.github.aplcornell.viaduct.syntax.intermediate/-simple-statement-node/index.html">SimpleStatementNode</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="../../io.github.aplcornell.viaduct.selection/-protocol-communication/index.html">ProtocolCommunication</a></div><div class="brief "><p class="paragraph">Return the relevant communication events for <a href="relevant-communication-events.html">reader</a> reading from <a href="relevant-communication-events.html">letNode</a>.</p></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <h2 class="">Properties</h2>
+      <div class="table" data-togglable="Properties"><a data-name="1810450314%2FProperties%2F-971379511" anchor-label="program" id="1810450314%2FProperties%2F-971379511" data-filterable-set=":compiler:dokkaHtmlPartial/main"></a>
+        <div class="table-row" data-filterable-current=":compiler:dokkaHtmlPartial/main" data-filterable-set=":compiler:dokkaHtmlPartial/main">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="program.html"><span><span>program</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1810450314%2FProperties%2F-971379511"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted" data-togglable="Properties"><div class="content sourceset-dependent-content" data-active="" data-togglable=":compiler:dokkaHtmlPartial/main"><a data-name="1810450314%2FProperties%2F-971379511" anchor-label="program" id="1810450314%2FProperties%2F-971379511" data-filterable-set=":compiler:dokkaHtmlPartial/main"></a><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">val </span><a href="program.html">program</a><span class="token operator">: </span><a href="../../io.github.aplcornell.viaduct.syntax.intermediate/-program-node/index.html">ProgramNode</a></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      <div class="footer">
+        <span class="go-to-top-icon"><a href="#content" id="go-to-top-link"></a></span><span>© 2023 Copyright</span><span class="pull-right"><span>Generated by </span><a href="https://github.com/Kotlin/dokka"><span>dokka</span><span class="padded-icon"></span></a></span>
+      </div>
+    </div>
+</div>
+
+</body></html>
+

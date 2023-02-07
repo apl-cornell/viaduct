@@ -1,0 +1,168 @@
+<!doctype html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1" charset="UTF-8">
+    <title>Tree</title>
+<link href="../../../images/logo-icon.svg" rel="icon" type="image/svg"><script>var pathToRoot = "../../../";</script>    <script>const storage = localStorage.getItem("dokka-dark-mode")
+    if (storage == null) {
+        const osDarkSchemePreferred = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+        if (osDarkSchemePreferred === true) {
+            document.getElementsByTagName("html")[0].classList.add("theme-dark")
+        }
+    } else {
+        const savedDarkMode = JSON.parse(storage)
+        if(savedDarkMode === true) {
+            document.getElementsByTagName("html")[0].classList.add("theme-dark")
+        }
+    }
+    </script>
+<script type="text/javascript" src="../../../scripts/sourceset_dependencies.js" async></script>
+<link href="../../../styles/style.css" rel="Stylesheet">
+<link href="../../../styles/jetbrains-mono.css" rel="Stylesheet">
+<link href="../../../styles/main.css" rel="Stylesheet">
+<link href="../../../styles/prism.css" rel="Stylesheet">
+<link href="../../../styles/logo-styles.css" rel="Stylesheet">
+<script type="text/javascript" src="../../../scripts/clipboard.js" async></script>
+<script type="text/javascript" src="../../../scripts/navigation-loader.js" async></script>
+<script type="text/javascript" src="../../../scripts/platform-content-handler.js" async></script>
+<script type="text/javascript" src="../../../scripts/main.js" defer></script>
+<script type="text/javascript" src="../../../scripts/prism.js" async></script>
+<script type="text/javascript" src="../../../scripts/symbol-parameters-wrapper_deferred.js" defer></script></head>
+<body>
+<div class="navigation-wrapper" id="navigation-wrapper">
+    <div id="leftToggler"><span class="icon-toggler"></span></div>
+    <div class="library-name">
+<a href="../../../index.html">
+<span>viaduct</span>            </a>    </div>
+    <div>0.3.0
+    </div>
+    <div class="pull-right d-flex">
+        <button id="theme-toggle-button"><span id="theme-toggle"></span></button>
+        <div id="searchBar"></div>
+    </div>
+</div>
+<div id="container">
+    <div id="leftColumn">
+        <div id="sideMenu"></div>
+    </div>
+    <div id="main">
+<div class="main-content" id="content" pageids="compiler::io.github.aplcornell.viaduct.attributes/Tree///PointingToDeclaration//-971379511">
+  <div class="breadcrumbs"><a href="../../index.html">compiler</a><span class="delimiter">/</span><a href="../index.html">io.github.aplcornell.viaduct.attributes</a><span class="delimiter">/</span><span class="current">Tree</span></div>
+  <div class="cover ">
+    <h1 class="cover"><span><span>Tree</span></span></h1>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":compiler:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">class </span><a href="index.html">Tree</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="index.html">Node</a><span class="token operator"> : </span><a href="../-tree-node/index.html">TreeNode</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="index.html">Node</a><span class="token operator">&gt;</span><span class="token punctuation">, </span><span class="token keyword">out </span><a href="index.html">RootNode</a><span class="token operator"> : </span><a href="index.html">Node</a><span class="token operator">&gt;</span><span class="token punctuation">(</span><span class="parameters "><span class="parameter "><span class="token keyword">val </span>root<span class="token operator">: </span><a href="index.html">RootNode</a></span></span><span class="token punctuation">)</span></div><p class="paragraph">Computes and stores parent/child/sibling relations in a tree structure.</p><p class="paragraph">This class is a simplified version of Kiama's tree relations. Refer to the sections on <a href="https://inkytonik.github.io/kiama/Attribution#tree-relations">Attribute Grammars</a> and <a href="https://inkytonik.github.io/kiama/Relations">Relations</a>. in Kiama's user manual for more information.</p></div></div>
+  </div>
+  <div class="tabbedcontent">
+    <div class="tabs-section" tabs-section="tabs-section"><button class="section-tab" data-active="" data-togglable="Constructors">Constructors</button><button class="section-tab" data-togglable="Functions">Functions</button><button class="section-tab" data-togglable="Properties">Properties</button><button class="section-tab" data-togglable="Parameters">Parameters</button></div>
+    <div class="tabs-section-body">
+      <h4 class="">Parameters</h4>
+      <div data-togglable="Parameters">
+        <div class="platform-hinted WithExtraAttributes" data-platform-hinted="data-platform-hinted" data-togglable="Parameters"><div class="content sourceset-dependent-content" data-active="" data-togglable=":compiler:dokkaHtmlPartial/main"><div data-togglable="Parameters"><div class="table" data-togglable="Parameters"><div class="table-row" data-filterable-current=":compiler:dokkaHtmlPartial/main" data-filterable-set=":compiler:dokkaHtmlPartial/main"><div class="main-subrow keyValue WithExtraAttributes"><div class=""><span class="inline-flex"><div><u><span><span>Node</span></span></u></div></span></div><div><div class="title"><div data-togglable="Parameters"><p class="paragraph">The type of nodes in the tree.</p></div></div></div></div></div><div class="table-row" data-filterable-current=":compiler:dokkaHtmlPartial/main" data-filterable-set=":compiler:dokkaHtmlPartial/main"><div class="main-subrow keyValue WithExtraAttributes"><div class=""><span class="inline-flex"><div><u><span>Root</span><wbr><span><span>Node</span></span></u></div></span></div><div><div class="title"><div data-togglable="Parameters"><p class="paragraph">The type of the root node of the tree.</p></div></div></div></div></div><div class="table-row" data-filterable-current=":compiler:dokkaHtmlPartial/main" data-filterable-set=":compiler:dokkaHtmlPartial/main"><div class="main-subrow keyValue WithExtraAttributes"><div class=""><span class="inline-flex"><div><u><span><span>root</span></span></u></div></span></div><div><div class="title"><div data-togglable="Parameters"><p class="paragraph">The root node of the tree.</p></div></div></div></div></div></div></div></div></div>
+      </div>
+      <h2 class="tabbedcontent">Constructors</h2>
+      <div class="table" data-togglable="Constructors"><a data-name="309509509%2FConstructors%2F-971379511" anchor-label="Tree" id="309509509%2FConstructors%2F-971379511" data-filterable-set=":compiler:dokkaHtmlPartial/main"></a>
+        <div class="table-row" data-filterable-current=":compiler:dokkaHtmlPartial/main" data-filterable-set=":compiler:dokkaHtmlPartial/main">
+          <div class="main-subrow keyValue TabbedContent">
+            <div class=""><span class="inline-flex">
+                <div><a href="-tree.html"><span><span>Tree</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="309509509%2FConstructors%2F-971379511"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":compiler:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><span class="token operator">&lt;</span><span class="token keyword">out </span><a href="index.html">RootNode</a><span class="token operator"> : </span><a href="index.html">Node</a><span class="token operator">&gt; </span><a href="-tree.html"><span class="token function">Tree</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">root<span class="token operator">: </span><a href="index.html">RootNode</a></span></span><span class="token punctuation">)</span></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <h2 class="">Functions</h2>
+      <div class="table" data-togglable="Functions"><a data-name="1056591693%2FFunctions%2F-971379511" anchor-label="childIndex" id="1056591693%2FFunctions%2F-971379511" data-filterable-set=":compiler:dokkaHtmlPartial/main"></a>
+        <div class="table-row" data-filterable-current=":compiler:dokkaHtmlPartial/main" data-filterable-set=":compiler:dokkaHtmlPartial/main">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="child-index.html"><span>child</span><wbr><span><span>Index</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1056591693%2FFunctions%2F-971379511"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":compiler:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="child-index.html"><span class="token function">childIndex</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">node<span class="token operator">: </span><a href="index.html">Node</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html">Int</a></div><div class="brief "><p class="paragraph">Returns the index of <a href="child-index.html">node</a> in its parent's children list.</p></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="668640194%2FFunctions%2F-971379511" anchor-label="nextSibling" id="668640194%2FFunctions%2F-971379511" data-filterable-set=":compiler:dokkaHtmlPartial/main"></a>
+        <div class="table-row" data-filterable-current=":compiler:dokkaHtmlPartial/main" data-filterable-set=":compiler:dokkaHtmlPartial/main">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="next-sibling.html"><span>next</span><wbr><span><span>Sibling</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="668640194%2FFunctions%2F-971379511"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":compiler:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="next-sibling.html"><span class="token function">nextSibling</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">node<span class="token operator">: </span><a href="index.html">Node</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="index.html">Node</a><span class="token operator">?</span></div><div class="brief "><p class="paragraph">Returns the node that occurs just after <a href="next-sibling.html">node</a> in its parent's children list, or <code class="lang-kotlin">null</code> if <a href="next-sibling.html">node</a> is the root or <a href="next-sibling.html">node</a> is its parent's last child.</p></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="988308449%2FFunctions%2F-971379511" anchor-label="parent" id="988308449%2FFunctions%2F-971379511" data-filterable-set=":compiler:dokkaHtmlPartial/main"></a>
+        <div class="table-row" data-filterable-current=":compiler:dokkaHtmlPartial/main" data-filterable-set=":compiler:dokkaHtmlPartial/main">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="parent.html"><span><span>parent</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="988308449%2FFunctions%2F-971379511"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":compiler:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="parent.html"><span class="token function">parent</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">node<span class="token operator">: </span><a href="index.html">Node</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="index.html">Node</a><span class="token operator">?</span></div><div class="brief "><p class="paragraph">Returns the parent of <a href="parent.html">node</a>, or <code class="lang-kotlin">null</code> if <a href="parent.html">node</a> is the root.</p></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="-2111190978%2FFunctions%2F-971379511" anchor-label="previousSibling" id="-2111190978%2FFunctions%2F-971379511" data-filterable-set=":compiler:dokkaHtmlPartial/main"></a>
+        <div class="table-row" data-filterable-current=":compiler:dokkaHtmlPartial/main" data-filterable-set=":compiler:dokkaHtmlPartial/main">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="previous-sibling.html"><span>previous</span><wbr><span><span>Sibling</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-2111190978%2FFunctions%2F-971379511"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":compiler:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="previous-sibling.html"><span class="token function">previousSibling</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">node<span class="token operator">: </span><a href="index.html">Node</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="index.html">Node</a><span class="token operator">?</span></div><div class="brief "><p class="paragraph">Returns the node that occurs just before <a href="previous-sibling.html">node</a> in its parent's children list, or <code class="lang-kotlin">null</code> if <a href="previous-sibling.html">node</a> is the root or <a href="previous-sibling.html">node</a> is its parent's first child.</p></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <h2 class="">Properties</h2>
+      <div class="table" data-togglable="Properties"><a data-name="63624793%2FProperties%2F-971379511" anchor-label="root" id="63624793%2FProperties%2F-971379511" data-filterable-set=":compiler:dokkaHtmlPartial/main"></a>
+        <div class="table-row" data-filterable-current=":compiler:dokkaHtmlPartial/main" data-filterable-set=":compiler:dokkaHtmlPartial/main">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="root.html"><span><span>root</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="63624793%2FProperties%2F-971379511"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted" data-togglable="Properties"><div class="content sourceset-dependent-content" data-active="" data-togglable=":compiler:dokkaHtmlPartial/main"><a data-name="63624793%2FProperties%2F-971379511" anchor-label="root" id="63624793%2FProperties%2F-971379511" data-filterable-set=":compiler:dokkaHtmlPartial/main"></a><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">val </span><a href="root.html">root</a><span class="token operator">: </span><a href="index.html">RootNode</a></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      <div class="footer">
+        <span class="go-to-top-icon"><a href="#content" id="go-to-top-link"></a></span><span>© 2023 Copyright</span><span class="pull-right"><span>Generated by </span><a href="https://github.com/Kotlin/dokka"><span>dokka</span><span class="padded-icon"></span></a></span>
+      </div>
+    </div>
+</div>
+
+</body></html>
+

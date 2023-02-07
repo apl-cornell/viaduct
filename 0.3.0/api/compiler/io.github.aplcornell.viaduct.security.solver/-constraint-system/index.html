@@ -1,0 +1,121 @@
+<!doctype html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1" charset="UTF-8">
+    <title>ConstraintSystem</title>
+<link href="../../../images/logo-icon.svg" rel="icon" type="image/svg"><script>var pathToRoot = "../../../";</script>    <script>const storage = localStorage.getItem("dokka-dark-mode")
+    if (storage == null) {
+        const osDarkSchemePreferred = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+        if (osDarkSchemePreferred === true) {
+            document.getElementsByTagName("html")[0].classList.add("theme-dark")
+        }
+    } else {
+        const savedDarkMode = JSON.parse(storage)
+        if(savedDarkMode === true) {
+            document.getElementsByTagName("html")[0].classList.add("theme-dark")
+        }
+    }
+    </script>
+<script type="text/javascript" src="../../../scripts/sourceset_dependencies.js" async></script>
+<link href="../../../styles/style.css" rel="Stylesheet">
+<link href="../../../styles/jetbrains-mono.css" rel="Stylesheet">
+<link href="../../../styles/main.css" rel="Stylesheet">
+<link href="../../../styles/prism.css" rel="Stylesheet">
+<link href="../../../styles/logo-styles.css" rel="Stylesheet">
+<script type="text/javascript" src="../../../scripts/clipboard.js" async></script>
+<script type="text/javascript" src="../../../scripts/navigation-loader.js" async></script>
+<script type="text/javascript" src="../../../scripts/platform-content-handler.js" async></script>
+<script type="text/javascript" src="../../../scripts/main.js" defer></script>
+<script type="text/javascript" src="../../../scripts/prism.js" async></script>
+<script type="text/javascript" src="../../../scripts/symbol-parameters-wrapper_deferred.js" defer></script></head>
+<body>
+<div class="navigation-wrapper" id="navigation-wrapper">
+    <div id="leftToggler"><span class="icon-toggler"></span></div>
+    <div class="library-name">
+<a href="../../../index.html">
+<span>viaduct</span>            </a>    </div>
+    <div>0.3.0
+    </div>
+    <div class="pull-right d-flex">
+        <button id="theme-toggle-button"><span id="theme-toggle"></span></button>
+        <div id="searchBar"></div>
+    </div>
+</div>
+<div id="container">
+    <div id="leftColumn">
+        <div id="sideMenu"></div>
+    </div>
+    <div id="main">
+<div class="main-content" id="content" pageids="compiler::io.github.aplcornell.viaduct.security.solver/ConstraintSystem///PointingToDeclaration//-971379511">
+  <div class="breadcrumbs"><a href="../../index.html">compiler</a><span class="delimiter">/</span><a href="../index.html">io.github.aplcornell.viaduct.security.solver</a><span class="delimiter">/</span><span class="current">ConstraintSystem</span></div>
+  <div class="cover ">
+    <h1 class="cover"><span>Constraint</span><wbr><span><span>System</span></span></h1>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":compiler:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">class </span><a href="index.html">ConstraintSystem</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="index.html">C</a><span class="token operator"> : </span><a href="../../io.github.aplcornell.viaduct.algebra/-heyting-algebra/index.html">HeytingAlgebra</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="index.html">C</a><span class="token operator">&gt;</span><span class="token punctuation">, </span><span class="token keyword"></span><a href="index.html">V</a><span class="token punctuation">, </span><span class="token keyword"></span><a href="index.html">T</a><span class="token operator"> : </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html">Throwable</a><span class="token operator">&gt;</span><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">constraints<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-iterable/index.html">Iterable</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="../index.html#827213085%2FClasslikes%2F-971379511">Constraint</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="index.html">C</a><span class="token punctuation">, </span><span class="token keyword"></span><a href="index.html">V</a><span class="token punctuation">, </span><span class="token keyword"></span><a href="index.html">T</a><span class="token operator">&gt;</span><span class="token operator">&gt;</span><span class="token punctuation">, </span></span><span class="parameter ">bounds<span class="token operator">: </span><a href="../../io.github.aplcornell.viaduct.algebra/-bounded-lattice/index.html">BoundedLattice</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="index.html">C</a><span class="token operator">&gt;</span><span class="token punctuation">, </span></span><span class="parameter ">delegationContext<span class="token operator">: </span><a href="../../io.github.aplcornell.viaduct.algebra/-lattice-congruence/index.html">LatticeCongruence</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="index.html">C</a><span class="token operator">&gt;</span></span></span><span class="token punctuation">)</span></div><p class="paragraph">Given a set of <a href="../../io.github.aplcornell.viaduct.security/-security-lattice/index.html">SecurityLattice</a> constraints, finds an assignment to all variables that minimizes the trust assigned to each variable (if one exists).</p></div></div>
+  </div>
+  <div class="tabbedcontent">
+    <div class="tabs-section" tabs-section="tabs-section"><button class="section-tab" data-active="" data-togglable="Constructors">Constructors</button><button class="section-tab" data-togglable="Functions">Functions</button><button class="section-tab" data-togglable="Parameters">Parameters</button></div>
+    <div class="tabs-section-body">
+      <h4 class="">Parameters</h4>
+      <div data-togglable="Parameters">
+        <div class="platform-hinted WithExtraAttributes" data-platform-hinted="data-platform-hinted" data-togglable="Parameters"><div class="content sourceset-dependent-content" data-active="" data-togglable=":compiler:dokkaHtmlPartial/main"><div data-togglable="Parameters"><div class="table" data-togglable="Parameters"><div class="table-row" data-filterable-current=":compiler:dokkaHtmlPartial/main" data-filterable-set=":compiler:dokkaHtmlPartial/main"><div class="main-subrow keyValue WithExtraAttributes"><div class=""><span class="inline-flex"><div><u><span><span>T</span></span></u></div></span></div><div><div class="title"><div data-togglable="Parameters"><p class="paragraph">type of exceptions thrown when there are unsatisfiable constraints.</p></div></div></div></div></div></div></div></div></div>
+      </div>
+      <h2 class="tabbedcontent">Constructors</h2>
+      <div class="table" data-togglable="Constructors"><a data-name="-1626870461%2FConstructors%2F-971379511" anchor-label="ConstraintSystem" id="-1626870461%2FConstructors%2F-971379511" data-filterable-set=":compiler:dokkaHtmlPartial/main"></a>
+        <div class="table-row" data-filterable-current=":compiler:dokkaHtmlPartial/main" data-filterable-set=":compiler:dokkaHtmlPartial/main">
+          <div class="main-subrow keyValue TabbedContent">
+            <div class=""><span class="inline-flex">
+                <div><a href="-constraint-system.html"><span>Constraint</span><wbr><span><span>System</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1626870461%2FConstructors%2F-971379511"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":compiler:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><span class="token operator">&lt;</span><span class="token keyword"></span><a href="index.html">C</a><span class="token operator"> : </span><a href="../../io.github.aplcornell.viaduct.algebra/-heyting-algebra/index.html">HeytingAlgebra</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="index.html">C</a><span class="token operator">&gt;</span><span class="token operator">&gt; </span><a href="-constraint-system.html"><span class="token function">ConstraintSystem</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">constraints<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-iterable/index.html">Iterable</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="../index.html#827213085%2FClasslikes%2F-971379511">Constraint</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="index.html">C</a><span class="token punctuation">, </span><span class="token keyword"></span><a href="index.html">V</a><span class="token punctuation">, </span><span class="token keyword"></span><a href="index.html">T</a><span class="token operator">&gt;</span><span class="token operator">&gt;</span><span class="token punctuation">, </span></span><span class="parameter ">bounds<span class="token operator">: </span><a href="../../io.github.aplcornell.viaduct.algebra/-bounded-lattice/index.html">BoundedLattice</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="index.html">C</a><span class="token operator">&gt;</span><span class="token punctuation">, </span></span><span class="parameter ">delegationContext<span class="token operator">: </span><a href="../../io.github.aplcornell.viaduct.algebra/-lattice-congruence/index.html">LatticeCongruence</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="index.html">C</a><span class="token operator">&gt;</span></span></span><span class="token punctuation">)</span></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <h2 class="">Functions</h2>
+      <div class="table" data-togglable="Functions"><a data-name="-955865431%2FFunctions%2F-971379511" anchor-label="exportDotGraph" id="-955865431%2FFunctions%2F-971379511" data-filterable-set=":compiler:dokkaHtmlPartial/main"></a>
+        <div class="table-row" data-filterable-current=":compiler:dokkaHtmlPartial/main" data-filterable-set=":compiler:dokkaHtmlPartial/main">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="export-dot-graph.html"><span>export</span><wbr><span>Dot</span><wbr><span><span>Graph</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-955865431%2FFunctions%2F-971379511"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":compiler:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="export-dot-graph.html"><span class="token function">exportDotGraph</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">writer<span class="token operator">: </span><a href="https://docs.oracle.com/javase/8/docs/api/java/io/Writer.html">Writer</a></span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Outputs the constraint system as a DOT graph to <a href="export-dot-graph.html">writer</a>.</p></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="2023761976%2FFunctions%2F-971379511" anchor-label="solution" id="2023761976%2FFunctions%2F-971379511" data-filterable-set=":compiler:dokkaHtmlPartial/main"></a>
+        <div class="table-row" data-filterable-current=":compiler:dokkaHtmlPartial/main" data-filterable-set=":compiler:dokkaHtmlPartial/main">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="solution.html"><span><span>solution</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="2023761976%2FFunctions%2F-971379511"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":compiler:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="solution.html"><span class="token function">solution</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="../-constraint-solution/index.html">ConstraintSolution</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="index.html">C</a><span class="token punctuation">, </span><span class="token keyword"></span><a href="index.html">V</a><span class="token operator">&gt;</span></div><div class="brief "><p class="paragraph">Returns the least-trust solution to the set of constraints in the system.</p></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      <div class="footer">
+        <span class="go-to-top-icon"><a href="#content" id="go-to-top-link"></a></span><span>© 2023 Copyright</span><span class="pull-right"><span>Generated by </span><a href="https://github.com/Kotlin/dokka"><span>dokka</span><span class="padded-icon"></span></a></span>
+      </div>
+    </div>
+</div>
+
+</body></html>
+

@@ -1,0 +1,447 @@
+<!doctype html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1" charset="UTF-8">
+    <title>NameAnalysis</title>
+<link href="../../../images/logo-icon.svg" rel="icon" type="image/svg"><script>var pathToRoot = "../../../";</script>    <script>const storage = localStorage.getItem("dokka-dark-mode")
+    if (storage == null) {
+        const osDarkSchemePreferred = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+        if (osDarkSchemePreferred === true) {
+            document.getElementsByTagName("html")[0].classList.add("theme-dark")
+        }
+    } else {
+        const savedDarkMode = JSON.parse(storage)
+        if(savedDarkMode === true) {
+            document.getElementsByTagName("html")[0].classList.add("theme-dark")
+        }
+    }
+    </script>
+<script type="text/javascript" src="../../../scripts/sourceset_dependencies.js" async></script>
+<link href="../../../styles/style.css" rel="Stylesheet">
+<link href="../../../styles/jetbrains-mono.css" rel="Stylesheet">
+<link href="../../../styles/main.css" rel="Stylesheet">
+<link href="../../../styles/prism.css" rel="Stylesheet">
+<link href="../../../styles/logo-styles.css" rel="Stylesheet">
+<script type="text/javascript" src="../../../scripts/clipboard.js" async></script>
+<script type="text/javascript" src="../../../scripts/navigation-loader.js" async></script>
+<script type="text/javascript" src="../../../scripts/platform-content-handler.js" async></script>
+<script type="text/javascript" src="../../../scripts/main.js" defer></script>
+<script type="text/javascript" src="../../../scripts/prism.js" async></script>
+<script type="text/javascript" src="../../../scripts/symbol-parameters-wrapper_deferred.js" defer></script></head>
+<body>
+<div class="navigation-wrapper" id="navigation-wrapper">
+    <div id="leftToggler"><span class="icon-toggler"></span></div>
+    <div class="library-name">
+<a href="../../../index.html">
+<span>viaduct</span>            </a>    </div>
+    <div>0.3.0
+    </div>
+    <div class="pull-right d-flex">
+        <button id="theme-toggle-button"><span id="theme-toggle"></span></button>
+        <div id="searchBar"></div>
+    </div>
+</div>
+<div id="container">
+    <div id="leftColumn">
+        <div id="sideMenu"></div>
+    </div>
+    <div id="main">
+<div class="main-content" id="content" pageids="compiler::io.github.aplcornell.viaduct.analysis/NameAnalysis///PointingToDeclaration//-971379511">
+  <div class="breadcrumbs"><a href="../../index.html">compiler</a><span class="delimiter">/</span><a href="../index.html">io.github.aplcornell.viaduct.analysis</a><span class="delimiter">/</span><span class="current">NameAnalysis</span></div>
+  <div class="cover ">
+    <h1 class="cover"><span>Name</span><wbr><span><span>Analysis</span></span></h1>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":compiler:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">class </span><a href="index.html">NameAnalysis</a></div><p class="paragraph">Associates each use of a <a href="../../../compiler/io.github.aplcornell.viaduct.syntax/-name/index.html">Name</a> with its declaration, and every <a href="../../../compiler/io.github.aplcornell.viaduct.syntax/-name/index.html">Name</a> declaration with the set of its uses.</p><p class="paragraph">For example, <a href="../../io.github.aplcornell.viaduct.syntax/-temporary/index.html">Temporary</a> variables are associated with <a href="../../io.github.aplcornell.viaduct.syntax.intermediate/-let-node/index.html">LetNode</a>s, <a href="../../io.github.aplcornell.viaduct.syntax/-object-variable/index.html">ObjectVariable</a>s with <a href="../../io.github.aplcornell.viaduct.syntax.intermediate/-declaration-node/index.html">DeclarationNode</a>s, and <a href="../../io.github.aplcornell.viaduct.syntax/-jump-label/index.html">JumpLabel</a>s with <a href="../../io.github.aplcornell.viaduct.syntax.intermediate/-infinite-loop-node/index.html">InfiniteLoopNode</a>s.</p></div></div>
+  </div>
+  <div class="tabbedcontent">
+    <div class="tabs-section" tabs-section="tabs-section"><button class="section-tab" data-active="" data-togglable="Types">Types</button><button class="section-tab" data-togglable="Functions">Functions</button></div>
+    <div class="tabs-section-body">
+      <h2 class="">Types</h2>
+      <div class="table" data-togglable="Types"><a data-name="685289410%2FClasslikes%2F-971379511" anchor-label="Companion" id="685289410%2FClasslikes%2F-971379511" data-filterable-set=":compiler:dokkaHtmlPartial/main"></a>
+        <div class="table-row" data-filterable-current=":compiler:dokkaHtmlPartial/main" data-filterable-set=":compiler:dokkaHtmlPartial/main">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="-companion/index.html"><span><span>Companion</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="685289410%2FClasslikes%2F-971379511"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":compiler:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">object </span><a href="-companion/index.html">Companion</a> : <a href="../-analysis-provider/index.html">AnalysisProvider</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="index.html">NameAnalysis</a><span class="token operator">&gt; </span></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <h2 class="">Functions</h2>
+      <div class="table" data-togglable="Functions"><a data-name="1083107400%2FFunctions%2F-971379511" anchor-label="argumentUses" id="1083107400%2FFunctions%2F-971379511" data-filterable-set=":compiler:dokkaHtmlPartial/main"></a>
+        <div class="table-row" data-filterable-current=":compiler:dokkaHtmlPartial/main" data-filterable-set=":compiler:dokkaHtmlPartial/main">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="argument-uses.html"><span>argument</span><wbr><span><span>Uses</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1083107400%2FFunctions%2F-971379511"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":compiler:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="argument-uses.html"><span class="token function">argumentUses</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">node<span class="token operator">: </span><a href="../../io.github.aplcornell.viaduct.syntax.intermediate/-object-variable-declaration-node/index.html">ObjectVariableDeclarationNode</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-set/index.html">Set</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="../../io.github.aplcornell.viaduct.syntax.intermediate/-function-argument-node/index.html">FunctionArgumentNode</a><span class="token operator">&gt;</span></div><div class="brief "><p class="paragraph">Returns the set of arguments where <a href="argument-uses.html">node</a> is used.</p></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="784609941%2FFunctions%2F-971379511" anchor-label="calls" id="784609941%2FFunctions%2F-971379511" data-filterable-set=":compiler:dokkaHtmlPartial/main"></a>
+        <div class="table-row" data-filterable-current=":compiler:dokkaHtmlPartial/main" data-filterable-set=":compiler:dokkaHtmlPartial/main">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="calls.html"><span><span>calls</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="784609941%2FFunctions%2F-971379511"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":compiler:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="calls.html"><span class="token function">calls</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">function<span class="token operator">: </span><a href="../../io.github.aplcornell.viaduct.syntax.intermediate/-function-declaration-node/index.html">FunctionDeclarationNode</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-set/index.html">Set</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="../../io.github.aplcornell.viaduct.syntax.intermediate/-function-call-node/index.html">FunctionCallNode</a><span class="token operator">&gt;</span></div><div class="brief "><p class="paragraph">Returns the set of calls to the given function declaration.</p></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="1955938675%2FFunctions%2F-971379511" anchor-label="check" id="1955938675%2FFunctions%2F-971379511" data-filterable-set=":compiler:dokkaHtmlPartial/main"></a>
+        <div class="table-row" data-filterable-current=":compiler:dokkaHtmlPartial/main" data-filterable-set=":compiler:dokkaHtmlPartial/main">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="check.html"><span><span>check</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1955938675%2FFunctions%2F-971379511"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":compiler:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="check.html"><span class="token function">check</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Asserts that every referenced <a href="../../../compiler/io.github.aplcornell.viaduct.syntax/-name/index.html">Name</a> has a declaration, and that no <a href="../../../compiler/io.github.aplcornell.viaduct.syntax/-name/index.html">Name</a> is declared multiple times in the same scope.</p></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="-1144935743%2FFunctions%2F-971379511" anchor-label="correspondingBreaks" id="-1144935743%2FFunctions%2F-971379511" data-filterable-set=":compiler:dokkaHtmlPartial/main"></a>
+        <div class="table-row" data-filterable-current=":compiler:dokkaHtmlPartial/main" data-filterable-set=":compiler:dokkaHtmlPartial/main">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="corresponding-breaks.html"><span>corresponding</span><wbr><span><span>Breaks</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1144935743%2FFunctions%2F-971379511"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":compiler:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="corresponding-breaks.html"><span class="token function">correspondingBreaks</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">node<span class="token operator">: </span><a href="../../io.github.aplcornell.viaduct.syntax.intermediate/-infinite-loop-node/index.html">InfiniteLoopNode</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-set/index.html">Set</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="../../io.github.aplcornell.viaduct.syntax.intermediate/-break-node/index.html">BreakNode</a><span class="token operator">&gt;</span></div><div class="brief "><p class="paragraph">Returns the set of <a href="../../io.github.aplcornell.viaduct.syntax.intermediate/-break-node/index.html">BreakNode</a>s that reference <a href="corresponding-breaks.html">node</a>.</p></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="1499431520%2FFunctions%2F-971379511" anchor-label="correspondingLet" id="1499431520%2FFunctions%2F-971379511" data-filterable-set=":compiler:dokkaHtmlPartial/main"></a>
+        <div class="table-row" data-filterable-current=":compiler:dokkaHtmlPartial/main" data-filterable-set=":compiler:dokkaHtmlPartial/main">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="corresponding-let.html"><span>corresponding</span><wbr><span><span>Let</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1499431520%2FFunctions%2F-971379511"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":compiler:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="corresponding-let.html"><span class="token function">correspondingLet</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">query<span class="token operator">: </span><a href="../../io.github.aplcornell.viaduct.syntax.intermediate/-query-node/index.html">QueryNode</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="../../io.github.aplcornell.viaduct.syntax.intermediate/-let-node/index.html">LetNode</a></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="768039702%2FFunctions%2F-971379511" anchor-label="correspondingLoop" id="768039702%2FFunctions%2F-971379511" data-filterable-set=":compiler:dokkaHtmlPartial/main"></a>
+        <div class="table-row" data-filterable-current=":compiler:dokkaHtmlPartial/main" data-filterable-set=":compiler:dokkaHtmlPartial/main">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="corresponding-loop.html"><span>corresponding</span><wbr><span><span>Loop</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="768039702%2FFunctions%2F-971379511"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":compiler:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="corresponding-loop.html"><span class="token function">correspondingLoop</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">node<span class="token operator">: </span><a href="../../io.github.aplcornell.viaduct.syntax.intermediate/-break-node/index.html">BreakNode</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="../../io.github.aplcornell.viaduct.syntax.intermediate/-infinite-loop-node/index.html">InfiniteLoopNode</a></div><div class="brief "><p class="paragraph">Returns the loop that <a href="corresponding-loop.html">node</a> is breaking out of.</p></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="-501048325%2FFunctions%2F-971379511" anchor-label="declaration" id="-501048325%2FFunctions%2F-971379511" data-filterable-set=":compiler:dokkaHtmlPartial/main"></a>
+        <div class="table-row" data-filterable-current=":compiler:dokkaHtmlPartial/main" data-filterable-set=":compiler:dokkaHtmlPartial/main">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="declaration.html"><span><span>declaration</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-501048325%2FFunctions%2F-971379511"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":compiler:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="declaration.html"><span class="token function">declaration</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">node<span class="token operator">: </span><a href="../../io.github.aplcornell.viaduct.syntax.intermediate/-communication-node/index.html">CommunicationNode</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="../../io.github.aplcornell.viaduct.syntax.intermediate/-host-declaration-node/index.html">HostDeclarationNode</a></div><div class="brief "><p class="paragraph">Returns the declaration of the <a href="../../../compiler/io.github.aplcornell.viaduct.syntax/-host/index.html">Host</a> in <a href="declaration.html">node</a>.</p></div><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="declaration.html"><span class="token function">declaration</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">node<span class="token operator">: </span><a href="../../io.github.aplcornell.viaduct.syntax.intermediate/-function-call-node/index.html">FunctionCallNode</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="../../io.github.aplcornell.viaduct.syntax.intermediate/-function-declaration-node/index.html">FunctionDeclarationNode</a></div><div class="brief "><p class="paragraph">Returns the declaration of the function being called in <a href="declaration.html">node</a>.</p></div><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="declaration.html"><span class="token function">declaration</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">node<span class="token operator">: </span><a href="../../io.github.aplcornell.viaduct.syntax.intermediate/-object-reference-argument-node/index.html">ObjectReferenceArgumentNode</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="../../io.github.aplcornell.viaduct.syntax.intermediate/-object-variable-declaration-node/index.html">ObjectVariableDeclarationNode</a></div><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="declaration.html"><span class="token function">declaration</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">node<span class="token operator">: </span><a href="../../io.github.aplcornell.viaduct.syntax.intermediate/-out-parameter-argument-node/index.html">OutParameterArgumentNode</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="../../io.github.aplcornell.viaduct.syntax.intermediate/-parameter-node/index.html">ParameterNode</a></div><div class="brief "><p class="paragraph">Returns the object referenced by the <a href="declaration.html">node</a> function argument.</p></div><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="declaration.html"><span class="token function">declaration</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">node<span class="token operator">: </span><a href="../../io.github.aplcornell.viaduct.syntax.intermediate/-out-parameter-initialization-node/index.html">OutParameterInitializationNode</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="../../io.github.aplcornell.viaduct.syntax.intermediate/-parameter-node/index.html">ParameterNode</a></div><div class="brief "><p class="paragraph">Returns the declaration of the out parameter in <a href="declaration.html">node</a>.</p></div><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="declaration.html"><span class="token function">declaration</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">node<span class="token operator">: </span><a href="../../io.github.aplcornell.viaduct.syntax.intermediate/-query-node/index.html">QueryNode</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="../../io.github.aplcornell.viaduct.syntax.intermediate/-object-variable-declaration-node/index.html">ObjectVariableDeclarationNode</a></div><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="declaration.html"><span class="token function">declaration</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">node<span class="token operator">: </span><a href="../../io.github.aplcornell.viaduct.syntax.intermediate/-update-node/index.html">UpdateNode</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="../../io.github.aplcornell.viaduct.syntax.intermediate/-object-variable-declaration-node/index.html">ObjectVariableDeclarationNode</a></div><div class="brief "><p class="paragraph">Returns the statement that declares the <a href="../../io.github.aplcornell.viaduct.syntax/-object-variable/index.html">ObjectVariable</a> in <a href="declaration.html">node</a>.</p></div><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="declaration.html"><span class="token function">declaration</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">node<span class="token operator">: </span><a href="../../io.github.aplcornell.viaduct.syntax.intermediate/-read-node/index.html">ReadNode</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="../../io.github.aplcornell.viaduct.syntax.intermediate/-let-node/index.html">LetNode</a></div><div class="brief "><p class="paragraph">Returns the statement that defines the <a href="../../io.github.aplcornell.viaduct.syntax/-temporary/index.html">Temporary</a> in <a href="declaration.html">node</a>.</p></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="-1206399712%2FFunctions%2F-971379511" anchor-label="enclosingBlock" id="-1206399712%2FFunctions%2F-971379511" data-filterable-set=":compiler:dokkaHtmlPartial/main"></a>
+        <div class="table-row" data-filterable-current=":compiler:dokkaHtmlPartial/main" data-filterable-set=":compiler:dokkaHtmlPartial/main">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="enclosing-block.html"><span>enclosing</span><wbr><span><span>Block</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1206399712%2FFunctions%2F-971379511"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":compiler:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="enclosing-block.html"><span class="token function">enclosingBlock</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">stmt<span class="token operator">: </span><a href="../../io.github.aplcornell.viaduct.syntax.intermediate/-statement-node/index.html">StatementNode</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="../../io.github.aplcornell.viaduct.syntax.intermediate/-block-node/index.html">BlockNode</a></div><div class="brief "><p class="paragraph">Returns the block that encloses this statement.</p></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="1845345014%2FFunctions%2F-971379511" anchor-label="enclosingFunction" id="1845345014%2FFunctions%2F-971379511" data-filterable-set=":compiler:dokkaHtmlPartial/main"></a>
+        <div class="table-row" data-filterable-current=":compiler:dokkaHtmlPartial/main" data-filterable-set=":compiler:dokkaHtmlPartial/main">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="enclosing-function.html"><span>enclosing</span><wbr><span><span>Function</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1845345014%2FFunctions%2F-971379511"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":compiler:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="enclosing-function.html"><span class="token function">enclosingFunction</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">node<span class="token operator">: </span><a href="../../io.github.aplcornell.viaduct.syntax.intermediate/-node/index.html">Node</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="../../io.github.aplcornell.viaduct.syntax.intermediate/-function-declaration-node/index.html">FunctionDeclarationNode</a></div><div class="brief "><p class="paragraph">Returns the function declaration enclosing <a href="enclosing-function.html">node</a>.</p></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="-167418015%2FFunctions%2F-971379511" anchor-label="enclosingFunctionName" id="-167418015%2FFunctions%2F-971379511" data-filterable-set=":compiler:dokkaHtmlPartial/main"></a>
+        <div class="table-row" data-filterable-current=":compiler:dokkaHtmlPartial/main" data-filterable-set=":compiler:dokkaHtmlPartial/main">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="enclosing-function-name.html"><span>enclosing</span><wbr><span>Function</span><wbr><span><span>Name</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-167418015%2FFunctions%2F-971379511"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":compiler:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="enclosing-function-name.html"><span class="token function">enclosingFunctionName</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">node<span class="token operator">: </span><a href="../../io.github.aplcornell.viaduct.syntax.intermediate/-node/index.html">Node</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="../../io.github.aplcornell.viaduct.syntax/-function-name/index.html">FunctionName</a></div><div class="brief "><p class="paragraph">Returns the function declaration enclosing <a href="enclosing-function-name.html">node</a>.</p></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="1983734651%2FFunctions%2F-971379511" anchor-label="enclosingStatement" id="1983734651%2FFunctions%2F-971379511" data-filterable-set=":compiler:dokkaHtmlPartial/main"></a>
+        <div class="table-row" data-filterable-current=":compiler:dokkaHtmlPartial/main" data-filterable-set=":compiler:dokkaHtmlPartial/main">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="enclosing-statement.html"><span>enclosing</span><wbr><span><span>Statement</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1983734651%2FFunctions%2F-971379511"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":compiler:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="enclosing-statement.html"><span class="token function">enclosingStatement</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">read<span class="token operator">: </span><a href="../../io.github.aplcornell.viaduct.syntax.intermediate/-read-node/index.html">ReadNode</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="../../io.github.aplcornell.viaduct.syntax.intermediate/-statement-node/index.html">StatementNode</a></div><div class="brief "><p class="paragraph">Return the statement enclosing the <a href="enclosing-statement.html">read</a> node.</p></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="1231378095%2FFunctions%2F-971379511" anchor-label="functionCall" id="1231378095%2FFunctions%2F-971379511" data-filterable-set=":compiler:dokkaHtmlPartial/main"></a>
+        <div class="table-row" data-filterable-current=":compiler:dokkaHtmlPartial/main" data-filterable-set=":compiler:dokkaHtmlPartial/main">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="function-call.html"><span>function</span><wbr><span><span>Call</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1231378095%2FFunctions%2F-971379511"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":compiler:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="function-call.html"><span class="token function">functionCall</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">argument<span class="token operator">: </span><a href="../../io.github.aplcornell.viaduct.syntax.intermediate/-function-argument-node/index.html">FunctionArgumentNode</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="../../io.github.aplcornell.viaduct.syntax.intermediate/-function-call-node/index.html">FunctionCallNode</a></div><div class="brief "><p class="paragraph">Returns the function call that contains <a href="function-call.html">argument</a>.</p></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="1266611009%2FFunctions%2F-971379511" anchor-label="functionDeclaration" id="1266611009%2FFunctions%2F-971379511" data-filterable-set=":compiler:dokkaHtmlPartial/main"></a>
+        <div class="table-row" data-filterable-current=":compiler:dokkaHtmlPartial/main" data-filterable-set=":compiler:dokkaHtmlPartial/main">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="function-declaration.html"><span>function</span><wbr><span><span>Declaration</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1266611009%2FFunctions%2F-971379511"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":compiler:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="function-declaration.html"><span class="token function">functionDeclaration</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">parameter<span class="token operator">: </span><a href="../../io.github.aplcornell.viaduct.syntax.intermediate/-parameter-node/index.html">ParameterNode</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="../../io.github.aplcornell.viaduct.syntax.intermediate/-function-declaration-node/index.html">FunctionDeclarationNode</a></div><div class="brief "><p class="paragraph">Returns the function declaration that contains <a href="function-declaration.html">parameter</a>.</p></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="65428570%2FFunctions%2F-971379511" anchor-label="involvedLoops" id="65428570%2FFunctions%2F-971379511" data-filterable-set=":compiler:dokkaHtmlPartial/main"></a>
+        <div class="table-row" data-filterable-current=":compiler:dokkaHtmlPartial/main" data-filterable-set=":compiler:dokkaHtmlPartial/main">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="involved-loops.html"><span>involved</span><wbr><span><span>Loops</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="65428570%2FFunctions%2F-971379511"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":compiler:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="involved-loops.html"><span class="token function">involvedLoops</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">node<span class="token operator">: </span><a href="../../io.github.aplcornell.viaduct.syntax.intermediate/-node/index.html">Node</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html">List</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="../../io.github.aplcornell.viaduct.syntax.intermediate/-infinite-loop-node/index.html">InfiniteLoopNode</a><span class="token operator">&gt;</span></div><div class="brief "><p class="paragraph">Returns the list of <a href="../../io.github.aplcornell.viaduct.syntax.intermediate/-infinite-loop-node/index.html">InfiniteLoopNode</a>s <a href="involved-loops.html">node</a> is contained in.</p></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="1748433880%2FFunctions%2F-971379511" anchor-label="objectType" id="1748433880%2FFunctions%2F-971379511" data-filterable-set=":compiler:dokkaHtmlPartial/main"></a>
+        <div class="table-row" data-filterable-current=":compiler:dokkaHtmlPartial/main" data-filterable-set=":compiler:dokkaHtmlPartial/main">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="object-type.html"><span>object</span><wbr><span><span>Type</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1748433880%2FFunctions%2F-971379511"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":compiler:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="object-type.html"><span class="token function">objectType</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">node<span class="token operator">: </span><a href="../../io.github.aplcornell.viaduct.syntax.intermediate/-object-variable-declaration-node/index.html">ObjectVariableDeclarationNode</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="../../io.github.aplcornell.viaduct.syntax/-object-type-node/index.html">ObjectTypeNode</a></div><div class="brief "><p class="paragraph">Returns the object type declaration for <a href="object-type.html">node</a>.</p></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="645953542%2FFunctions%2F-971379511" anchor-label="parameter" id="645953542%2FFunctions%2F-971379511" data-filterable-set=":compiler:dokkaHtmlPartial/main"></a>
+        <div class="table-row" data-filterable-current=":compiler:dokkaHtmlPartial/main" data-filterable-set=":compiler:dokkaHtmlPartial/main">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="parameter.html"><span><span>parameter</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="645953542%2FFunctions%2F-971379511"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":compiler:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="parameter.html"><span class="token function">parameter</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">node<span class="token operator">: </span><a href="../../io.github.aplcornell.viaduct.syntax.intermediate/-function-argument-node/index.html">FunctionArgumentNode</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="../../io.github.aplcornell.viaduct.syntax.intermediate/-parameter-node/index.html">ParameterNode</a></div><div class="brief "><p class="paragraph">Returns the parameter for which <a href="parameter.html">node</a> is the argument.</p></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="-41889528%2FFunctions%2F-971379511" anchor-label="parameterUsers" id="-41889528%2FFunctions%2F-971379511" data-filterable-set=":compiler:dokkaHtmlPartial/main"></a>
+        <div class="table-row" data-filterable-current=":compiler:dokkaHtmlPartial/main" data-filterable-set=":compiler:dokkaHtmlPartial/main">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="parameter-users.html"><span>parameter</span><wbr><span><span>Users</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-41889528%2FFunctions%2F-971379511"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":compiler:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="parameter-users.html"><span class="token function">parameterUsers</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">parameter<span class="token operator">: </span><a href="../../io.github.aplcornell.viaduct.syntax.intermediate/-parameter-node/index.html">ParameterNode</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-set/index.html">Set</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="../../io.github.aplcornell.viaduct.syntax.intermediate/-function-argument-node/index.html">FunctionArgumentNode</a><span class="token operator">&gt;</span></div><div class="brief "><p class="paragraph">Returns the set of arguments for <a href="../../io.github.aplcornell.viaduct.syntax.intermediate/-parameter-node/index.html">ParameterNode</a>.</p></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="1883186712%2FFunctions%2F-971379511" anchor-label="parameterUses" id="1883186712%2FFunctions%2F-971379511" data-filterable-set=":compiler:dokkaHtmlPartial/main"></a>
+        <div class="table-row" data-filterable-current=":compiler:dokkaHtmlPartial/main" data-filterable-set=":compiler:dokkaHtmlPartial/main">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="parameter-uses.html"><span>parameter</span><wbr><span><span>Uses</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1883186712%2FFunctions%2F-971379511"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":compiler:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="parameter-uses.html"><span class="token function">parameterUses</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">node<span class="token operator">: </span><a href="../../io.github.aplcornell.viaduct.syntax.intermediate/-object-variable-declaration-node/index.html">ObjectVariableDeclarationNode</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-set/index.html">Set</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="../../io.github.aplcornell.viaduct.syntax.intermediate/-parameter-node/index.html">ParameterNode</a><span class="token operator">&gt;</span></div><div class="brief "><p class="paragraph">Returns the set of parameters for which <a href="parameter-uses.html">node</a> is used as an argument.</p></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="709355555%2FFunctions%2F-971379511" anchor-label="queriers" id="709355555%2FFunctions%2F-971379511" data-filterable-set=":compiler:dokkaHtmlPartial/main"></a>
+        <div class="table-row" data-filterable-current=":compiler:dokkaHtmlPartial/main" data-filterable-set=":compiler:dokkaHtmlPartial/main">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="queriers.html"><span><span>queriers</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="709355555%2FFunctions%2F-971379511"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":compiler:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="queriers.html"><span class="token function">queriers</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">node<span class="token operator">: </span><a href="../../io.github.aplcornell.viaduct.syntax.intermediate/-object-variable-declaration-node/index.html">ObjectVariableDeclarationNode</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-set/index.html">Set</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="../../io.github.aplcornell.viaduct.syntax.intermediate/-query-node/index.html">QueryNode</a><span class="token operator">&gt;</span></div><div class="brief "><p class="paragraph">Returns the set of <a href="../../io.github.aplcornell.viaduct.syntax.intermediate/-query-node/index.html">QueryNode</a>s that reference the <a href="../../io.github.aplcornell.viaduct.syntax/-object-variable/index.html">ObjectVariable</a> declared by <a href="queriers.html">node</a>.</p></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="-1553186148%2FFunctions%2F-971379511" anchor-label="reachableFunctions" id="-1553186148%2FFunctions%2F-971379511" data-filterable-set=":compiler:dokkaHtmlPartial/main"></a>
+        <div class="table-row" data-filterable-current=":compiler:dokkaHtmlPartial/main" data-filterable-set=":compiler:dokkaHtmlPartial/main">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="reachable-functions.html"><span>reachable</span><wbr><span><span>Functions</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1553186148%2FFunctions%2F-971379511"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":compiler:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="reachable-functions.html"><span class="token function">reachableFunctions</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">node<span class="token operator">: </span><a href="../../io.github.aplcornell.viaduct.syntax.intermediate/-node/index.html">Node</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="kotlinx.collections.immutable/PersistentSet///PointingToDeclaration/">PersistentSet</span><span class="token operator">&lt;</span><span class="token keyword"></span><a href="../../io.github.aplcornell.viaduct.syntax/-function-name/index.html">FunctionName</a><span class="token operator">&gt;</span></div><div class="brief "><p class="paragraph">Returns the set of functions transitively reachable from a statement node.</p></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="1693551361%2FFunctions%2F-971379511" anchor-label="readers" id="1693551361%2FFunctions%2F-971379511" data-filterable-set=":compiler:dokkaHtmlPartial/main"></a>
+        <div class="table-row" data-filterable-current=":compiler:dokkaHtmlPartial/main" data-filterable-set=":compiler:dokkaHtmlPartial/main">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="readers.html"><span><span>readers</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1693551361%2FFunctions%2F-971379511"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":compiler:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="readers.html"><span class="token function">readers</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">node<span class="token operator">: </span><a href="../../io.github.aplcornell.viaduct.syntax.intermediate/-let-node/index.html">LetNode</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-set/index.html">Set</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="../../io.github.aplcornell.viaduct.syntax.intermediate/-statement-node/index.html">StatementNode</a><span class="token operator">&gt;</span></div><div class="brief "><p class="paragraph">Returns the set of <a href="../../io.github.aplcornell.viaduct.syntax.intermediate/-statement-node/index.html">StatementNode</a>s that read the <a href="../../io.github.aplcornell.viaduct.syntax/-temporary/index.html">Temporary</a> defined by <a href="readers.html">node</a>.</p></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="-833934353%2FFunctions%2F-971379511" anchor-label="reads" id="-833934353%2FFunctions%2F-971379511" data-filterable-set=":compiler:dokkaHtmlPartial/main"></a>
+        <div class="table-row" data-filterable-current=":compiler:dokkaHtmlPartial/main" data-filterable-set=":compiler:dokkaHtmlPartial/main">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="reads.html"><span><span>reads</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-833934353%2FFunctions%2F-971379511"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":compiler:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="reads.html"><span class="token function">reads</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">node<span class="token operator">: </span><a href="../../io.github.aplcornell.viaduct.syntax.intermediate/-node/index.html">Node</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-set/index.html">Set</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="../../io.github.aplcornell.viaduct.syntax.intermediate/-read-node/index.html">ReadNode</a><span class="token operator">&gt;</span></div><div class="brief "><p class="paragraph">Returns all <a href="../../io.github.aplcornell.viaduct.syntax.intermediate/-read-node/index.html">ReadNode</a>s in this node.</p></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="-335962745%2FFunctions%2F-971379511" anchor-label="updaters" id="-335962745%2FFunctions%2F-971379511" data-filterable-set=":compiler:dokkaHtmlPartial/main"></a>
+        <div class="table-row" data-filterable-current=":compiler:dokkaHtmlPartial/main" data-filterable-set=":compiler:dokkaHtmlPartial/main">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="updaters.html"><span><span>updaters</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-335962745%2FFunctions%2F-971379511"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":compiler:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="updaters.html"><span class="token function">updaters</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">node<span class="token operator">: </span><a href="../../io.github.aplcornell.viaduct.syntax.intermediate/-object-variable-declaration-node/index.html">ObjectVariableDeclarationNode</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-set/index.html">Set</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="../../io.github.aplcornell.viaduct.syntax.intermediate/-update-node/index.html">UpdateNode</a><span class="token operator">&gt;</span></div><div class="brief "><p class="paragraph">Returns the set of <a href="../../io.github.aplcornell.viaduct.syntax.intermediate/-update-node/index.html">UpdateNode</a>s that reference the <a href="../../io.github.aplcornell.viaduct.syntax/-object-variable/index.html">ObjectVariable</a> declared by <a href="updaters.html">node</a>.</p></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+<a data-name="-1900560218%2FFunctions%2F-971379511" anchor-label="variables" id="-1900560218%2FFunctions%2F-971379511" data-filterable-set=":compiler:dokkaHtmlPartial/main"></a>
+        <div class="table-row" data-filterable-current=":compiler:dokkaHtmlPartial/main" data-filterable-set=":compiler:dokkaHtmlPartial/main">
+          <div class="main-subrow keyValue ">
+            <div class=""><span class="inline-flex">
+                <div><a href="variables.html"><span><span>variables</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1900560218%2FFunctions%2F-971379511"></span>
+                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                </span></span></div>
+            <div>
+              <div class="title">
+                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":compiler:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="variables.html"><span class="token function">variables</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">node<span class="token operator">: </span><a href="../../io.github.aplcornell.viaduct.syntax.intermediate/-statement-node/index.html">StatementNode</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-set/index.html">Set</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="../../io.github.aplcornell.viaduct.selection/-function-variable/index.html">FunctionVariable</a><span class="token operator">&gt;</span></div><div class="brief "><p class="paragraph">Returns the variables used of a node.</p></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      <div class="footer">
+        <span class="go-to-top-icon"><a href="#content" id="go-to-top-link"></a></span><span>© 2023 Copyright</span><span class="pull-right"><span>Generated by </span><a href="https://github.com/Kotlin/dokka"><span>dokka</span><span class="padded-icon"></span></a></span>
+      </div>
+    </div>
+</div>
+
+</body></html>
+

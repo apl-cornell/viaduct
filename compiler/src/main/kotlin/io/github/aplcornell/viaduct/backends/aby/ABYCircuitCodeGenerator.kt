@@ -100,7 +100,7 @@ class ABYCircuitCodeGenerator(
                     "val %N = %M()",
                     portVarName,
                     MemberName(
-                        "io.github.apl_cornell.viaduct.runtime",
+                        "io.github.aplcornell.viaduct.runtime",
                         "findAvailableTcpPort",
                     ),
                 )

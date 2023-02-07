@@ -7,28 +7,28 @@ import java.io.File
 import java.util.stream.Stream
 import kotlin.streams.asStream
 
-/** Enumerates the paths of source files that use the circuit representation and should successfully compile. */
-class CircuitTestFileProvider(private val subfolder: String = "") : ArgumentsProvider {
-    override fun provideArguments(context: ExtensionContext?): Stream<out Arguments> =
-        testFilesAtPath("circuit/$subfolder").map { Arguments.of(it) }.asStream()
-}
-
 /** Enumerates the paths of source files that should successfully compile. */
-class PositiveTestFileProvider(private val subfolder: String = "") : ArgumentsProvider {
+class PositiveTestFileProvider(private val subfolder: String = "", private val extension: String = "via") :
+    ArgumentsProvider {
     override fun provideArguments(context: ExtensionContext?): Stream<out Arguments> =
-        testFilesAtPath("should-pass/$subfolder").map { Arguments.of(it) }.asStream()
+        testFilesAtPath("should-pass/$subfolder", extension).map { Arguments.of(it) }.asStream()
 }
 
 /** Enumerates the paths of source files that should fail to compile. */
-class NegativeTestFileProvider(private val subfolder: String = "") : ArgumentsProvider {
+class NegativeTestFileProvider(private val subfolder: String = "", private val extension: String = "via") :
+    ArgumentsProvider {
     override fun provideArguments(context: ExtensionContext?): Stream<out Arguments> =
-        testFilesAtPath("should-fail/$subfolder").map { Arguments.of(it) }.asStream()
+        testFilesAtPath("should-fail/$subfolder", extension).map { Arguments.of(it) }.asStream()
 }
 
-private fun testFilesAtPath(path: String): Sequence<File> {
+/** Enumerates the paths of source files that use the circuit representation and should successfully compile. */
+class CircuitTestFileProvider(subfolder: String = "") :
+    ArgumentsProvider by PositiveTestFileProvider(subfolder, "circuit")
+
+private fun testFilesAtPath(path: String, extension: String): Sequence<File> {
     // TODO: sorting will break with subdirectories
     return File("tests").resolve(path).walk()
         .filter { it.isFile }
-        .filter { it.extension == "via" }
+        .filter { it.extension == extension }
         .sorted()
 }

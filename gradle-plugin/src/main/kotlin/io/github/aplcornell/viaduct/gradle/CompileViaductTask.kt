@@ -3,6 +3,7 @@ package io.github.aplcornell.viaduct.gradle
 import io.github.aplcornell.viaduct.backends.Backend
 import io.github.aplcornell.viaduct.errors.CompilationError
 import io.github.aplcornell.viaduct.parsing.SourceFile
+import io.github.aplcornell.viaduct.passes.compileCircuitToKotlin
 import io.github.aplcornell.viaduct.passes.compileToKotlin
 import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
@@ -33,6 +34,9 @@ abstract class CompileViaductTask : DefaultTask() {
     @get:Internal
     abstract val backend: Property<Backend>
 
+    @get:Internal
+    abstract val circuitBackend: Property<Backend>
+
     @Internal
     override fun getGroup(): String =
         LifecycleBasePlugin.BUILD_TASK_NAME
@@ -60,6 +64,7 @@ abstract class CompileViaductTask : DefaultTask() {
                     project.delete(outputFile)
                     project.delete(debugDirectory)
                 }
+
                 else ->
                     try {
                         compileFile(change.file, packageName, outputFile, debugDirectory)
@@ -81,14 +86,22 @@ abstract class CompileViaductTask : DefaultTask() {
 
         project.mkdir(debugDirectory)
         val compiledProgram =
-            SourceFile.from(sourceFile).compileToKotlin(
-                fileName = outputFile.nameWithoutExtension,
-                packageName = packageName,
-                backend = backend.get(),
-                saveInferredLabels = debugDirectory.resolve("InferredLabels.via"),
-                saveEstimatedCost = debugDirectory.resolve("EstimatedCost.via"),
-                saveProtocolAssignment = debugDirectory.resolve("ProtocolAssignment.via"),
-            )
+            if (sourceFile.extension == "circuit") {
+                SourceFile.from(sourceFile).compileCircuitToKotlin(
+                    fileName = outputFile.nameWithoutExtension,
+                    packageName = packageName,
+                    backend = circuitBackend.get(),
+                )
+            } else {
+                SourceFile.from(sourceFile).compileToKotlin(
+                    fileName = outputFile.nameWithoutExtension,
+                    packageName = packageName,
+                    backend = backend.get(),
+                    saveInferredLabels = debugDirectory.resolve("InferredLabels.via"),
+                    saveEstimatedCost = debugDirectory.resolve("EstimatedCost.via"),
+                    saveProtocolAssignment = debugDirectory.resolve("ProtocolAssignment.via"),
+                )
+            }
 
         // Write the output
         project.mkdir(outputFile.parentFile)

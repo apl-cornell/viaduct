@@ -1,5 +1,6 @@
 package io.github.aplcornell.viaduct.gradle
 
+import io.github.aplcornell.viaduct.backends.CircuitCodeGenerationBackend
 import io.github.aplcornell.viaduct.backends.CodeGenerationBackend
 import org.gradle.api.Plugin
 import org.gradle.api.Project
@@ -12,8 +13,6 @@ class ViaductPlugin : Plugin<Project> {
     override fun apply(project: Project) {
         project.extensions.create<ViaductPluginExtension>("viaduct")
 
-        val backends = CodeGenerationBackend
-
         project.extensions.getByType<KotlinProjectExtension>().sourceSets.configureEach {
             val sourceSet = this.name
             val sourceDir = project.layout.projectDirectory.dir("src/$sourceSet/$pluginName")
@@ -23,7 +22,8 @@ class ViaductPlugin : Plugin<Project> {
                     sourceDirectory.set(sourceDir)
                     outputDirectory.set(project.layout.buildDirectory.dir("generated/sources/$pluginName/$sourceSet"))
                     debugOutputDirectory.set(project.layout.buildDirectory.dir("$pluginName/$sourceSet"))
-                    backend.set(backends)
+                    backend.set(CodeGenerationBackend)
+                    circuitBackend.set(CircuitCodeGenerationBackend)
                 }
 
                 kotlin.srcDir(compileTask.map { it.outputDirectory })

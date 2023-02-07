@@ -1,7 +1,7 @@
-host alice: {A}
+host alice
 
 fun main() {
-    val a = Array[int]{A}(1);
+    val a = Array[int]{alice}(1);
     output a[0] to alice;  /* expects 0 */
 
     /* Passing array obj ref as in arg */
@@ -23,24 +23,24 @@ fun main() {
     output e[0] to alice;  /* expects 5 */
 }
 
-fun f0(a: Array[int]) {
+fun f0(a: Array[int]{alice}) {
     a[0] = 1;
 }
 
-fun f1(b: out Array[int]{A}) {
+fun f1(b: out Array[int]{alice}) {
     g(out b);
 }
 
-fun g(c: out Array[int]{A}) {
-    out c = Array[int]{A}(1);
+fun g(c: out Array[int]{alice}) {
+    out c = Array[int]{alice}(1);
 }
 
-fun f2(d: out Array[int]{A}) {
-    out d = Array[int]{A}(1);
+fun f2(d: out Array[int]{alice}) {
+    out d = Array[int]{alice}(1);
     d[0] = 2;
 }
 
-fun f3(e: out Array[int]{A}) {
+fun f3(e: out Array[int]{alice}) {
     g(out e);
     e[0] = 5;
 }

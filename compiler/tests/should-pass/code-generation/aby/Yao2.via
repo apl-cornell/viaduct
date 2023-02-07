@@ -1,6 +1,7 @@
-
-host alice : {A}
-host bob   : {A}
+host alice
+host bob
+assume alice trusts bob
+assume bob trusts alice
 
 fun main() {
     let $aliceLOr@Local(host = alice) = input bool from alice;

@@ -1,15 +1,15 @@
 plugins {
-    kotlin("jvm") version "1.7.10"
+    kotlin("jvm") version "1.8.10"
     id("io.github.apl-cornell.viaduct")
     application
 
     // Style checking
-    id("com.diffplug.spotless") version "6.7.2"
+    id("com.diffplug.spotless") version "6.14.1"
 }
 
 group = "io.github.apl-cornell.viaduct"
 
-val mainPackage = "${(project.group as String).replace('-', '_')}.${project.name}"
+val mainPackage = "${(project.group as String).replace("-", "")}.${project.name}"
 
 java {
     toolchain {
@@ -22,12 +22,12 @@ dependencies {
     implementation("${project.group}:runtime")
 
     // Command-line-argument parsing
-    implementation("com.github.ajalt.clikt:clikt:3.5.0")
+    implementation("com.github.ajalt.clikt:clikt:3.5.1")
 
     // Logging
-    implementation("io.github.microutils:kotlin-logging:2.1.23")
-    implementation("org.apache.logging.log4j:log4j-core:2.18.0")
-    implementation("org.apache.logging.log4j:log4j-slf4j-impl:2.18.0")
+    implementation("io.github.microutils:kotlin-logging:3.0.5")
+    implementation("org.apache.logging.log4j:log4j-core:2.19.0")
+    implementation("org.apache.logging.log4j:log4j-slf4j2-impl:2.19.0")
 
     // Testing
     testImplementation("${project.group}:test-utilities")
@@ -54,7 +54,7 @@ spotless {
 }
 
 val generateViaductProgramList by tasks.registering(GenerateViaductProgramList::class) {
-    sourceDirectory.set(tasks.compileViaduct.map { it.sourceDirectory }.get())
+    sourceDirectory.set(tasks.compileViaductMain.map { it.sourceDirectory }.get())
     outputPackage.set(mainPackage)
 }
 

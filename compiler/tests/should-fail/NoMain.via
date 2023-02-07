@@ -1,4 +1,4 @@
 /* NoMainError */
 
-host alice : {A}
+host alice
 

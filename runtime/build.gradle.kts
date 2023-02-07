@@ -12,7 +12,7 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
 
     // Networking
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-protobuf:1.3.3")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-protobuf:1.4.1")
 
     // Cryptography
     api("io.github.apl-cornell:aby-java:0.2.2")

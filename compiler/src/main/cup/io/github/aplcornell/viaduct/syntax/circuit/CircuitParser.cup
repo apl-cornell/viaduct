@@ -1,0 +1,734 @@
+import io.github.aplcornell.viaduct.errors.NoMainError;
+import io.github.aplcornell.viaduct.errors.ParsingError;
+import io.github.aplcornell.viaduct.security.*;
+import io.github.aplcornell.viaduct.syntax.*;
+import io.github.aplcornell.viaduct.syntax.operators.*;
+import io.github.aplcornell.viaduct.syntax.types.*;
+import io.github.aplcornell.viaduct.syntax.values.*;
+import io.github.aplcornell.viaduct.parsing.*;
+
+import java.util.List;
+import java.util.LinkedList;
+import java.util.Map;
+import kotlin.collections.CollectionsKt;
+import kotlin.Pair;
+
+import java_cup.runtime.ComplexSymbolFactory;
+import java_cup.runtime.ComplexSymbolFactory.Location;
+import java_cup.runtime.Symbol;
+
+
+action code {:
+    /** Constructs a binary expression node. Source location is inferred from the arguments. */
+    private OperatorApplicationNode binaryExpression(BinaryOperator op, ExpressionNode lhs, ExpressionNode rhs) {
+        Arguments arguments = Arguments.from(lhs, rhs);
+        SourceRange sourceLocation = lhs.getSourceLocation().merge(rhs.getSourceLocation());
+        SourceRange opLocation = new SourceRange(lhs.getSourceLocation().getEnd(), rhs.getSourceLocation().getStart());
+        return new OperatorApplicationNode(new OperatorNode(op, opLocation), arguments, sourceLocation);
+    }
+:}
+
+parser code {:
+    Map<ProtocolName, ProtocolParser<Protocol>> protocolParsers;
+
+    /** Generates source location information for a node given left and right character offsets. */
+    private SourceRange location(int left, int right) {
+        return ((CircuitLexer) getScanner()).location(left, right);
+    }
+
+    @Override
+    public void report_error(String message, Object info) {
+        report_fatal_error(message, info);
+    }
+
+    @Override
+    public void report_fatal_error(String message, Object info) {
+        done_parsing();
+
+        final Symbol infoSymbol = (Symbol) info;
+        final SourceRange errorLocation = location(infoSymbol.left, infoSymbol.right);
+        final String actualToken = symbl_name_from_id(infoSymbol.sym);
+        final List<String> expectedTokens = new LinkedList<>();
+        for (Integer id : expected_token_ids()) {
+            expectedTokens.add(symbl_name_from_id(id));
+        }
+        throw new ParsingError(errorLocation, actualToken, expectedTokens);
+    }
+
+
+    // Used to support multiple start symbols.
+    private Symbol current_symbol;
+
+    private void set_current_symbol(int symbol) {
+        final Location location = new Location(0, 0, 0);
+        current_symbol =
+            ((ComplexSymbolFactory) getSymbolFactory())
+                .newSymbol(symbl_name_from_id(symbol), symbol, location, location);
+    }
+
+    /** Parses the input as a program. */
+    public ProgramNode parseProgram() throws Exception {
+        set_current_symbol(sym.PARSE_PROGRAM);
+        return (ProgramNode) parse().value;
+    }
+:}
+
+scan with {:
+    if (current_symbol != null) {
+        final Symbol result = current_symbol;
+        current_symbol = null;
+        return result;
+    }
+    return getScanner().next_token();
+:};
+
+nonterminal ProgramNode program;
+nonterminal List<TopLevelDeclarationNode> declaration_list;
+nonterminal TopLevelDeclarationNode declaration;
+
+nonterminal ReturnNode return;
+nonterminal BlockNode<StatementNode> block;
+nonterminal List<StatementNode> stmt_list;
+nonterminal StatementNode stmt;
+nonterminal CommandNode command;
+nonterminal BlockNode<CircuitStatementNode> circ_block;
+nonterminal List<CircuitStatementNode> circ_stmt_list;
+nonterminal CircuitStatementNode circ_stmt;
+
+nonterminal ExpressionNode expr;
+nonterminal IndexExpressionNode index_expr;
+nonterminal List<IndexExpressionNode> index_expr_list, nonempty_index_expr_list;
+nonterminal ReferenceNode reference;
+nonterminal List<ReferenceNode> reference_list, nonempty_reference_list;
+nonterminal LiteralNode literal;
+nonterminal Located<Variable> variable;
+nonterminal SizeParameterNode size;
+nonterminal List<SizeParameterNode> size_list, nonempty_size_list;
+nonterminal List<ExpressionNode> expr_list, nonempty_expr_list;
+nonterminal Located<ArgumentLabel> argument_label;
+nonterminal IndexParameterNode index_param;
+nonterminal List<IndexParameterNode> index_param_list, nonempty_index_param_list;
+nonterminal Operator operator;
+
+nonterminal Value value;
+nonterminal Located<ValueType> value_type;
+nonterminal ArrayTypeNode array_type;
+
+nonterminal Located<Host> host;
+nonterminal List host_list, nonempty_host_list;
+nonterminal HostSetValue host_set;
+
+nonterminal List parameter_list, nonempty_parameter_list;
+nonterminal ParameterNode parameter;
+
+nonterminal List<VariableBindingNode> var_binding_list, nonempty_var_binding_list;
+nonterminal VariableBindingNode var_binding;
+
+nonterminal Located<Protocol> protocol;
+nonterminal Located<Protocol> protocol_annot;
+nonterminal Located<ProtocolName> protocol_name;
+nonterminal Pair<Located<ArgumentLabel>, Located<Value>> protocol_labelled_argument;
+nonterminal List protocol_argument_list, nonempty_protocol_argument_list;
+nonterminal Value protocol_argument;
+
+terminal String IDENT, CAP_IDENT;
+terminal int INT_LIT;
+terminal TRUE, FALSE;
+
+terminal HOST;
+terminal FUNCTION;
+terminal CIRCUIT;
+terminal RETURN;
+terminal COLON;
+terminal COLONCOLON;
+
+terminal PERIOD;
+
+terminal INPUT, FROM, OUTPUT, TO;
+
+terminal REDUCE;
+
+terminal EQ;
+
+terminal VAL;
+terminal NOT, ANDAND, OROR;
+terminal EQEQ, NEQ, LT, LEQ, GT, GEQ;
+terminal PLUS, MINUS, TIMES, DIVIDE;
+terminal MIN, MAX, MUX;
+
+terminal INT, BOOL, UNIT;
+terminal AND, RARROW, LARROW;
+terminal AT;
+
+terminal OPEN_BRACE, CLOSE_BRACE, SEMICOLON;
+terminal OPEN_SQBRACE, CLOSE_SQBRACE;
+terminal OPEN_PAREN, CLOSE_PAREN, COMMA;
+
+// Used to support multiple start symbols
+nonterminal entry_point;
+terminal Symbol PARSE_PROGRAM;
+
+precedence left ANDAND, OROR, AND;
+precedence nonassoc EQEQ, NEQ, LT, LEQ, GT, GEQ;
+precedence left PLUS, MINUS;
+precedence left TIMES, DIVIDE;
+precedence right NOT, MIN;
+precedence left LARROW, RARROW;
+precedence nonassoc OPEN_PAREN, CLOSE_PAREN;
+
+start with entry_point;
+
+entry_point ::=
+     PARSE_PROGRAM program:s    {: RESULT = s; :}
+  ;
+
+program ::=
+    declaration_list:declarations {:
+      if (declarations.isEmpty()) {
+        /* Empty program */
+        throw new NoMainError(((CircuitLexer) getScanner()).sourceFile.getPath());
+      }
+      RESULT = new ProgramNode(declarations, location(declarationsleft, declarationsright));
+    :}
+  ;
+
+declaration_list ::=
+    declaration_list:declarations declaration:declaration {:
+      declarations.add(declaration);
+      RESULT = declarations;
+    :}
+  | /* empty */ {:
+      RESULT = CollectionsKt.mutableListOf();
+    :}
+  ;
+
+declaration ::=
+    HOST:begin host:host {:
+      RESULT = new HostDeclarationNode(host, location(beginleft, hostright));
+    :}
+  | CIRCUIT:begin FUNCTION LT:sizesopen size_list:sizes GT:sizesclose IDENT:funcname protocol_annot:protocol
+      OPEN_PAREN:paramsbegin parameter_list:inparams CLOSE_PAREN:paramsclose RARROW:arrow parameter_list:outparams circ_block:body {:
+        RESULT = new CircuitDeclarationNode(
+          new Located(new FunctionName(funcname), location(funcnameleft, funcnameright)),
+          protocol,
+          new Arguments(sizes, location(sizesopenleft, sizescloseright)),
+          new Arguments(inparams, location(paramsbeginleft, paramsbeginright)),
+          new Arguments(outparams, location(arrowleft, arrowright)),
+          body,
+          location(beginleft, bodyright)
+        );
+    :}
+  | FUNCTION:begin LT:sizesopen size_list:sizes GT:sizesclose IDENT:funcname
+        OPEN_PAREN:paramsbegin parameter_list:inparams CLOSE_PAREN:paramsclose RARROW:arrow parameter_list:outparams block:body {:
+          RESULT = new FunctionDeclarationNode(
+            new Located(new FunctionName(funcname), location(funcnameleft, funcnameright)),
+            new Arguments(sizes, location(sizesopenleft, sizescloseright)),
+            new Arguments(inparams, location(paramsbeginleft, paramsbeginright)),
+            new Arguments(outparams, location(arrowleft, arrowright)),
+            body,
+            location(beginleft, bodyright)
+          );
+      :}
+  ;
+
+size_list ::=
+    nonempty_size_list:bs {:
+      RESULT = bs;
+    :}
+  | /* empty */ {:
+      RESULT = CollectionsKt.mutableListOf();
+    :}
+  ;
+
+nonempty_size_list ::=
+    nonempty_size_list:bs COMMA size:b {:
+      bs.add(b);
+      RESULT = bs;
+    :}
+  | size:b {:
+      RESULT = CollectionsKt.mutableListOf(b);
+    :}
+  ;
+
+size ::=
+  variable:var {: RESULT = new SizeParameterNode(var, location(varleft, varright)); :};
+
+parameter_list ::=
+    nonempty_parameter_list:params {:
+      RESULT = params;
+    :}
+  | /* empty */ {:
+      RESULT = CollectionsKt.mutableListOf();
+    :}
+  ;
+
+nonempty_parameter_list ::=
+    nonempty_parameter_list:params COMMA parameter:param {:
+      params.add(param);
+      RESULT = params;
+    :}
+  | parameter:param {:
+      RESULT = CollectionsKt.mutableListOf(param);
+    :}
+  ;
+
+parameter ::=
+    variable:name COLON array_type:type {:
+      RESULT = new ParameterNode(
+        name,
+        type,
+        location(nameleft, typeright)
+      );
+    :}
+  ;
+
+return ::=
+  RETURN:begin reference_list:values {:
+      SourceRange valuesLoc = (values.size() == 0) ? location(beginleft, valuesright) : location(valuesleft, valuesright);
+      RESULT = new ReturnNode(
+        new Arguments(values, valuesLoc),
+        location(beginleft, valuesright)
+      );
+    :}
+  ;
+
+var_binding_list ::=
+    nonempty_var_binding_list:var_bindings {:
+      RESULT = var_bindings;
+    :}
+  | /* empty */ {:
+      RESULT = CollectionsKt.mutableListOf();
+    :}
+  ;
+
+nonempty_var_binding_list ::=
+    nonempty_var_binding_list:var_bindings COMMA var_binding:r {:
+      var_bindings.add(r);
+      RESULT = var_bindings;
+    :}
+  | var_binding:r {:
+      RESULT = CollectionsKt.mutableListOf(r);
+    :}
+  ;
+
+var_binding ::=
+    variable:name AT protocol:p {:
+      RESULT = new VariableBindingNode(
+        name,
+        p,
+        location(nameleft, pright)
+      );
+    :}
+  ;
+
+block ::=
+    OPEN_BRACE:begin stmt_list:statements return:ret CLOSE_BRACE:end {:
+      RESULT = new BlockNode(statements, ret, location(beginleft, endright));
+    :}
+  ;
+
+stmt_list ::=
+    stmt_list:slist stmt:s {:
+      slist.add(s);
+      RESULT = slist;
+    :}
+  | /* empty */ {:
+      RESULT = CollectionsKt.mutableListOf();
+    :}
+  ;
+
+stmt ::=
+  VAL:begin var_binding_list:varbindings EQ:e command:rhs {:
+      RESULT = new LetNode(
+          new Arguments(varbindings, location(varbindingsleft, eright)),
+          rhs,
+          location(beginleft, rhsright)
+      );
+  :}
+;
+
+command ::=
+    IDENT:funcname LT:ibegin index_expr_list:inds GT:iend
+    OPEN_PAREN:abegin reference_list:args CLOSE_PAREN:aend {:
+        RESULT = new CircuitCallNode(
+          new Located(new FunctionName(funcname), location(funcnameleft, funcnameright)),
+          new Arguments(inds, location(ibeginleft, iendright)),
+          new Arguments(args, location(abeginleft, aendright)),
+          location(funcnameleft, aendright)
+        );
+      :}
+  | host:sender PERIOD INPUT LT array_type:type GT OPEN_PAREN CLOSE_PAREN:end {:
+        RESULT = new InputNode(type, sender, location(senderleft, endright));
+    :}
+  | host:recipient PERIOD OUTPUT LT array_type:type GT OPEN_PAREN reference:message CLOSE_PAREN:end {:
+      RESULT = new OutputNode(type, message, recipient, location(recipientleft, endright));
+  :}
+;
+
+circ_block ::=
+    OPEN_BRACE:begin circ_stmt_list:statements return:ret CLOSE_BRACE:end {:
+      RESULT = new BlockNode(statements, ret, location(beginleft, endright));
+    :}
+  ;
+
+circ_stmt_list ::=
+    circ_stmt_list:slist circ_stmt:s {:
+      slist.add(s);
+      RESULT = slist;
+    :}
+  | /* empty */ {:
+      RESULT = CollectionsKt.mutableListOf();
+    :}
+  ;
+
+circ_stmt ::=
+  /* let binding */
+  VAL:begin variable:var OPEN_SQBRACE:open index_param_list:indices CLOSE_SQBRACE:close COLON array_type:type EQ expr:e {:
+      RESULT = new CircuitLetNode(
+        var,
+        new Arguments(indices, location(openleft, closeright)),
+        type,
+        e,
+        location(beginleft, eright)
+      );
+    :}
+  ;
+
+variable ::=
+    IDENT:id  {:
+      RESULT = new Located(new Variable(id), location(idleft, idright));
+    :}
+  ;
+
+index_param_list ::=
+    nonempty_index_param_list:plist {: RESULT = plist; :}
+  | /* empty */ {:
+      RESULT = CollectionsKt.mutableListOf();
+    :}
+  ;
+
+nonempty_index_param_list ::=
+    nonempty_index_param_list:elist COMMA index_param:e {:
+      elist.add(e);
+      RESULT = elist;
+    :}
+  | index_param:e {:
+      RESULT = CollectionsKt.mutableListOf(e);
+    :}
+  ;
+
+index_param ::=
+    variable:var LT index_expr:bound {:
+      RESULT = new IndexParameterNode(var, bound, location(varleft, boundright));
+    :}
+  ;
+
+array_type ::=
+    value_type:elementtype OPEN_SQBRACE:open index_expr_list:shape CLOSE_SQBRACE:close {:
+      RESULT = new ArrayTypeNode(
+        elementtype,
+        new Arguments(shape, location(openleft, closeright)),
+        location(elementtypeleft, closeright)
+      );
+    :}
+  ;
+
+value_type ::=
+    INT:type {:
+      RESULT = new Located(IntegerType.INSTANCE, location(typeleft, typeright));
+    :}
+  | BOOL:type {:
+      RESULT = new Located(BooleanType.INSTANCE, location(typeleft, typeright));
+    :}
+  | UNIT:type {:
+      RESULT = new Located(UnitType.INSTANCE, location(typeleft, typeright));
+    :}
+  ;
+
+index_expr_list ::=
+      nonempty_index_expr_list:elist {: RESULT = elist; :}
+    | /* empty */ {:
+      RESULT = CollectionsKt.mutableListOf();
+    :}
+  ;
+
+nonempty_index_expr_list ::=
+  nonempty_index_expr_list:elist COMMA index_expr:e {:
+    elist.add(e);
+    RESULT = elist;
+  :}
+  | index_expr:e {:
+       RESULT = CollectionsKt.mutableListOf(e);
+     :}
+   ;
+
+reference_list ::=
+      nonempty_reference_list:rlist {: RESULT = rlist; :}
+    | /* empty */ {:
+      RESULT = CollectionsKt.mutableListOf();
+    :}
+  ;
+
+nonempty_reference_list ::=
+  nonempty_reference_list:rlist COMMA reference:r {:
+    rlist.add(r);
+    RESULT = rlist;
+  :}
+  | reference:r {:
+       RESULT = CollectionsKt.mutableListOf(r);
+     :}
+   ;
+
+index_expr ::=
+    literal:lit   {: RESULT = lit; :}
+  | reference:var {: RESULT = var; :};
+
+literal ::=
+    value:value {:
+      RESULT = new LiteralNode(value, location(valueleft, valueright));
+    :}
+  ;
+
+reference ::= variable:var {: RESULT = new ReferenceNode(var, location(varleft, varright)); :};
+
+expr ::=
+    index_expr:exp {: RESULT = exp; :}
+  | OPEN_PAREN expr:e CLOSE_PAREN {:
+      RESULT = e;
+  :}
+  /* variable/array lookup */
+  | variable:var OPEN_SQBRACE:open index_expr_list:indices CLOSE_SQBRACE:close {:
+      RESULT = new LookupNode(
+        var,
+        new Arguments(indices, location(openleft, closeright)),
+        location(varleft, closeright)
+      );
+  :}
+  | REDUCE:begin OPEN_PAREN COLONCOLON operator:op COMMA expr:defaultvalue CLOSE_PAREN OPEN_BRACE:bodybegin
+   index_param:params RARROW:arrow expr:expression CLOSE_BRACE:bodyend {:
+      RESULT = new ReduceNode(
+        new OperatorNode(op, location(opleft, opright)),
+        defaultvalue,
+        params,
+        expression,
+        location(beginleft, bodyendright)
+      );
+   :}
+  | NOT:begin expr:e {:
+      RESULT = new OperatorApplicationNode(
+        new OperatorNode(Not.INSTANCE, location(beginleft, beginright)),
+        Arguments.from(e),
+        location(beginleft, eright));
+    :}
+  | MINUS:begin expr:e {:
+      RESULT = new OperatorApplicationNode(
+        new OperatorNode(Negation.INSTANCE, location(beginleft, beginright)),
+        Arguments.from(e),
+        location(beginleft, eright));
+    :}
+  | expr:e1 ANDAND expr:e2 {:
+      RESULT = binaryExpression(And.INSTANCE, e1, e2);
+    :}
+  | expr:e1 OROR expr:e2 {:
+      RESULT = binaryExpression(Or.INSTANCE, e1, e2);
+    :}
+  | expr:e1 AND expr:e2 {:
+      RESULT = binaryExpression(ExclusiveOr.INSTANCE, e1, e2);
+    :}
+  | expr:e1 EQEQ expr:e2 {:
+      RESULT = binaryExpression(EqualTo.INSTANCE, e1, e2);
+    :}
+  | expr:e1 NEQ expr:e2 {:
+      RESULT = binaryExpression(ExclusiveOr.INSTANCE, e1, e2);
+    :}
+  | expr:e1 LT expr:e2 {:
+      RESULT = binaryExpression(LessThan.INSTANCE, e1, e2);
+    :}
+  | expr:e1 LEQ expr:e2 {:
+      RESULT = binaryExpression(LessThanOrEqualTo.INSTANCE, e1, e2);
+    :}
+  | expr:e1 GT expr:e2 {:
+      RESULT = binaryExpression(GreaterThan.INSTANCE, e1, e2);
+    :}
+  | expr:e1 GEQ expr:e2 {:
+      RESULT = binaryExpression(GreaterThanOrEqualTo.INSTANCE, e1, e2);
+    :}
+  | expr:e1 PLUS expr:e2 {:
+      RESULT = binaryExpression(Addition.INSTANCE, e1, e2);
+    :}
+  | expr:e1 MINUS expr:e2 {:
+      RESULT = binaryExpression(Subtraction.INSTANCE, e1, e2);
+    :}
+  | expr:e1 TIMES expr:e2 {:
+      RESULT = binaryExpression(Multiplication.INSTANCE, e1, e2);
+    :}
+  | expr:e1 DIVIDE expr:e2 {:
+      RESULT = binaryExpression(Division.INSTANCE, e1, e2);
+    :}
+  | MIN:begin OPEN_PAREN expr:e1 COMMA expr:e2 CLOSE_PAREN:end {:
+      RESULT = binaryExpression(Minimum.INSTANCE, e1, e2);
+    :}
+  | MAX:begin OPEN_PAREN expr:e1 COMMA expr:e2 CLOSE_PAREN:end {:
+      RESULT = binaryExpression(Maximum.INSTANCE, e1, e2);
+    :}
+  | MUX:begin OPEN_PAREN expr:e1 COMMA expr:e2 COMMA expr:e3 CLOSE_PAREN:end {:
+      Arguments arguments = Arguments.from(e1, e2, e3);
+      RESULT = new OperatorApplicationNode(
+        new OperatorNode(Mux.INSTANCE, location(beginleft, beginright)),
+        arguments,
+        location(beginleft, endright)
+      );
+    :}
+  ;
+
+operator ::=
+    NOT {: RESULT = Not.INSTANCE; :}
+  | ANDAND {: RESULT = And.INSTANCE; :}
+  | OROR {: RESULT = Or.INSTANCE; :}
+  | AND {: RESULT = ExclusiveOr.INSTANCE; :}
+  | EQEQ {: RESULT = EqualTo.INSTANCE; :}
+  | NEQ {: RESULT = ExclusiveOr.INSTANCE; :}
+  | LT {: RESULT = LessThan.INSTANCE; :}
+  | LEQ {: RESULT = LessThanOrEqualTo.INSTANCE; :}
+  | GT {: RESULT = GreaterThan.INSTANCE; :}
+  | GEQ {: RESULT = GreaterThanOrEqualTo.INSTANCE; :}
+  | PLUS {: RESULT = Addition.INSTANCE; :}
+  | MINUS {: RESULT = Subtraction.INSTANCE; :}
+  | TIMES {: RESULT = Multiplication.INSTANCE; :}
+  | DIVIDE {: RESULT = Division.INSTANCE; :}
+  | MIN {: RESULT = Minimum.INSTANCE; :}
+  | MAX {: RESULT = Maximum.INSTANCE; :}
+  | MUX {: RESULT = Mux.INSTANCE; :}
+;
+
+expr_list ::=
+    nonempty_expr_list:elist {:
+      RESULT = elist;
+    :}
+  | /* empty */ {:
+      RESULT = CollectionsKt.listOf();
+    :}
+  ;
+
+nonempty_expr_list ::=
+    nonempty_expr_list:elist COMMA expr:e {:
+      elist.add(e);
+      RESULT = elist;
+    :}
+  | expr:e {:
+      RESULT = CollectionsKt.mutableListOf(e);
+    :}
+  ;
+
+value ::=
+    TRUE {:
+      RESULT = new BooleanValue(true);
+    :}
+  | FALSE {:
+      RESULT = new BooleanValue(false);
+    :}
+  | INT_LIT:literal {:
+      RESULT = new IntegerValue(literal);
+    :}
+  | UNIT {:
+      RESULT = UnitValue.INSTANCE;
+    :}
+  ;
+
+host ::=
+    IDENT:id {:
+      RESULT = new Located(new Host(id), location(idleft, idright));
+    :}
+  ;
+
+host_list ::=
+    nonempty_host_list:hosts {:
+      RESULT = hosts;
+    :}
+  | /* empty */ {:
+      RESULT = CollectionsKt.mutableListOf();
+    :}
+  ;
+
+nonempty_host_list ::=
+    nonempty_host_list:hosts COMMA host:host {:
+      hosts.add(host);
+      RESULT = hosts;
+    :}
+  | host:host {:
+      RESULT = CollectionsKt.mutableListOf(host);
+    :}
+  ;
+
+host_set ::=
+    OPEN_BRACE host_list:hosts CLOSE_BRACE {:
+      RESULT = HostSetValue.invoke(hosts);
+    :}
+  ;
+
+protocol_annot ::=
+    AT protocol:p     {: RESULT = p; :}
+  | /* empty */       {: RESULT = null; :}
+  ;
+
+protocol ::=
+    protocol_name:protocolName OPEN_PAREN:open protocol_argument_list:arguments CLOSE_PAREN:close {:
+      RESULT = new Located(
+        ProtocolParserKt.parseProtocol(
+          protocolParsers,
+          protocolName,
+          NamedArguments.invoke(arguments, location(openleft, closeright))),
+        location(protocolNameleft, closeright));
+    :}
+  ;
+
+protocol_name ::=
+    CAP_IDENT:protocolName {:
+      RESULT = new Located(new ProtocolName(protocolName), location(protocolNameleft, protocolNameright));
+    :}
+  ;
+
+protocol_argument_list ::=
+    nonempty_protocol_argument_list:arguments {:
+      RESULT = arguments;
+    :}
+  | /* empty */ {:
+      RESULT = CollectionsKt.listOf();
+    :}
+  ;
+
+nonempty_protocol_argument_list ::=
+    nonempty_protocol_argument_list:arguments COMMA protocol_labelled_argument:argument {:
+      arguments.add(argument);
+      RESULT = arguments;
+    :}
+  | protocol_labelled_argument:argument {:
+      RESULT = CollectionsKt.mutableListOf(argument);
+    :}
+  ;
+
+protocol_labelled_argument ::=
+    argument_label:label EQ protocol_argument:value {:
+      RESULT = new Pair(
+        label,
+        new Located(value, location(valueleft, valueright))
+      );
+    :}
+  ;
+
+argument_label ::=
+    IDENT:label {:
+      RESULT = new Located(new ArgumentLabel(label), location(labelleft, labelright));
+    :}
+  /* Parse the "host" keyword as a label also. */
+  // TODO: find a more generic solution (lexer states?)
+  | HOST:label {:
+      RESULT = new Located(new ArgumentLabel("host"), location(labelleft, labelright));
+    :}
+  ;
+
+protocol_argument ::=
+    host:host         {: RESULT = new HostValue(host.getValue()); :}
+  | host_set:hostSet  {: RESULT = hostSet; :}
+  | value:value       {: RESULT = value; :}
+  ;

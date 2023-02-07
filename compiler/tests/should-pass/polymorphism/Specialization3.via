@@ -1,0 +1,28 @@
+fun f{X, Y, Z}(a: int{X}, b: int{Y}, c: out int{Z}) where (X <: alice, X ⊔ Y <: Z) : {⊥} {
+  g(a, b, val gab);
+  g(b, a, val gba);
+  out c = gab + gba;
+}
+
+fun g{X, Y}(a: int{X}, b: int{Y}, c: out int{X ⊔ Y}) : {⊥} {
+  h(a, val ha);
+  h(b, val hb);
+  out c = ha + hb;
+}
+
+fun h{X}(a: int{X}, c: out int{X}) : {X} {
+  out c = a + a;
+}
+
+fun main() {
+  val x : int{alice} = input int from alice;
+  val y : int{bob} = input int from bob;
+  f(x, y, val z);
+  output declassify z to {alice} to alice;
+  output declassify z to {bob} to bob;
+}
+
+host alice
+host bob
+assume for <- alice trusts bob
+assume for <- bob trusts alice

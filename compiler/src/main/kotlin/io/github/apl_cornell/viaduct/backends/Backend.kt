@@ -1,5 +1,6 @@
 package io.github.apl_cornell.viaduct.backends
 
+import io.github.apl_cornell.viaduct.circuitcodegeneration.unions
 import io.github.apl_cornell.viaduct.codegeneration.CodeGenerator
 import io.github.apl_cornell.viaduct.codegeneration.CodeGeneratorContext
 import io.github.apl_cornell.viaduct.codegeneration.unions
@@ -13,6 +14,8 @@ import io.github.apl_cornell.viaduct.syntax.Protocol
 import io.github.apl_cornell.viaduct.syntax.ProtocolName
 import io.github.apl_cornell.viaduct.syntax.intermediate.ProgramNode
 import io.github.apl_cornell.viaduct.util.unions
+import io.github.apl_cornell.viaduct.circuitcodegeneration.CodeGenerator as CircuitCodeGenerator
+import io.github.apl_cornell.viaduct.circuitcodegeneration.CodeGeneratorContext as CircuitCodeGeneratorContext
 
 /** A compiler extension that adds support for a cryptographic backend. */
 interface Backend {
@@ -26,6 +29,8 @@ interface Backend {
     val protocolComposer: ProtocolComposer
 
     fun codeGenerator(context: CodeGeneratorContext): CodeGenerator
+
+    fun circuitCodeGenerator(context: CircuitCodeGeneratorContext): CircuitCodeGenerator
 }
 
 /** Combines back ends for different protocols into one that supports all. */
@@ -80,6 +85,9 @@ fun Iterable<Backend>.unions(): Backend {
 
         override fun codeGenerator(context: CodeGeneratorContext): CodeGenerator =
             backends.map { it.protocols to it.codeGenerator(context) }.unions()
+
+        override fun circuitCodeGenerator(context: CircuitCodeGeneratorContext): CircuitCodeGenerator =
+            backends.map { it.protocols to it.circuitCodeGenerator(context) }.unions()
     }
 }
 

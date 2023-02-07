@@ -1,4 +1,4 @@
-package io.github.apl_cornell.viaduct.circuitbackends.aby
+package io.github.apl_cornell.viaduct.backends.aby
 
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.INT
@@ -13,9 +13,9 @@ import io.github.apl_cornell.aby.Aby
 import io.github.apl_cornell.aby.Role
 import io.github.apl_cornell.aby.Share
 import io.github.apl_cornell.aby.SharingType
+import io.github.apl_cornell.viaduct.backends.cleartext.Local
+import io.github.apl_cornell.viaduct.backends.cleartext.Replication
 import io.github.apl_cornell.viaduct.circuitanalysis.NameAnalysis
-import io.github.apl_cornell.viaduct.circuitbackends.cleartext.Local
-import io.github.apl_cornell.viaduct.circuitbackends.cleartext.Replication
 import io.github.apl_cornell.viaduct.circuitcodegeneration.AbstractCodeGenerator
 import io.github.apl_cornell.viaduct.circuitcodegeneration.Argument
 import io.github.apl_cornell.viaduct.circuitcodegeneration.CodeGeneratorContext
@@ -53,11 +53,11 @@ import io.github.apl_cornell.viaduct.syntax.values.IntegerValue
 import io.github.apl_cornell.viaduct.syntax.values.Value
 import java.math.BigInteger
 
-private data class ABYPair(val server: Host, val client: Host)
-
-class ABYCodeGenerator(
+class ABYCircuitCodeGenerator(
     context: CodeGeneratorContext
 ) : AbstractCodeGenerator(context) {
+    private data class ABYPair(val server: Host, val client: Host)
+
     private val nameAnalysis: NameAnalysis = NameAnalysis.get(context.program)
     private var protocolToABYPartyMap: MutableMap<ABYPair, String> = mutableMapOf()
 
@@ -122,6 +122,7 @@ class ABYCodeGenerator(
                 abyPartyBuilder.addStatement("%L", abyParty(protocol, role, portVarName))
                 abyPartyBuilder.endControlFlow()
             }
+
             else -> throw IllegalArgumentException("Unknown ABY Role: $role.")
         }
         return abyPartyBuilder.build()
@@ -183,6 +184,7 @@ class ABYCodeGenerator(
                             protocolToAbyPartyCircuit(sourceProtocol, SharingType.S_YAO),
                             kotlinName
                         )
+
                     is ArithABY -> CodeBlock.of("")
                 }
             }
@@ -220,6 +222,7 @@ class ABYCodeGenerator(
                     value.value,
                     BIT_LENGTH
                 )
+
             is IntegerValue ->
                 CodeBlock.of(
                     "%L.putCONSGate(%L.toBigInteger(), %L)",
@@ -227,6 +230,7 @@ class ABYCodeGenerator(
                     value.value,
                     BIT_LENGTH
                 )
+
             else -> throw java.lang.IllegalArgumentException("Unknown value type: $value.")
         }
 
@@ -414,6 +418,7 @@ class ABYCodeGenerator(
                     args.first(),
 
                 )
+
             else -> throw UnsupportedOperationException("Unknown operator $op.")
         }
 
@@ -475,6 +480,7 @@ class ABYCodeGenerator(
                         )
                     }
                 }
+
                 argument.protocol is Replication && argument.protocol.hosts == protocol.hosts -> {
                     builder.addStatement(
                         "val %L = %L.putCONSGate(%L.toBigInteger(), %L)",
@@ -487,6 +493,7 @@ class ABYCodeGenerator(
                         BIT_LENGTH
                     )
                 }
+
                 else -> throw UnsupportedCommunicationException(argument.protocol, protocol, argument.sourceLocation)
             }
             CodeBlock.of("%N", inputName)

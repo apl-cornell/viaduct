@@ -1,8 +1,7 @@
 package io.github.apl_cornell.viaduct.syntax.circuit
 
 import io.github.apl_cornell.viaduct.CircuitTestFileProvider
-import io.github.apl_cornell.viaduct.circuitbackends.CodeGenerationBackend
-import io.github.apl_cornell.viaduct.circuitbackends.DefaultCombinedBackend
+import io.github.apl_cornell.viaduct.backends.CircuitCodeGenerationBackend
 import io.github.apl_cornell.viaduct.circuitcodegeneration.compileToKotlin
 import io.github.apl_cornell.viaduct.parsing.SourceFile
 import org.junit.jupiter.params.ParameterizedTest
@@ -13,13 +12,13 @@ internal class CircuitTest {
     @ParameterizedTest
     @ArgumentsSource(CircuitTestFileProvider::class)
     fun `Circuit parses`(file: File) {
-        SourceFile.from(file).parse(DefaultCombinedBackend.protocolParsers)
+        SourceFile.from(file).parse(CircuitCodeGenerationBackend.protocolParsers)
     }
 
     @ParameterizedTest
     @ArgumentsSource(CircuitTestFileProvider::class)
-    fun `Circuit prettyprints`(file: File) {
-        val program = SourceFile.from(file).parse(DefaultCombinedBackend.protocolParsers)
+    fun `Circuit pretty prints`(file: File) {
+        val program = SourceFile.from(file).parse(CircuitCodeGenerationBackend.protocolParsers)
         println(program.toDocument().print())
     }
 
@@ -27,10 +26,10 @@ internal class CircuitTest {
     @ArgumentsSource(CircuitTestFileProvider::class)
     fun `Circuit generates`(file: File) {
         print(
-            SourceFile.from(file).parse(DefaultCombinedBackend.protocolParsers).compileToKotlin(
+            SourceFile.from(file).parse(CircuitCodeGenerationBackend.protocolParsers).compileToKotlin(
                 file.nameWithoutExtension,
                 packageName = ".",
-                CodeGenerationBackend::codeGenerator,
+                CircuitCodeGenerationBackend::circuitCodeGenerator
             )
         )
     }

@@ -10,6 +10,8 @@ import io.github.apl_cornell.viaduct.selection.unions
 import io.github.apl_cornell.viaduct.syntax.Protocol
 import io.github.apl_cornell.viaduct.syntax.ProtocolName
 import io.github.apl_cornell.viaduct.syntax.intermediate.ProgramNode
+import io.github.apl_cornell.viaduct.circuitcodegeneration.CodeGenerator as CircuitCodeGenerator
+import io.github.apl_cornell.viaduct.circuitcodegeneration.CodeGeneratorContext as CircuitCodeGeneratorContext
 
 object CleartextBackend : Backend {
     override val protocols: Set<ProtocolName>
@@ -28,4 +30,7 @@ object CleartextBackend : Backend {
         get() = CleartextProtocolComposer
 
     override fun codeGenerator(context: CodeGeneratorContext): CodeGenerator = CleartextCodeGenerator(context)
+
+    override fun circuitCodeGenerator(context: CircuitCodeGeneratorContext): CircuitCodeGenerator =
+        CleartextCircuitCodeGenerator(context)
 }

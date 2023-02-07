@@ -1,4 +1,4 @@
-package io.github.apl_cornell.viaduct.circuitbackends.cleartext
+package io.github.apl_cornell.viaduct.backends.cleartext
 
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.MemberName
@@ -16,7 +16,7 @@ import io.github.apl_cornell.viaduct.syntax.circuit.OperatorNode
 import io.github.apl_cornell.viaduct.syntax.operators.Maximum
 import io.github.apl_cornell.viaduct.syntax.operators.Minimum
 
-class CleartextCodeGenerator(context: CodeGeneratorContext) : AbstractCodeGenerator(context) {
+class CleartextCircuitCodeGenerator(context: CodeGeneratorContext) : AbstractCodeGenerator(context) {
     override fun operatorApplication(protocol: Protocol, op: OperatorNode, arguments: List<CodeBlock>): CodeBlock =
         when (op.operator) {
             Minimum ->
@@ -26,6 +26,7 @@ class CleartextCodeGenerator(context: CodeGeneratorContext) : AbstractCodeGenera
                     arguments[0],
                     arguments[1]
                 )
+
             Maximum ->
                 CodeBlock.of(
                     "%M(%L, %L)",
@@ -33,12 +34,14 @@ class CleartextCodeGenerator(context: CodeGeneratorContext) : AbstractCodeGenera
                     arguments[0],
                     arguments[1]
                 )
+
             is UnaryOperator ->
                 CodeBlock.of(
                     "%L%L",
                     op.operator.toString(),
                     arguments[0]
                 )
+
             is BinaryOperator ->
                 CodeBlock.of(
                     "%L %L %L",
@@ -46,6 +49,7 @@ class CleartextCodeGenerator(context: CodeGeneratorContext) : AbstractCodeGenera
                     op.operator,
                     arguments[1]
                 )
+
             else -> throw UnsupportedOperatorException(protocol, op)
         }
 
@@ -101,11 +105,13 @@ class CleartextCodeGenerator(context: CodeGeneratorContext) : AbstractCodeGenera
                 builder.add(send(target, argument))
                 argument.value
             }
+
             in target.hosts -> {
                 val (receiveCode, value) = receive(target, argument)
                 builder.add(receiveCode)
                 value
             }
+
             else -> throw IllegalStateException()
         }
     }
@@ -121,6 +127,7 @@ class CleartextCodeGenerator(context: CodeGeneratorContext) : AbstractCodeGenera
                 is Cleartext -> {
                     move(arg.protocol, protocol, arg, builder)
                 }
+
                 else -> throw UnsupportedCommunicationException(arg.protocol, protocol, arg.sourceLocation)
             }
         }
@@ -138,6 +145,7 @@ class CleartextCodeGenerator(context: CodeGeneratorContext) : AbstractCodeGenera
                 is Cleartext -> {
                     move(protocol, arg.protocol, arg, builder)
                 }
+
                 else -> throw UnsupportedCommunicationException(protocol, arg.protocol, arg.sourceLocation)
             }
         }

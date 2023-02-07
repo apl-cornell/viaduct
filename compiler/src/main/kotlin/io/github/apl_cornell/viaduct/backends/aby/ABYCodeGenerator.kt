@@ -62,11 +62,11 @@ import io.github.apl_cornell.viaduct.syntax.values.IntegerValue
 import io.github.apl_cornell.viaduct.syntax.values.Value
 import java.math.BigInteger
 
-private data class ABYPair(val server: Host, val client: Host)
-
 class ABYCodeGenerator(
     context: CodeGeneratorContext
 ) : AbstractCodeGenerator(context) {
+    private data class ABYPair(val server: Host, val client: Host)
+
     private val typeAnalysis: TypeAnalysis = TypeAnalysis.get(context.program)
     private val nameAnalysis: NameAnalysis = NameAnalysis.get(context.program)
     private val protocolAnalysis: ProtocolAnalysis = ProtocolAnalysis(context.program, context.protocolComposer)
@@ -133,6 +133,7 @@ class ABYCodeGenerator(
                 abyPartyBuilder.addStatement("%L", abyParty(protocol, role, portVarName))
                 abyPartyBuilder.endControlFlow()
             }
+
             else -> throw IllegalArgumentException("Unknown ABY Role: $role.")
         }
         return abyPartyBuilder.build()
@@ -194,6 +195,7 @@ class ABYCodeGenerator(
                             protocolToAbyPartyCircuit(sourceProtocol, SharingType.S_YAO),
                             kotlinName
                         )
+
                     is ArithABY -> CodeBlock.of("")
                 }
             }
@@ -231,6 +233,7 @@ class ABYCodeGenerator(
                     value.value,
                     BIT_LENGTH
                 )
+
             is IntegerValue ->
                 CodeBlock.of(
                     "%L.putCONSGate(%L.toBigInteger(), %L)",
@@ -238,6 +241,7 @@ class ABYCodeGenerator(
                     value.value,
                     BIT_LENGTH
                 )
+
             else -> throw java.lang.IllegalArgumentException("Unknown value type: $value.")
         }
 
@@ -425,6 +429,7 @@ class ABYCodeGenerator(
                     args.first(),
 
                 )
+
             else -> throw UnsupportedOperationException("Unknown operator $op.")
         }
 
@@ -473,6 +478,7 @@ class ABYCodeGenerator(
                                             context.kotlinName(expr.variable.value)
 
                                         )
+
                                     true ->
                                         CodeBlock.of(
                                             "%N[%L]",
@@ -480,6 +486,7 @@ class ABYCodeGenerator(
                                             cleartextExp(protocol, expr.arguments.first())
                                         )
                                 }
+
                             else -> super.exp(protocol, expr)
                         }
 
@@ -523,6 +530,7 @@ class ABYCodeGenerator(
                                 exp(protocol, stmt.arguments.last())
                             )
                         }
+
                         is Modify -> {
                             CodeBlock.of(
                                 "%N.%N(%N, %N, %L)",
@@ -540,6 +548,7 @@ class ABYCodeGenerator(
                                 )
                             )
                         }
+
                         else -> throw UnsupportedOperatorException(protocol, stmt)
                     }
 
@@ -552,6 +561,7 @@ class ABYCodeGenerator(
                                 exp(protocol, stmt.arguments.last())
                             )
                         }
+
                         is Modify -> {
                             CodeBlock.of(
                                 "%N[%L] = %L",
@@ -571,6 +581,7 @@ class ABYCodeGenerator(
                                 )
                             )
                         }
+
                         else -> throw UnsupportedOperatorException(protocol, stmt)
                     }
                 }
@@ -585,6 +596,7 @@ class ABYCodeGenerator(
                             exp(protocol, stmt.arguments.first())
                         )
                     }
+
                     is Modify -> {
                         CodeBlock.of(
                             "%N = %L",
@@ -599,6 +611,7 @@ class ABYCodeGenerator(
                             )
                         )
                     }
+
                     else -> throw UnsupportedOperatorException(protocol, stmt)
                 }
 
@@ -672,6 +685,7 @@ class ABYCodeGenerator(
                             event.recv.host
                         )
                     )
+
                 is IntegerType ->
                     outBuilder.addStatement(
                         "%L",

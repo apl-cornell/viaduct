@@ -1,8 +1,9 @@
 /* InsecureDataFlowError */
 
 fun main() {
-    val secret: int{(A ∧ B)->} = 42;
-    val public: int{A->} = secret;
+    val secret: int{(alice ∧ bob)->} = 42;
+    val public: int{alice->} = secret;
 }
 
-host alice : {A}
+host alice
+host bob

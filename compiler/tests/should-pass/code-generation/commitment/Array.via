@@ -1,6 +1,9 @@
-host alice : {A}
-host bob   : {A}
-host chuck : {A}
+host alice
+host bob
+host chuck
+assume alice trusts bob
+assume bob trusts chuck
+assume chuck trusts alice
 
 fun main() {
     val x = Array[int]@Commitment(receivers = {bob, chuck}, sender = alice)(10);

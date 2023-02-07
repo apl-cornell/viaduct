@@ -1,15 +1,15 @@
 plugins {
-    kotlin("multiplatform") version "1.7.10" apply false
-    kotlin("plugin.serialization") version "1.7.10" apply false
+    kotlin("multiplatform") version "1.8.10" apply false
+    kotlin("plugin.serialization") version "1.8.10" apply false
 
     // Versioning
     id("com.palantir.git-version") version "0.15.0"
 
     // Documentation
-    id("org.jetbrains.dokka") version "1.7.10"
+    id("org.jetbrains.dokka") version "1.7.20"
 
     // Style checking
-    id("com.diffplug.spotless") version "6.7.2"
+    id("com.diffplug.spotless") version "6.14.1"
 }
 
 // Derive version from Git tags
@@ -23,7 +23,7 @@ allprojects {
 
     version = if (versionFromGit == "unspecified") "0.0.0-SNAPSHOT" else versionFromGit
 
-    ext.set("rootPackage", (group as String).replace('-', '_'))
+    ext.set("rootPackage", (group as String).replace("-", ""))
 
     /** Style */
 
@@ -71,9 +71,9 @@ subprojects {
 
         dependencies {
             // Logging
-            "implementation"("io.github.microutils:kotlin-logging:2.1.23")
-            "testImplementation"("org.apache.logging.log4j:log4j-core:2.18.0")
-            "testImplementation"("org.apache.logging.log4j:log4j-slf4j-impl:2.18.0")
+            "implementation"("io.github.microutils:kotlin-logging:3.0.5")
+            "testImplementation"("org.apache.logging.log4j:log4j-core:2.19.0")
+            "testImplementation"("org.apache.logging.log4j:log4j-slf4j2-impl:2.19.0")
         }
 
         /** Testing */

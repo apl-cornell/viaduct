@@ -1,0 +1,15 @@
+fun f(a: int{alice}, b: int{bob}, c: out int{alice ⊔ bob}) {
+  out c = a + b;
+}
+
+fun main() {
+  val x : int = input int from alice;
+  val y : int = input int from bob;
+  f(x, y, val z);
+}
+
+host alice
+host bob
+host chuck
+assume alice trusts chuck
+assume bob trusts chuck

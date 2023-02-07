@@ -1,18 +1,20 @@
-fun f(x: int{A}) {
+/* monomorphic */
+fun f(x: int{alice}) {
     g(x);
 }
 
-fun g(y: int{A}) {
+/* monomorphic */
+fun g(y: int{alice}) {
     if (false) {
         f(y);
     }
 }
 
 fun main() {
-    val a: int{A} = 0;
+    val a: int{alice} = 0;
     f(a);
     f(a);
 }
 
-host alice: {A}
-host bob: {B}
+host alice
+host bob

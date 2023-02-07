@@ -1,6 +1,6 @@
 buildscript {
     dependencies {
-        classpath("com.github.vbmacher:java-cup:11b-20160615-1")
+        classpath("com.github.vbmacher:java-cup:11b-20160615-2")
     }
 }
 
@@ -8,7 +8,7 @@ plugins {
     kotlin("jvm")
 
     // Lexing & Parsing
-    id("org.xbib.gradle.plugin.jflex") version "1.6.0"
+    id("org.xbib.gradle.plugin.jflex") version "1.7.0"
 }
 
 /** Dependencies */
@@ -26,10 +26,10 @@ dependencies {
     implementation("org.jgrapht:jgrapht-io:1.5.1")
 
     // Unicode support
-    implementation("com.ibm.icu:icu4j:71.1")
+    implementation("com.ibm.icu:icu4j:72.1")
 
     // Parsing
-    implementation("com.github.vbmacher:java-cup-runtime:11b-20160615-1")
+    implementation("com.github.vbmacher:java-cup-runtime:11b-20160615-2")
 
     // Code generation
     api("com.squareup:kotlinpoet:1.12.0") {
@@ -37,7 +37,7 @@ dependencies {
     }
 
     // SMT solving
-    implementation("io.github.tudo-aqua:z3-turnkey:4.8.14")
+    implementation("tools.aqua:z3-turnkey:4.11.2")
 
     // Testing
     testImplementation(project(":test-utilities"))
@@ -47,7 +47,7 @@ dependencies {
 /** Compilation */
 
 jflex {
-    encoding = Charsets.UTF_8.name()
+    encoding.set(Charsets.UTF_8.name())
 }
 
 val compileCup by tasks.registering(CompileCupTask::class)
@@ -66,7 +66,7 @@ tasks.compileKotlin.configure {
 tasks.withType<Test>().configureEach {
     systemProperties(
         "junit.jupiter.execution.parallel.enabled" to "true",
-        "junit.jupiter.execution.parallel.mode.default" to "concurrent"
+        "junit.jupiter.execution.parallel.mode.default" to "concurrent",
     )
 }
 
@@ -127,10 +127,13 @@ abstract class CompileCupTask : DefaultTask() {
 
         project.mkdir(targetDirectory)
         val args: List<String> = cupArguments.get() + listOf(
-            "-destdir", targetDirectory.get().asFile.path,
-            "-package", packageName,
-            "-parser", className,
-            cupFile.path
+            "-destdir",
+            targetDirectory.get().asFile.path,
+            "-package",
+            packageName,
+            "-parser",
+            className,
+            cupFile.path,
         )
         logger.info("java_cup ${args.joinToString(" ")}}")
         java_cup.Main.main(args.toTypedArray())

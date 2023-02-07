@@ -36,7 +36,7 @@ val mkdocsPublish by tasks.registering {
             "--push",
             "--update-aliases",
             "$version",
-            "latest"
+            "latest",
         )
     }
 }
@@ -52,5 +52,6 @@ fun pipenv(vararg arguments: String) {
 /** Runs [command] using `pipenv`. */
 fun pipenvRun(vararg command: String) {
     pipenv("sync")
+    pipenv("clean")
     pipenv("run", *command)
 }

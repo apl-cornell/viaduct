@@ -1,16 +1,16 @@
 fun main() {
   /* Alice provides some input. */
-  val a: int{A} = input int from alice;
+  val a: int{alice} = input int from alice;
 
   /* The input is public, and Bob implicitly trusts it. */
-  val replicated: int{(A & B)<-} = endorse (declassify a to {A<-}) to {(A & B)<-} from {A<-};
+  val replicated: int{(alice & bob)<-} = endorse (declassify a to {alice<-}) to {(alice & bob)<-} from {alice<-};
   /* The cheapest protocol for storing this variable is open replication. */
 
   /* Chuck wants the input; but he only needs Alice's word for it. */
-  output (endorse replicated to {C<-} from {A<-}) to chuck;
+  output (endorse replicated to {chuck<-} from {alice<-}) to chuck;
   /* In the final protocol, Chuck should receive the variable from Alice only. */
 }
 
-host alice : {A}
-host bob   : {B}
-host chuck : {C}
+host alice
+host bob
+host chuck

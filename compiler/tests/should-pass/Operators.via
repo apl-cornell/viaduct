@@ -1,4 +1,4 @@
-fun main() {
+fun main() : {⊥<-} {
     /* Comparison Operators */
     assert 1 == 1;
     assert 1 != 2;
@@ -30,4 +30,5 @@ fun main() {
     assert false || true;
 }
 
-host god : {⊥}
+host god
+assume ⊥ trusts god

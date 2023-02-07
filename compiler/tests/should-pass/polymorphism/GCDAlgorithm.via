@@ -1,0 +1,27 @@
+fun gcd{X, Y, Z}(a: int{X}, b: int{Y}, c: out int{Z}) where (X ⊔ Y <: Z, X <: alice ⊔ bob, Y <: alice ⊔ bob) : {alice ⊔ bob} {
+  if (a > b) {
+    gcd(a-b, b, out c);
+  } else {
+   if (b > a) {
+    gcd(b-a, a, out c);
+   } else {
+    out c = a;
+   }
+  }
+}
+
+fun main() {
+  val x : int{alice} = input int from alice;
+  val y : int{bob} = input int from bob;
+  gcd(x, y, val z);
+  output declassify z to {alice} to alice;
+  output declassify z to {bob} to bob;
+}
+
+host alice
+host bob
+assume for <- alice trusts bob
+assume for <- bob trusts alice
+host chuck
+assume alice trusts chuck
+assume bob trusts chuck

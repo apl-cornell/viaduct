@@ -1,7 +1,11 @@
-host alice : {A}
-host bob   : {A}
-host chuck : {A}
-host dave  : {A}
+host alice
+host bob
+host chuck
+host dave
+assume alice trusts bob
+assume bob trusts chuck
+assume chuck trusts dave
+assume dave trusts alice
 
 fun main() {
     let $aliceLocal@Local(host = alice) = input int from alice;

@@ -1,7 +1,7 @@
 /* TypeMismatchError */
 
-host alice : {A}
-host bob : {B}
+host alice
+host bob
 
 fun main() {
     val x: int@Local(host = {alice, bob}) = 0;

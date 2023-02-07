@@ -1,3 +1,5 @@
 /* IncorrectNumberOfArgumentsError */
 
-fun main(a: int{A}) { }
+fun main(a: int{a}) { }
+
+host a

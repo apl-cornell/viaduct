@@ -1,5 +1,7 @@
-host alice : {A}
-host bob   : {A}
+host alice
+host bob
+assume alice trusts bob
+assume bob trusts alice
 
 fun main() {
     val a : int = input int from alice;
@@ -7,7 +9,7 @@ fun main() {
     f(a, b);
 }
 
-fun f(a: int, b:int) {
+fun f(a: int{alice}, b:int{bob}) {
     val win: bool = a == b;
     output win to alice;
     output win to bob;

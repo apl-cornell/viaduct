@@ -55,3 +55,7 @@ circuit fun <n> findMin@Local(host = alice)(a: int[n]) → res: int[] {
     val result[]: int[] = reduce(::min, 999999){ i < n -> a[i] }
     return result
 }
+
+fun <> main() -> {
+  return
+}

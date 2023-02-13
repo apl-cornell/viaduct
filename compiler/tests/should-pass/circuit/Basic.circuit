@@ -1,18 +1,19 @@
 host alice
 host bob
 
-circuit fun <> basic@YaoABY(client = bob, server = alice)(a: int[], b: int[]) → d: int[], e: int[]{
-    val c[]: int[] = a[] + b[]
+circuit fun <n> basic@YaoABY(client = bob, server = alice)(a: int[n], b: int[]) → d: int[]{
+    val c[]: int[] = a[0] + b[]
     return c
 }
 
 fun <> main() -> {
     val a@Local(host = alice) = alice.input<int[10]>()
-    val b@Local(host = bob) = alice.input<int[]>()
+    val b@Local(host = bob) = bob.input<int[]>()
     val u@Local(host = alice) = alice.output<int[10]>(a)  /* remove type annotation once type-checking complete */
 
     /* val arr[a[]] = input int[a[]] from alice  // bad */
-    val c@Local(host = alice), d@Local(host = alice) = basic<>(a, b)  /* no brackets bc passing entire arr */
+    val c@Local(host = alice) = basic<10>(a, b)  /* no brackets bc passing entire arr */
+    val d@Local(host = alice) = alice.output<int[]>(c)
     return
 }
 

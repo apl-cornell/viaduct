@@ -1,53 +1,56 @@
-host alice  : {A & B<-}
-host bob    : {B & A<-}
+host alice
+host bob
+
+assume for <- alice trusts bob
+assume for <- bob trusts alice
 
 /* k-means clustering */
 fun main() {
-  val a_len: int{A ⊓ B} = 2;
-  val b_len: int{A ⊓ B} = 2;
-  val len: int{A ⊓ B} = a_len + b_len;
-  val dim: int{A ⊓ B} = 1;
-  val num_clusters: int{A ⊓ B} = 2;
-  val num_iterations: int{A ⊓ B} = 1;
+  val a_len: int{alice ⊓ bob} = 2;
+  val b_len: int{alice ⊓ bob} = 2;
+  val len: int{alice ⊓ bob} = a_len + b_len;
+  val dim: int{alice ⊓ bob} = 1;
+  val num_clusters: int{alice ⊓ bob} = 2;
+  val num_iterations: int{alice ⊓ bob} = 1;
 
-  val data = Array[int]{A & B}(len * dim);
+  val data = Array[int]{alice & bob}(len * dim);
 
   /* load data */
-  for (var i: int{A ⊓ B} = 0; i < a_len * dim; i += 1) {
+  for (var i: int{alice ⊓ bob} = 0; i < a_len * dim; i += 1) {
     data[i] = input int from alice;
   }
 
-  for (var i: int{A ⊓ B} = 0; i < b_len * dim; i += 1) {
+  for (var i: int{alice ⊓ bob} = 0; i < b_len * dim; i += 1) {
     data[(a_len*dim) + i] = input int from bob;
   }
 
-  val clusters = Array[int]{A & B}(num_clusters * dim);
+  val clusters = Array[int]{alice & bob}(num_clusters * dim);
 
   /* initialize by randomly picking data points as centroids */
-  val stride: int{A ⊓ B} = len / num_clusters;
-  for (var c: int{A ⊓ B} = 0; c < num_clusters; c += 1) {
-    for (var d: int{A ⊓ B} = 0; d < dim; d += 1) {
+  val stride: int{alice ⊓ bob} = len / num_clusters;
+  for (var c: int{alice ⊓ bob} = 0; c < num_clusters; c += 1) {
+    for (var d: int{alice ⊓ bob} = 0; d < dim; d += 1) {
       clusters[c+d] = data[(stride*c*dim)+d];
     }
   }
 
-  for (var iter: int{A ⊓ B} = 0; iter < num_iterations; iter += 1) {
+  for (var iter: int{alice ⊓ bob} = 0; iter < num_iterations; iter += 1) {
     /* assign points to clusters */
-    val best_clusters = Array[int]{A & B}(len);
+    val best_clusters = Array[int]{alice & bob}(len);
     for (var i: int = 0; i < len; i += 1) {
 
       /* initialize to first cluster */
-      var best_dist: int{A & B} = 0;
-      var best_cluster: int{A & B} = 0;
-      for (var d: int{A ⊓ B}; d < dim; d += 1) {
-        val sub: int{A & B} = data[(i*dim)+d] - clusters[d];
+      var best_dist: int{alice & bob} = 0;
+      var best_cluster: int{alice & bob} = 0;
+      for (var d: int{alice ⊓ bob}; d < dim; d += 1) {
+        val sub: int{alice & bob} = data[(i*dim)+d] - clusters[d];
         best_dist += sub * sub;
       }
 
-      for (var c: int{A ⊓ B} = 1; c < num_clusters; c += 1) {
-        var dist: int{A & B} = 0;
-        for (var d: int{A ⊓ B}; d < dim; d += 1) {
-          val sub: int{A & B} = data[(i*dim)+d] - clusters[(c*dim)+d];
+      for (var c: int{alice ⊓ bob} = 1; c < num_clusters; c += 1) {
+        var dist: int{alice & bob} = 0;
+        for (var d: int{alice ⊓ bob}; d < dim; d += 1) {
+          val sub: int{alice & bob} = data[(i*dim)+d] - clusters[(c*dim)+d];
           dist += sub * sub;
         }
 
@@ -61,12 +64,12 @@ fun main() {
 
     /* update cluster centroids */
     for (var c: int = 1; c < num_clusters; c += 1) {
-      val new_centroid_sum = Array[int]{A & B}(dim);
-      var num_points: int{A & B} = 0;
+      val new_centroid_sum = Array[int]{alice & bob}(dim);
+      var num_points: int{alice & bob} = 0;
       for (var i: int = 0; i < len; i += 1) {
-        val in_cluster: bool{A & B} = best_clusters[i] == c;
+        val in_cluster: bool{alice & bob} = best_clusters[i] == c;
 
-        for (var d: int{A ⊓ B} = 0; d < dim; d += 1) {
+        for (var d: int{alice ⊓ bob} = 0; d < dim; d += 1) {
           new_centroid_sum[d] += mux(in_cluster, data[(i*dim)+d], 0);
         }
 
@@ -75,7 +78,7 @@ fun main() {
         }
       }
 
-      for (var d: int{A ⊓ B} = 0; d < dim; d += 1) {
+      for (var d: int{alice ⊓ bob} = 0; d < dim; d += 1) {
         clusters[(c*dim)+d] =
           mux(num_points > 0, new_centroid_sum[d] / num_points, clusters[(c*dim)+d]);
       }
@@ -83,8 +86,8 @@ fun main() {
   }
 
   /* declassify clusters */
-  for (var h: int{A ⊓ B} = 1; h < num_clusters * dim; h += 1) {
-    val public_cluster: int{A ⊓ B} = declassify clusters[h] to {A ⊓ B};
+  for (var h: int{alice ⊓ bob} = 1; h < num_clusters * dim; h += 1) {
+    val public_cluster: int{alice ⊓ bob} = declassify clusters[h] to {alice ⊓ bob};
     output public_cluster to alice;
     output public_cluster to bob;
   }

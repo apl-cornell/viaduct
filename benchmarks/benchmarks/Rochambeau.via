@@ -1,28 +1,28 @@
-host alice : {A}
-host bob   : {B}
+host alice
+host bob
 
 fun main() {
-  val num_turns: int{A ⊓ B} = 3;
-  var a_score: int{A ⊓ B} = 0;
-  var b_score: int{A ⊓ B} = 0;
-  val a_moves = Array[int]{A & B<-}(num_turns);
-  val b_moves = Array[int]{B & A<-}(num_turns);
+  val num_turns: int{alice ⊓ bob} = 3;
+  var a_score: int{alice ⊓ bob} = 0;
+  var b_score: int{alice ⊓ bob} = 0;
+  val a_moves = Array[int]{alice & bob<-}(num_turns);
+  val b_moves = Array[int]{bob & alice<-}(num_turns);
 
-  for (var i: int{A ⊓ B} = 0; i < num_turns; i += 1) {
-    a_moves[i] = endorse (input int from alice) to {A & B<-} from {A};
-    b_moves[i] = endorse (input int from bob) to {B & A<-} from {B};
+  for (var i: int{alice ⊓ bob} = 0; i < num_turns; i += 1) {
+    a_moves[i] = endorse (input int from alice) to {alice & bob<-} from {alice};
+    b_moves[i] = endorse (input int from bob) to {bob & alice<-} from {bob};
   }
 
-  for (var turn: int{A ⊓ B} = 0; turn < num_turns; turn += 1) {
-    val a_move: int{A & B<-} = a_moves[turn];
-    val b_move: int{B & A<-} = b_moves[turn];
+  for (var turn: int{alice ⊓ bob} = 0; turn < num_turns; turn += 1) {
+    val a_move: int{alice & bob<-} = a_moves[turn];
+    val b_move: int{bob & alice<-} = b_moves[turn];
 
-    val a_move_public: int{A ⊓ B} = declassify a_move to {A ⊓ B};
-    val b_move_public: int{A ⊓ B} = declassify b_move to {A ⊓ B};
+    val a_move_public: int{alice ⊓ bob} = declassify a_move to {alice ⊓ bob};
+    val b_move_public: int{alice ⊓ bob} = declassify b_move to {alice ⊓ bob};
 
     /* 1 = rock; 2 = paper; 3 = scissors; */
-    val a_valid: bool{A ⊓ B} = 1 <= a_move_public && a_move_public <= 3;
-    val b_valid: bool{A ⊓ B} = 1 <= b_move_public && b_move_public <= 3;
+    val a_valid: bool{alice ⊓ bob} = 1 <= a_move_public && a_move_public <= 3;
+    val b_valid: bool{alice ⊓ bob} = 1 <= b_move_public && b_move_public <= 3;
 
     /* alice cheats */
     if (!a_valid && b_valid) {
@@ -54,7 +54,7 @@ fun main() {
     }
   }
 
-  val a_wins: bool{A ⊓ B} = a_score > b_score;
+  val a_wins: bool{alice ⊓ bob} = a_score > b_score;
   output a_wins to alice;
   output a_wins to bob;
 }

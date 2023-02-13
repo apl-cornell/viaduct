@@ -1,6 +1,6 @@
-host alice : {(A & B<-)}
+host alice
 
-host bob : {(B & A<-)}
+host bob
 
 fun match_1(db1: int{(A & B<-)}@Local(host = alice), db2: int{(A & B<-)}@Local(host = alice), s1: int{(B & A<-)}@Local(host = bob), s2: int{(B & A<-)}@Local(host = bob), res: out int{(A & B)}@BoolABY(client = bob, server = alice)) {
     let $tmp@Local(host = alice) = db1;

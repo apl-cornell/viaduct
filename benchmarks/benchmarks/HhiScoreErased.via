@@ -19,11 +19,14 @@ fun main() {
     val a_share: int = (100 * a_rev) / total_market;
     val b_share: int = (100 * b_rev) / total_market;
 
-    val hhi: int = declassify (a_share * a_share + b_share * b_share) to {A ⊓ B};
+    val hhi: int = declassify (a_share * a_share + b_share * b_share) to {companyA ⊓ companyB};
 
     output hhi to companyA;
     output hhi to companyB;
 }
 
-host companyA  : {A & B<-}
-host companyB  : {B & A<-}
+host companyA
+host companyB
+
+assume for <- companyA trusts companyB
+assume for <- companyB trusts companyA

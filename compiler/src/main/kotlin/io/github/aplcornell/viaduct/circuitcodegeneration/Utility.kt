@@ -4,11 +4,13 @@ import com.squareup.kotlinpoet.ARRAY
 import com.squareup.kotlinpoet.BOOLEAN
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.INT
+import com.squareup.kotlinpoet.MemberName
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.STRING
 import com.squareup.kotlinpoet.TypeName
 import com.squareup.kotlinpoet.U_BYTE_ARRAY
 import com.squareup.kotlinpoet.joinToCode
+import io.github.aplcornell.viaduct.group
 import io.github.aplcornell.viaduct.runtime.EquivocationException
 import io.github.aplcornell.viaduct.syntax.Host
 import io.github.aplcornell.viaduct.syntax.circuit.IndexExpressionNode
@@ -23,6 +25,14 @@ import io.github.aplcornell.viaduct.syntax.values.Value
 import kotlin.reflect.KClass
 
 typealias Shape = List<IndexExpressionNode>
+
+/** Top level package name for the runtime module. */
+// TODO: is there a better way of doing this?
+val runtimePackage = "${group.replace("-", "")}.runtime"
+
+/** Returns code for finding an available TCP port. */
+val findAvailableTcpPort: CodeBlock =
+    CodeBlock.of("%M()", MemberName(runtimePackage, "findAvailableTcpPort"))
 
 /** Returns the [KClass] object for values of this type. */
 val ValueType.valueClass: KClass<out Value>

@@ -10,7 +10,6 @@ import com.squareup.kotlinpoet.asClassName
 import com.squareup.kotlinpoet.asTypeName
 import com.squareup.kotlinpoet.joinToCode
 import io.github.apl_cornell.aby.ABYParty
-import io.github.apl_cornell.aby.Aby
 import io.github.apl_cornell.aby.Role
 import io.github.apl_cornell.aby.Share
 import io.github.apl_cornell.aby.SharingType
@@ -21,6 +20,7 @@ import io.github.aplcornell.viaduct.circuitcodegeneration.AbstractCodeGenerator
 import io.github.aplcornell.viaduct.circuitcodegeneration.Argument
 import io.github.aplcornell.viaduct.circuitcodegeneration.CodeGeneratorContext
 import io.github.aplcornell.viaduct.circuitcodegeneration.UnsupportedCommunicationException
+import io.github.aplcornell.viaduct.circuitcodegeneration.findAvailableTcpPort
 import io.github.aplcornell.viaduct.circuitcodegeneration.indexExpression
 import io.github.aplcornell.viaduct.circuitcodegeneration.new
 import io.github.aplcornell.viaduct.syntax.Host
@@ -83,57 +83,35 @@ class ABYCircuitCodeGenerator(
             CodeBlock.of("%L.hostName", context.url(protocol.server))
         }
 
-    private fun abyParty(protocol: ABY, role: Role, port: String): CodeBlock =
+    private fun abyParty(protocol: ABY, role: Role, port: CodeBlock): CodeBlock =
         CodeBlock.of(
-            "ABYParty(%L, %L, %L, %N.%M(), %L)",
+            "ABYParty(%L, %L, %L)",
             roleToCodeBlock(role),
             address(protocol, context.host),
             port,
-            "Aby",
-            MemberName(Aby::class.asClassName(), "getLT"), // TODO make this not hard coded
-            BIT_LENGTH,
         )
 
-    private fun abyPartySetup(protocol: Protocol, role: Role): CodeBlock {
-        val abyPartyBuilder = CodeBlock.builder()
-        val portVarName = context.newTemporary("port")
+    private fun abyPartySetup(protocol: ABY, role: Role): CodeBlock =
         when (role) {
             Role.SERVER -> {
-                abyPartyBuilder.beginControlFlow("run")
-                abyPartyBuilder.addStatement(
-                    "val %N = %M()",
-                    portVarName,
-                    MemberName(
-                        "io.github.aplcornell.viaduct.runtime",
-                        "findAvailableTcpPort",
-                    ),
-                )
-
-                abyPartyBuilder.addStatement(
+                val builder = CodeBlock.builder()
+                val portVar = CodeBlock.of("port")
+                builder.beginControlFlow("%L.let { %L ->", findAvailableTcpPort, portVar)
+                builder.addStatement(
                     "%L",
-                    context.send(CodeBlock.of(portVarName), (protocol as ABY).client),
+                    context.send(portVar, protocol.client),
                 )
-
-                abyPartyBuilder.addStatement("%L", abyParty(protocol, role, portVarName))
-                abyPartyBuilder.endControlFlow()
+                builder.addStatement("%L", abyParty(protocol, role, portVar))
+                builder.endControlFlow()
+                builder.build()
             }
 
             Role.CLIENT -> {
-                abyPartyBuilder.beginControlFlow("run")
-                abyPartyBuilder.addStatement(
-                    "val %N = %L",
-                    portVarName,
-                    context.receive(INT, (protocol as ABY).server),
-                )
-
-                abyPartyBuilder.addStatement("%L", abyParty(protocol, role, portVarName))
-                abyPartyBuilder.endControlFlow()
+                abyParty(protocol, role, context.receive(INT, protocol.server))
             }
 
             else -> throw IllegalArgumentException("Unknown ABY Role: $role.")
         }
-        return abyPartyBuilder.build()
-    }
 
     override fun setup(protocol: Protocol): List<PropertySpec> {
         return if (protocolToABYPartyMap.containsKey(ABYPair((protocol as ABY).server, protocol.client))) {
@@ -451,6 +429,7 @@ class ABYCircuitCodeGenerator(
                     )
                 }
             }
+
             else -> super.exp(protocol, expr)
         }
 

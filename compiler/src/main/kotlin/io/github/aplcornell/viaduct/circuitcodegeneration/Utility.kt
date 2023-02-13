@@ -9,7 +9,6 @@ import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.STRING
 import com.squareup.kotlinpoet.TypeName
 import com.squareup.kotlinpoet.U_BYTE_ARRAY
-import com.squareup.kotlinpoet.joinToCode
 import io.github.aplcornell.viaduct.group
 import io.github.aplcornell.viaduct.runtime.EquivocationException
 import io.github.aplcornell.viaduct.syntax.Host
@@ -64,43 +63,61 @@ fun indexExpression(expression: IndexExpressionNode, context: CodeGeneratorConte
     }
 }
 
+/**
+ * Generates code that constructs a new array with [this] shape.
+ *
+ * @param init returns the value of an element given its indices.
+ */
 fun Shape.new(
-    init: (indices: List<CodeBlock>) -> CodeBlock,
     context: CodeGeneratorContext,
+    init: (indices: List<CodeBlock>) -> CodeBlock,
 ): CodeBlock {
-    val declaration = CodeBlock.builder()
-    val indices: MutableList<CodeBlock> = mutableListOf()
-    for (i in this.indices) {
-        declaration.add("%T(%L){ ", Array::class, indexExpression(this[i], context))
-        indices.add(CodeBlock.of(context.newTemporary("i")))
+    val builder = CodeBlock.builder()
+    val indexVariables: List<CodeBlock> = this.map { size ->
+        val indexVar = CodeBlock.of("%N", context.newTemporary("i"))
+        builder.beginControlFlow(
+            "%T(%L) { %L ->",
+            Array::class,
+            indexExpression(size, context),
+            indexVar,
+        )
+        indexVar
     }
-    declaration.add("%L -> %L", indices.joinToCode(), init(indices))
-    repeat(this.size) { declaration.add(" }") }
-    return declaration.build()
+    // Don't add a newline if we did not create any blocks.
+    if (indexVariables.isEmpty()) {
+        builder.add(init(indexVariables))
+    } else {
+        builder.add("%L\n", init(indexVariables))
+    }
+    repeat(this.size) { builder.endControlFlow() }
+    return builder.build()
 }
 
 /**
- * Generates code to do [action] for each element in [this], where [action] is the code to be executed for each
- * element [value] as accessed by [indices].
+ * Generates code to do [action] for each element in [this] array.
+ *
+ * The action is given the index and value of the processed element.
  */
 fun CodeBlock.forEachIndexed(
     shape: List<IndexExpressionNode>,
-    action: (indices: List<CodeBlock>, value: CodeBlock) -> CodeBlock,
     context: CodeGeneratorContext,
+    action: (indices: List<CodeBlock>, value: CodeBlock) -> CodeBlock,
 ): CodeBlock {
     val builder = CodeBlock.builder()
-    val indexingTmps = shape.map { size ->
-        val indexingTmp = context.newTemporary("ind")
-        val bound = indexExpression(size, context)
-        builder.beginControlFlow("for ($indexingTmp in 0 until $bound)")
-        CodeBlock.of(indexingTmp)
+    val indexVariables: List<CodeBlock> = shape.map { size ->
+        val indexVar = CodeBlock.of("%N", context.newTemporary("i"))
+        builder.beginControlFlow("for (%L in 0 until %L)", indexVar, indexExpression(size, context))
+        indexVar
     }
+
     val valueBuilder = CodeBlock.builder()
-    valueBuilder.add("%L", this)
-    indexingTmps.forEach { valueBuilder.add("[%L]", it) }
+    valueBuilder.add(this)
+    indexVariables.forEach { valueBuilder.add("[%L]", it) }
     val value = valueBuilder.build()
-    builder.addStatement(action(indexingTmps, value).toString())
+
+    builder.addStatement("%L", action(indexVariables, value))
     repeat(shape.size) { builder.endControlFlow() }
+
     return builder.build()
 }
 
@@ -117,10 +134,7 @@ fun receiveExpected(
     if (senders.isEmpty()) return expectedValue
 
     val builder = CodeBlock.builder()
-    builder.beginControlFlow(
-        "%L.also",
-        expectedValue,
-    )
+    builder.beginControlFlow("%L.also", expectedValue)
     for (host in senders) {
         builder.addStatement(
             "%T.assertEquals(%L, %L, %L, %L)",

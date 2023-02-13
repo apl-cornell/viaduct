@@ -15,7 +15,6 @@ import com.squareup.kotlinpoet.TypeSpec
 import com.squareup.kotlinpoet.asClassName
 import com.squareup.kotlinpoet.joinToCode
 import io.github.aplcornell.viaduct.circuitanalysis.NameAnalysis
-import io.github.aplcornell.viaduct.codegeneration.valueClass
 import io.github.aplcornell.viaduct.runtime.Out
 import io.github.aplcornell.viaduct.runtime.ViaductGeneratedProgram
 import io.github.aplcornell.viaduct.runtime.ViaductRuntime
@@ -25,11 +24,11 @@ import io.github.aplcornell.viaduct.syntax.circuit.CircuitDeclarationNode
 import io.github.aplcornell.viaduct.syntax.circuit.FunctionDeclarationNode
 import io.github.aplcornell.viaduct.syntax.circuit.InputNode
 import io.github.aplcornell.viaduct.syntax.circuit.LetNode
-import io.github.aplcornell.viaduct.syntax.circuit.LiteralNode
 import io.github.aplcornell.viaduct.syntax.circuit.OutputNode
 import io.github.aplcornell.viaduct.syntax.circuit.ProgramNode
 import io.github.aplcornell.viaduct.syntax.circuit.Variable
 import io.github.aplcornell.viaduct.syntax.circuit.VariableBindingNode
+import io.github.aplcornell.viaduct.syntax.types.ValueType
 import io.github.aplcornell.viaduct.util.FreshNameGenerator
 import java.util.LinkedList
 import java.util.Queue
@@ -148,67 +147,21 @@ private class BackendCodeGenerator(
                             if (command.host.value != context.host) continue
                             val name = context.kotlinName(stmt.bindings[0].name.value)
                             val shape = command.type.shape
-                            if (shape.isEmpty()) {
-                                builder.addStatement(
-                                    "val %N = (runtime.input(%T) as %T).value",
-                                    name,
-                                    command.type.elementType.value::class,
-                                    command.type.elementType.value.valueClass,
-                                )
-                            } else {
-                                builder.addStatement(
-                                    "val %N = %L",
-                                    name,
-                                    shape.new(
-                                        { _ ->
-                                            CodeBlock.of(
-                                                "%L",
-                                                indexExpression(
-                                                    LiteralNode(
-                                                        command.type.elementType.value.defaultValue,
-                                                        command.type.elementType.sourceLocation,
-                                                    ),
-                                                    context,
-                                                ),
-                                            )
-                                        },
-                                        context,
-                                    ),
-                                )
-                                builder.addCode(
-                                    CodeBlock.of("%N", name).forEachIndexed(shape, { _, value ->
-                                        CodeBlock.of(
-                                            "%L = (runtime.input(%T) as %T).value",
-                                            value,
-                                            command.type.elementType.value::class,
-                                            command.type.elementType.value.valueClass,
-                                        )
-                                    }, context),
-                                )
-                            }
+                            builder.addStatement(
+                                "val %N = %L",
+                                name,
+                                shape.new(context) { context.input(command.type.elementType.value) },
+                            )
                         }
 
                         is OutputNode -> {
                             if (command.host.value != context.host) continue
                             val shape = command.type.shape
-                            if (shape.isEmpty()) {
-                                builder.addStatement(
-                                    "runtime.output(%T(%L))",
-                                    command.type.elementType.value.valueClass,
-                                    indexExpression(command.message, context),
-                                )
-                            } else {
-                                builder.addCode(
-                                    CodeBlock.of("%N", context.kotlinName(command.message.name.value))
-                                        .forEachIndexed(shape, { _, value ->
-                                            CodeBlock.of(
-                                                "runtime.output(%T(%L))",
-                                                command.type.elementType.value.valueClass,
-                                                value,
-                                            )
-                                        }, context),
-                                )
-                            }
+                            builder.addCode(
+                                indexExpression(command.message, context).forEachIndexed(shape, context) { _, value ->
+                                    context.output(value, command.type.elementType.value)
+                                },
+                            )
                         }
                     }
                 }
@@ -271,9 +224,6 @@ private class BackendCodeGenerator(
         override val host: Host
             get() = this@BackendCodeGenerator.host
 
-//        override val protocolComposer: ProtocolComposer
-//            get() = this@BackendCodeGenerator.protocolComposer
-
         override fun kotlinName(sourceName: Variable): String =
             varMap.getOrPut(sourceName) { freshNameGenerator.getFreshName(sourceName.name) }
 
@@ -282,6 +232,22 @@ private class BackendCodeGenerator(
 
         override fun codeOf(host: Host) =
             hostDeclarations.reference(host)
+
+        fun input(type: ValueType): CodeBlock =
+            CodeBlock.of(
+                "(%N.input(%T) as %T).value",
+                "runtime",
+                type::class,
+                type.valueClass,
+            )
+
+        fun output(value: CodeBlock, type: ValueType): CodeBlock =
+            CodeBlock.of(
+                "%N.output(%T(%L))",
+                "runtime",
+                type.valueClass,
+                value,
+            )
 
         override fun receive(type: TypeName, sender: Host): CodeBlock =
             if (sender == context.host) {

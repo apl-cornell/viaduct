@@ -480,31 +480,28 @@ class ABYCircuitCodeGenerator(
                             builder.addStatement(
                                 "val %L = %L",
                                 inputName,
-                                argument.type.shape.new(
-                                    { indices ->
-                                        val valueBuilder = CodeBlock.builder()
-                                        valueBuilder.add("%L", argument.value)
-                                        indices.forEach {
-                                            valueBuilder.add("[%L]", it)
-                                        }
-                                        val value = valueBuilder.build()
-                                        CodeBlock.of(
-                                            "%L.putINGate(%L.toBigInteger(), %L, %L)",
-                                            protocolToAbyPartyCircuit(protocol),
-                                            if (argument.type.elementType.value is IntegerType) {
-                                                value
-                                            } else {
-                                                CodeBlock.of(
-                                                    "%L.compareTo(false)",
-                                                    value,
-                                                )
-                                            },
-                                            BIT_LENGTH,
-                                            roleToCodeBlock(role(protocol, context.host)),
-                                        )
-                                    },
-                                    context,
-                                ),
+                                argument.type.shape.new(context) { indices ->
+                                    val valueBuilder = CodeBlock.builder()
+                                    valueBuilder.add("%L", argument.value)
+                                    indices.forEach {
+                                        valueBuilder.add("[%L]", it)
+                                    }
+                                    val value = valueBuilder.build()
+                                    CodeBlock.of(
+                                        "%L.putINGate(%L.toBigInteger(), %L, %L)",
+                                        protocolToAbyPartyCircuit(protocol),
+                                        if (argument.type.elementType.value is IntegerType) {
+                                            value
+                                        } else {
+                                            CodeBlock.of(
+                                                "%L.compareTo(false)",
+                                                value,
+                                            )
+                                        },
+                                        BIT_LENGTH,
+                                        roleToCodeBlock(role(protocol, context.host)),
+                                    )
+                                },
                             )
                         }
                     } else {
@@ -519,16 +516,13 @@ class ABYCircuitCodeGenerator(
                             builder.addStatement(
                                 "val %L = %L",
                                 inputName,
-                                argument.type.shape.new(
-                                    {
-                                        CodeBlock.of(
-                                            "%L.putDummyINGate(%L)",
-                                            protocolToAbyPartyCircuit(protocol),
-                                            BIT_LENGTH,
-                                        )
-                                    },
-                                    context,
-                                ),
+                                argument.type.shape.new(context) {
+                                    CodeBlock.of(
+                                        "%L.putDummyINGate(%L)",
+                                        protocolToAbyPartyCircuit(protocol),
+                                        BIT_LENGTH,
+                                    )
+                                },
                             )
                         }
                     }
@@ -554,30 +548,27 @@ class ABYCircuitCodeGenerator(
                         builder.addStatement(
                             "val %L = %L",
                             inputName,
-                            argument.type.shape.new(
-                                { indices ->
-                                    val valueBuilder = CodeBlock.builder()
-                                    valueBuilder.add("%L", argument.value)
-                                    indices.forEach {
-                                        valueBuilder.add("[%L]", it)
-                                    }
-                                    val value = valueBuilder.build()
-                                    CodeBlock.of(
-                                        "%L.putCONSGate(%L.toBigInteger(), %L)",
-                                        protocolToAbyPartyCircuit(protocol),
-                                        if (argument.type.elementType.value is IntegerType) {
-                                            value
-                                        } else {
-                                            CodeBlock.of(
-                                                "%L.compareTo(false)",
-                                                value,
-                                            )
-                                        },
-                                        BIT_LENGTH,
-                                    )
-                                },
-                                context,
-                            ),
+                            argument.type.shape.new(context) { indices ->
+                                val valueBuilder = CodeBlock.builder()
+                                valueBuilder.add("%L", argument.value)
+                                indices.forEach {
+                                    valueBuilder.add("[%L]", it)
+                                }
+                                val value = valueBuilder.build()
+                                CodeBlock.of(
+                                    "%L.putCONSGate(%L.toBigInteger(), %L)",
+                                    protocolToAbyPartyCircuit(protocol),
+                                    if (argument.type.elementType.value is IntegerType) {
+                                        value
+                                    } else {
+                                        CodeBlock.of(
+                                            "%L.compareTo(false)",
+                                            value,
+                                        )
+                                    },
+                                    BIT_LENGTH,
+                                )
+                            },
                         )
                     }
                 }

@@ -3,8 +3,8 @@ fun main() {
     val aships = Array[int](5);
     val bships = Array[int](5);
     for (var i: int = 0; i < 5; i+=1) {
-        aships[i] = endorse (input int from alice) from {A};
-        bships[i] = endorse (input int from bob) from {B};
+        aships[i] = endorse (input int from alice) from {alice};
+        bships[i] = endorse (input int from bob) from {bob};
     }
 
     var awins: bool = false;
@@ -15,11 +15,11 @@ fun main() {
 
     for (var j: int = 0; j < 5 && !acheated && !bcheated; j += 1) {
         for (var k: int = j + 1; k < 5 && !acheated && !bcheated; k += 1) {
-            if (declassify (aships[j] == aships[k]) to {A ⊓ B}) {
+            if (declassify (aships[j] == aships[k]) to {alice ⊓ bob}) {
                 acheated = true;
             }
 
-            if (declassify(bships[j] == bships[k]) to {A ⊓ B}) {
+            if (declassify(bships[j] == bships[k]) to {alice ⊓ bob}) {
                 bcheated = true;
             }
         }
@@ -35,11 +35,11 @@ fun main() {
         /** keep playing until someone sinks all the other person's battleships */
         while (playing) {
             if (aturn) {
-                val amove: int = declassify (input int from alice) to {(A|B)-> & A<-};
-                var amove_trusted: int = endorse amove from {(A|B)-> & A<-};
+                val amove: int = declassify (input int from alice) to {(alice|bob)-> & alice<-};
+                var amove_trusted: int = endorse amove from {(alice|bob)-> & alice<-};
                 var ahit: bool = false;
                 for (var aj: int = 0; aj < 5; aj += 1) {
-                    if (declassify (bships[aj] == amove_trusted) to {A ⊓ B}) {
+                    if (declassify (bships[aj] == amove_trusted) to {alice ⊓ bob}) {
                         ascore += 1;
                         bships[aj] = 0;
                         ahit = true;
@@ -50,11 +50,11 @@ fun main() {
                 output ahit to bob;
                 aturn = false;
             } else {
-                var bmove: int = declassify (input int from bob) to {(A|B)-> & B<-};
-                val bmove_trusted: int = endorse bmove from {(A|B)-> & B<-};
+                var bmove: int = declassify (input int from bob) to {(alice|bob)-> & bob<-};
+                val bmove_trusted: int = endorse bmove from {(alice|bob)-> & bob<-};
                 var bhit: bool = false;
                 for (var bj: int = 0; bj < 5; bj += 1) {
-                    if (declassify (aships[bj] == bmove_trusted) to {A ⊓ B}) {
+                    if (declassify (aships[bj] == bmove_trusted) to {alice ⊓ bob}) {
                         bscore += 1;
                         aships[bj] = 0;
                         bhit = true;
@@ -78,5 +78,5 @@ fun main() {
     }
 }
 
-host alice  : {A}
-host bob    : {B}
+host alice
+host bob

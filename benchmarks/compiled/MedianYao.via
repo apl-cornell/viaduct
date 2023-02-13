@@ -1,6 +1,6 @@
-host alice : {(A & B<-)}
+host alice
 
-host bob : {(B & A<-)}
+host bob
 
 fun main() {
     val n: int{(A ⊓ B)}@Replication(hosts = {alice, bob}) = 200;

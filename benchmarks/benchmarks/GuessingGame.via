@@ -1,14 +1,14 @@
-host alice : {A}
-host bob   : {B}
+host alice
+host bob
 
 fun main() {
-  val number: int{B & A<-} = endorse (input int from bob) to {B & A<-} from {B};
-  var tries: int{A ⊓ B} = 0;
-  var win: bool{A ⊓ B} = false;
+  val number: int{bob & alice<-} = endorse (input int from bob) to {bob & alice<-} from {bob};
+  var tries: int{alice ⊓ bob} = 0;
+  var win: bool{alice ⊓ bob} = false;
   while (tries < 5 && !win) {
-    val guess: int{(A|B)-> & A<-} = declassify (input int from alice) to {(A|B)-> & A<-};
-    val trusted_guess: int{A ⊓ B} = endorse guess to {A ⊓ B} from {(A|B)-> & A<-};
-    win = declassify (number == trusted_guess) to {A ⊓ B};
+    val guess: int{(alice|bob)-> & alice<-} = declassify (input int from alice) to {(alice|bob)-> & alice<-};
+    val trusted_guess: int{alice ⊓ bob} = endorse guess to {alice ⊓ bob} from {(alice|bob)-> & alice<-};
+    win = declassify (number == trusted_guess) to {alice ⊓ bob};
     tries += 1;
   }
   output win to alice;

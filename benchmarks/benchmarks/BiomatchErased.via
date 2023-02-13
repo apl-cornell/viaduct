@@ -1,8 +1,11 @@
-host alice: {A & B<-}
-host bob: {B & A<-}
+host alice
+host bob
+
+assume for <- alice trusts bob
+assume for <- bob trusts alice
 
 /* biometric matching example from HyCC paper */
-fun match(db1: int{A & B<-}, db2: int{db1}, s1: int{B & A<-}, s2: int{s1}, res: out int{A & B}) {
+fun match(db1: int{alice}, db2: int{alice}, s1: int{bob}, s2: int{bob}, res: out int{alice & bob}) : {(alice & bob)<- & (alice | bob)->}  {
     val dist1: int = db1 - s1;
     val dist2: int = db2 - s2;
     out res = (dist1 * dist1) + (dist2 * dist2);
@@ -34,7 +37,7 @@ fun main() {
         }
     }
 
-    val result: int = declassify min_dist to {A ⊓ B};
+    val result: int = declassify min_dist to {alice ⊓ bob};
     output result to alice;
     output result to bob;
 }

@@ -1,5 +1,9 @@
-host alice: {A & B<-}
-host bob:   {B & A<-}
+host alice
+host bob
+
+
+assume for <- alice trusts bob
+assume for <- bob trusts alice
 
 /* two-round bidding for n items */
 fun main() {
@@ -17,7 +21,7 @@ fun main() {
 
   /* reveal first-round winners */
   for (var i: int = 0; i < n; i += 1) {
-    val winner: bool = declassify abids1[i] < bbids1[i] to {A ⊓ B};
+    val winner: bool = declassify abids1[i] < bbids1[i] to {alice ⊓ bob};
     output winner to alice;
     output winner to bob;
   }
@@ -32,7 +36,7 @@ fun main() {
   for (var i: int = 0; i < n; i += 1) {
     val abid: int = (abids1[i] + abids2[i]) / 2;
     val bbid: int = (bbids1[i] + bbids2[i]) / 2;
-    val winner: bool = declassify abid < bbid to {A ⊓ B};
+    val winner: bool = declassify abid < bbid to {alice ⊓ bob};
     output winner to alice;
     output winner to bob;
   }

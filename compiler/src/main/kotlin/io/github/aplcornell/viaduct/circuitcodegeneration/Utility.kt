@@ -8,6 +8,7 @@ import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.STRING
 import com.squareup.kotlinpoet.TypeName
 import com.squareup.kotlinpoet.U_BYTE_ARRAY
+import com.squareup.kotlinpoet.joinToCode
 import io.github.aplcornell.viaduct.runtime.EquivocationException
 import io.github.aplcornell.viaduct.syntax.Host
 import io.github.aplcornell.viaduct.syntax.circuit.IndexExpressionNode
@@ -63,7 +64,7 @@ fun Shape.new(
         declaration.add("%T(%L){ ", Array::class, indexExpression(this[i], context))
         indices.add(CodeBlock.of(context.newTemporary("i")))
     }
-    declaration.add(init(indices))
+    declaration.add("%L -> %L", indices.joinToCode(), init(indices))
     repeat(this.size) { declaration.add(" }") }
     return declaration.build()
 }

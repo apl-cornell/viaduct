@@ -25,6 +25,7 @@ import io.github.aplcornell.viaduct.syntax.circuit.CircuitDeclarationNode
 import io.github.aplcornell.viaduct.syntax.circuit.FunctionDeclarationNode
 import io.github.aplcornell.viaduct.syntax.circuit.InputNode
 import io.github.aplcornell.viaduct.syntax.circuit.LetNode
+import io.github.aplcornell.viaduct.syntax.circuit.LiteralNode
 import io.github.aplcornell.viaduct.syntax.circuit.OutputNode
 import io.github.aplcornell.viaduct.syntax.circuit.ProgramNode
 import io.github.aplcornell.viaduct.syntax.circuit.Variable
@@ -77,6 +78,13 @@ private class BackendCodeGenerator(
                     when (val command = stmt.command) {
                         is CircuitCallNode -> {
                             val circuitDecl: CircuitDeclarationNode = nameAnalysis.declaration(command)
+                            circuitDecl.sizes.zip(command.bounds) { sizeParam, sizeArg ->
+                                builder.addStatement(
+                                    "val %N = %L",
+                                    context.kotlinName(sizeParam.name.value),
+                                    indexExpression(sizeArg, context),
+                                )
+                            }
                             val (importCode, inputs) = codeGenerator.import(
                                 circuitDecl.protocol.value,
                                 command.inputs.zip(circuitDecl.inputs).map { (arg, inParam) ->
@@ -106,7 +114,7 @@ private class BackendCodeGenerator(
                                 )
                                 outName
                             }
-                            builder.addCode(
+                            builder.addStatement(
                                 "%N(%L)",
                                 command.name.value.name,
                                 (
@@ -116,7 +124,7 @@ private class BackendCodeGenerator(
                             )
                             val outTmps = circuitDecl.outputs.map {
                                 val tmp = context.newTemporary(it.name.value.name)
-                                builder.addStatement("%N = %N.get()", tmp, outNames[it]!!)
+                                builder.addStatement("val %N = %N.get()", tmp, outNames[it]!!)
                                 CodeBlock.of("%N", tmp)
                             }
                             val (exportCode, outputs) = codeGenerator.export(
@@ -137,6 +145,7 @@ private class BackendCodeGenerator(
                         }
 
                         is InputNode -> {
+                            if (command.host.value != context.host) continue
                             val name = context.kotlinName(stmt.bindings[0].name.value)
                             val shape = command.type.shape
                             if (shape.isEmpty()) {
@@ -151,7 +160,18 @@ private class BackendCodeGenerator(
                                     "val %N = %L",
                                     name,
                                     shape.new(
-                                        { _ -> CodeBlock.of("%T", typeTranslator(command.type.elementType.value)) },
+                                        { _ ->
+                                            CodeBlock.of(
+                                                "%L",
+                                                indexExpression(
+                                                    LiteralNode(
+                                                        command.type.elementType.value.defaultValue,
+                                                        command.type.elementType.sourceLocation,
+                                                    ),
+                                                    context,
+                                                ),
+                                            )
+                                        },
                                         context,
                                     ),
                                 )
@@ -169,6 +189,7 @@ private class BackendCodeGenerator(
                         }
 
                         is OutputNode -> {
+                            if (command.host.value != context.host) continue
                             val shape = command.type.shape
                             if (shape.isEmpty()) {
                                 builder.addStatement(
@@ -216,8 +237,8 @@ private class BackendCodeGenerator(
             }
             builder.addParameter(paramName, paramType)
         }
-        for (param in circuitDeclaration.outputs) {
-            val paramName = context.kotlinName(param.name.value)
+        val outParams = circuitDeclaration.outputs.map { param ->
+            val paramName = context.newTemporary(param.name.value.name + "Box")
             val baseType = param.type.elementType.value
             val paramType = Out::class.asClassName().parameterizedBy(
                 if (param.type.shape.isEmpty()) {
@@ -227,8 +248,9 @@ private class BackendCodeGenerator(
                 },
             )
             builder.addParameter(paramName, paramType)
+            CodeBlock.of(paramName)
         }
-        builder.addCode(codeGenerator.circuitBody(protocol, circuitDeclaration))
+        builder.addCode(codeGenerator.circuitBody(protocol, circuitDeclaration, outParams))
         return builder.build()
     }
 

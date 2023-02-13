@@ -21,8 +21,9 @@ abstract class CodeGeneratorDispatcher : CodeGenerator {
     final override fun circuitBody(
         protocol: Protocol,
         circuitDeclaration: CircuitDeclarationNode,
+        outParams: List<CodeBlock>,
     ): CodeBlock =
-        generatorFor(protocol).circuitBody(protocol, circuitDeclaration)
+        generatorFor(protocol).circuitBody(protocol, circuitDeclaration, outParams)
 
     final override fun import(
         protocol: Protocol,

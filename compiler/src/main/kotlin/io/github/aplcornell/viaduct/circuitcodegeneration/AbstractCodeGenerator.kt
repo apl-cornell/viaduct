@@ -30,15 +30,19 @@ abstract class AbstractCodeGenerator(val context: CodeGeneratorContext) : CodeGe
     fun storageType(protocol: Protocol, sourceType: ArrayTypeNode): TypeName =
         kotlinType(sourceType.shape, storageType(protocol, sourceType.elementType.value))
 
-    override fun circuitBody(protocol: Protocol, circuitDeclaration: CircuitDeclarationNode): CodeBlock {
+    override fun circuitBody(
+        protocol: Protocol,
+        circuitDeclaration: CircuitDeclarationNode,
+        outParams: List<CodeBlock>,
+    ): CodeBlock {
         val builder = CodeBlock.builder()
         for (stmt in circuitDeclaration.body) {
             generate(protocol, builder, stmt)
         }
         circuitDeclaration.body.returnStatement.values.forEachIndexed { index, value ->
             builder.addStatement(
-                "%N.set(%L)",
-                context.kotlinName(circuitDeclaration.outputs[index].name.value),
+                "%L.set(%L)",
+                outParams[index],
                 indexExpression(value, context),
             )
         }
@@ -58,7 +62,7 @@ abstract class AbstractCodeGenerator(val context: CodeGeneratorContext) : CodeGe
                     )
                 }
                 rhsBuilder.add("%L", exp(protocol, stmt.value))
-                repeat(stmt.indices.size) { builder.add(" }") }
+                repeat(stmt.indices.size) { rhsBuilder.add(" }") }
                 builder.addStatement("val %N = %L", context.kotlinName(stmt.name.value), rhsBuilder.build())
             }
         }
@@ -100,7 +104,7 @@ abstract class AbstractCodeGenerator(val context: CodeGeneratorContext) : CodeGe
         val element = context.newTemporary("element")
         return CodeBlock.of(
             "(0 until %L).%M { %N -> %L }.%M(%L) { %N, %N -> %L }",
-            exp(protocol, r.indices.bound),
+            indexExpression(r.indices.bound, context),
             MemberName("kotlin.collections", "map"),
             context.kotlinName(r.indices.name.value),
             exp(protocol, r.body),

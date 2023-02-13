@@ -24,7 +24,11 @@ interface CodeGenerator {
     fun storageType(protocol: Protocol, sourceType: ValueType): TypeName
 
     /** Generates code for the body of circuit [circuitDeclaration]. */
-    fun circuitBody(protocol: Protocol, circuitDeclaration: CircuitDeclarationNode): CodeBlock
+    fun circuitBody(
+        protocol: Protocol,
+        circuitDeclaration: CircuitDeclarationNode,
+        outParams: List<CodeBlock>,
+    ): CodeBlock
 
     /**
      * Generates code for importing values from storage formats, and the names associated with imported results.

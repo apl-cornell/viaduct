@@ -8,7 +8,6 @@ import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.TypeName
 import com.squareup.kotlinpoet.asClassName
 import com.squareup.kotlinpoet.asTypeName
-import com.squareup.kotlinpoet.joinToCode
 import io.github.apl_cornell.aby.ABYParty
 import io.github.apl_cornell.aby.Role
 import io.github.apl_cornell.aby.Share
@@ -21,18 +20,14 @@ import io.github.aplcornell.viaduct.circuitcodegeneration.Argument
 import io.github.aplcornell.viaduct.circuitcodegeneration.CodeGeneratorContext
 import io.github.aplcornell.viaduct.circuitcodegeneration.UnsupportedCommunicationException
 import io.github.aplcornell.viaduct.circuitcodegeneration.findAvailableTcpPort
-import io.github.aplcornell.viaduct.circuitcodegeneration.indexExpression
 import io.github.aplcornell.viaduct.circuitcodegeneration.new
 import io.github.aplcornell.viaduct.syntax.Host
 import io.github.aplcornell.viaduct.syntax.Operator
 import io.github.aplcornell.viaduct.syntax.Protocol
 import io.github.aplcornell.viaduct.syntax.circuit.ExpressionNode
-import io.github.aplcornell.viaduct.syntax.circuit.IndexExpressionNode
 import io.github.aplcornell.viaduct.syntax.circuit.LiteralNode
-import io.github.aplcornell.viaduct.syntax.circuit.LookupNode
 import io.github.aplcornell.viaduct.syntax.circuit.OperatorNode
 import io.github.aplcornell.viaduct.syntax.circuit.ReferenceNode
-import io.github.aplcornell.viaduct.syntax.circuit.SizeParameterNode
 import io.github.aplcornell.viaduct.syntax.operators.Addition
 import io.github.aplcornell.viaduct.syntax.operators.And
 import io.github.aplcornell.viaduct.syntax.operators.Division
@@ -50,10 +45,9 @@ import io.github.aplcornell.viaduct.syntax.operators.Negation
 import io.github.aplcornell.viaduct.syntax.operators.Not
 import io.github.aplcornell.viaduct.syntax.operators.Or
 import io.github.aplcornell.viaduct.syntax.operators.Subtraction
+import io.github.aplcornell.viaduct.syntax.types.BooleanType
 import io.github.aplcornell.viaduct.syntax.types.IntegerType
 import io.github.aplcornell.viaduct.syntax.types.ValueType
-import io.github.aplcornell.viaduct.syntax.values.BooleanValue
-import io.github.aplcornell.viaduct.syntax.values.IntegerValue
 import io.github.aplcornell.viaduct.syntax.values.Value
 import java.math.BigInteger
 
@@ -200,25 +194,21 @@ class ABYCircuitCodeGenerator(
     }
 
     private fun valueToShare(value: Value, protocol: Protocol): CodeBlock =
-        when (value) {
-            is BooleanValue ->
-                CodeBlock.of(
-                    "%L.putCONSGate(%L.toInt().toBigInteger(), %L)",
-                    protocolToAbyPartyCircuit(protocol),
-                    value.value,
-                    BIT_LENGTH,
-                )
+        CodeBlock.of("%L", value).toShare(protocol as ABY, value.type)
 
-            is IntegerValue ->
-                CodeBlock.of(
-                    "%L.putCONSGate(%L.toBigInteger(), %L)",
-                    protocolToAbyPartyCircuit(protocol),
-                    value.value,
-                    BIT_LENGTH,
-                )
-
-            else -> throw java.lang.IllegalArgumentException("Unknown value type: $value.")
+    private fun CodeBlock.toShare(protocol: ABY, type: ValueType): CodeBlock {
+        val valueAsInt = when (type) {
+            is BooleanType -> CodeBlock.of("%L.toInt()", this)
+            is IntegerType -> this
+            else -> throw java.lang.IllegalArgumentException("Unknown value type: $type.")
         }
+        return CodeBlock.of(
+            "%L.putCONSGate(%L.toBigInteger(), %L)",
+            protocolToAbyPartyCircuit(protocol),
+            valueAsInt,
+            BIT_LENGTH,
+        )
+    }
 
     private fun binaryOpToShare(
         circuit: CodeBlock,
@@ -403,7 +393,7 @@ class ABYCircuitCodeGenerator(
                     args.last(),
                     args.first(),
 
-                )
+                    )
 
             else -> throw UnsupportedOperationException("Unknown operator $op.")
         }
@@ -416,20 +406,7 @@ class ABYCircuitCodeGenerator(
         when (expr) {
             is LiteralNode -> valueToShare(expr.value, protocol)
             is ReferenceNode -> CodeBlock.of("%N", context.kotlinName(expr.name.value))
-            is LookupNode -> {
-                if (expr.indices.isEmpty()) {
-                    CodeBlock.of("%N", context.kotlinName(expr.variable.value))
-                } else {
-                    CodeBlock.of(
-                        "%N%L",
-                        context.kotlinName(expr.variable.value),
-                        expr.indices.map {
-                            CodeBlock.of("[%L]", indexExpression(it, context))
-                        }.joinToCode(separator = ""),
-                    )
-                }
-            }
-
+                .toShare(protocol as ABY, IntegerType)
             else -> super.exp(protocol, expr)
         }
 
@@ -439,12 +416,6 @@ class ABYCircuitCodeGenerator(
             op.operator,
             arguments,
         )
-
-    private fun clearArgument(arg: IndexExpressionNode): Boolean =
-        when (arg) {
-            is LiteralNode -> true
-            is ReferenceNode -> (nameAnalysis.declaration(arg) is SizeParameterNode)
-        }
 
     private fun roleToCodeBlock(role: Role): CodeBlock = CodeBlock.of("%T.%L", role::class.asClassName(), role)
 

@@ -78,15 +78,11 @@ abstract class AbstractCodeGenerator(val context: CodeGeneratorContext) : CodeGe
         }
 
         is LookupNode -> {
-            if (expr.indices.isEmpty()) {
-                CodeBlock.of("%N", context.kotlinName(expr.variable.value))
-            } else {
-                CodeBlock.of(
-                    "%N%L",
-                    context.kotlinName(expr.variable.value),
-                    expr.indices.map { CodeBlock.of("[%L]", exp(protocol, it)) }.joinToCode(separator = ""),
-                )
-            }
+            CodeBlock.of(
+                "%N%L",
+                context.kotlinName(expr.variable.value),
+                expr.indices.map { CodeBlock.of("[%L]", indexExpression(it, context)) }.joinToCode(separator = ""),
+            )
         }
 
         is ReduceNode -> reduce(protocol, expr)

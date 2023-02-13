@@ -8,6 +8,7 @@ import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.TypeName
 import com.squareup.kotlinpoet.asClassName
 import com.squareup.kotlinpoet.asTypeName
+import com.squareup.kotlinpoet.joinToCode
 import io.github.apl_cornell.aby.ABYParty
 import io.github.apl_cornell.aby.Aby
 import io.github.apl_cornell.aby.Role
@@ -20,12 +21,15 @@ import io.github.aplcornell.viaduct.circuitcodegeneration.AbstractCodeGenerator
 import io.github.aplcornell.viaduct.circuitcodegeneration.Argument
 import io.github.aplcornell.viaduct.circuitcodegeneration.CodeGeneratorContext
 import io.github.aplcornell.viaduct.circuitcodegeneration.UnsupportedCommunicationException
+import io.github.aplcornell.viaduct.circuitcodegeneration.indexExpression
+import io.github.aplcornell.viaduct.circuitcodegeneration.new
 import io.github.aplcornell.viaduct.syntax.Host
 import io.github.aplcornell.viaduct.syntax.Operator
 import io.github.aplcornell.viaduct.syntax.Protocol
 import io.github.aplcornell.viaduct.syntax.circuit.ExpressionNode
 import io.github.aplcornell.viaduct.syntax.circuit.IndexExpressionNode
 import io.github.aplcornell.viaduct.syntax.circuit.LiteralNode
+import io.github.aplcornell.viaduct.syntax.circuit.LookupNode
 import io.github.aplcornell.viaduct.syntax.circuit.OperatorNode
 import io.github.aplcornell.viaduct.syntax.circuit.ReferenceNode
 import io.github.aplcornell.viaduct.syntax.circuit.SizeParameterNode
@@ -434,6 +438,19 @@ class ABYCircuitCodeGenerator(
         when (expr) {
             is LiteralNode -> valueToShare(expr.value, protocol)
             is ReferenceNode -> CodeBlock.of("%N", context.kotlinName(expr.name.value))
+            is LookupNode -> {
+                if (expr.indices.isEmpty()) {
+                    CodeBlock.of("%N", context.kotlinName(expr.variable.value))
+                } else {
+                    CodeBlock.of(
+                        "%N%L",
+                        context.kotlinName(expr.variable.value),
+                        expr.indices.map {
+                            CodeBlock.of("[%L]", indexExpression(it, context))
+                        }.joinToCode(separator = ""),
+                    )
+                }
+            }
             else -> super.exp(protocol, expr)
         }
 
@@ -464,8 +481,84 @@ class ABYCircuitCodeGenerator(
             when {
                 argument.protocol is Local && argument.protocol.host in protocol.hosts -> {
                     if (argument.protocol.host == context.host) {
+                        if (argument.type.shape.isEmpty()) {
+                            builder.addStatement(
+                                "val %L = %L.putINGate(%L.toBigInteger(), %L, %L)",
+                                inputName,
+                                protocolToAbyPartyCircuit(protocol),
+                                if (argument.type.elementType.value is IntegerType) {
+                                    argument.value
+                                } else {
+                                    CodeBlock.of(
+                                        "%L.compareTo(false)",
+                                        argument.value,
+                                    )
+                                },
+                                BIT_LENGTH,
+                                roleToCodeBlock(role(protocol, context.host)),
+                            )
+                        } else {
+                            builder.addStatement(
+                                "val %L = %L",
+                                inputName,
+                                argument.type.shape.new(
+                                    { indices ->
+                                        val valueBuilder = CodeBlock.builder()
+                                        valueBuilder.add("%L", argument.value)
+                                        indices.forEach {
+                                            valueBuilder.add("[%L]", it)
+                                        }
+                                        val value = valueBuilder.build()
+                                        CodeBlock.of(
+                                            "%L.putINGate(%L.toBigInteger(), %L, %L)",
+                                            protocolToAbyPartyCircuit(protocol),
+                                            if (argument.type.elementType.value is IntegerType) {
+                                                value
+                                            } else {
+                                                CodeBlock.of(
+                                                    "%L.compareTo(false)",
+                                                    value,
+                                                )
+                                            },
+                                            BIT_LENGTH,
+                                            roleToCodeBlock(role(protocol, context.host)),
+                                        )
+                                    },
+                                    context,
+                                ),
+                            )
+                        }
+                    } else {
+                        if (argument.type.shape.isEmpty()) {
+                            builder.addStatement(
+                                "val %L = %L.putDummyINGate(%L)",
+                                inputName,
+                                protocolToAbyPartyCircuit(protocol),
+                                BIT_LENGTH,
+                            )
+                        } else {
+                            builder.addStatement(
+                                "val %L = %L",
+                                inputName,
+                                argument.type.shape.new(
+                                    {
+                                        CodeBlock.of(
+                                            "%L.putDummyINGate(%L)",
+                                            protocolToAbyPartyCircuit(protocol),
+                                            BIT_LENGTH,
+                                        )
+                                    },
+                                    context,
+                                ),
+                            )
+                        }
+                    }
+                }
+
+                argument.protocol is Replication && argument.protocol.hosts == protocol.hosts -> {
+                    if (argument.type.shape.isEmpty()) {
                         builder.addStatement(
-                            "val %L = %L.putINGate(%L.toBigInteger(), %L, %L)",
+                            "val %L = %L.putCONSGate(%L.toBigInteger(), %L)",
                             inputName,
                             protocolToAbyPartyCircuit(protocol),
                             if (argument.type.elementType.value is IntegerType) {
@@ -477,33 +570,37 @@ class ABYCircuitCodeGenerator(
                                 )
                             },
                             BIT_LENGTH,
-                            roleToCodeBlock(role(protocol, context.host)),
                         )
                     } else {
                         builder.addStatement(
-                            "val %L = %L.putDummyINGate(%L)",
+                            "val %L = %L",
                             inputName,
-                            protocolToAbyPartyCircuit(protocol),
-                            BIT_LENGTH,
+                            argument.type.shape.new(
+                                { indices ->
+                                    val valueBuilder = CodeBlock.builder()
+                                    valueBuilder.add("%L", argument.value)
+                                    indices.forEach {
+                                        valueBuilder.add("[%L]", it)
+                                    }
+                                    val value = valueBuilder.build()
+                                    CodeBlock.of(
+                                        "%L.putCONSGate(%L.toBigInteger(), %L)",
+                                        protocolToAbyPartyCircuit(protocol),
+                                        if (argument.type.elementType.value is IntegerType) {
+                                            value
+                                        } else {
+                                            CodeBlock.of(
+                                                "%L.compareTo(false)",
+                                                value,
+                                            )
+                                        },
+                                        BIT_LENGTH,
+                                    )
+                                },
+                                context,
+                            ),
                         )
                     }
-                }
-
-                argument.protocol is Replication && argument.protocol.hosts == protocol.hosts -> {
-                    builder.addStatement(
-                        "val %L = %L.putCONSGate(%L.toBigInteger(), %L)",
-                        inputName,
-                        protocolToAbyPartyCircuit(protocol),
-                        if (argument.type.elementType.value is IntegerType) {
-                            argument.value
-                        } else {
-                            CodeBlock.of(
-                                "%L.compareTo(false)",
-                                argument.value,
-                            )
-                        },
-                        BIT_LENGTH,
-                    )
                 }
 
                 else -> throw UnsupportedCommunicationException(argument.protocol, protocol, argument.sourceLocation)
@@ -541,9 +638,9 @@ class ABYCircuitCodeGenerator(
             "%L.execCircuit()",
             protocolToABYPartyMap[ABYPair(protocol.server, protocol.client)],
         )
-        val cleartextTmps = arguments.zip(outShareNames).map { (arg, outShareName) ->
-            val cleartextTmp = context.newTemporary("cleartextTmp")
-            if (context.host in arg.protocol.hosts) {
+        val cleartextTmps = arguments.zip(outShareNames).filter { (arg, _) -> (context.host in arg.protocol.hosts) }
+            .map { (arg, outShareName) ->
+                val cleartextTmp = context.newTemporary("cleartextTmp")
                 builder.addStatement(
                     "val %N = %L.getClearValue32().%L",
                     cleartextTmp,
@@ -557,9 +654,8 @@ class ABYCircuitCodeGenerator(
                         )
                     },
                 )
+                CodeBlock.of(cleartextTmp)
             }
-            CodeBlock.of(cleartextTmp)
-        }
         builder.addStatement(
             "%L.reset()",
             protocolToABYPartyMap[ABYPair(protocol.server, protocol.client)],

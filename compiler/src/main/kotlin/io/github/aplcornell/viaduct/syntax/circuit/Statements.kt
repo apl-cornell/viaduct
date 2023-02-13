@@ -72,7 +72,7 @@ class CircuitLetNode(
         get() = indices + listOf(type, value)
 
     override fun toDocument(): Document =
-        keyword("val") * name + indices.bracketed() * "=" * value
+        (keyword("val") * name + indices.bracketed() + ":") * type * "=" * value
 }
 
 class LetNode(

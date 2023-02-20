@@ -393,7 +393,7 @@ class ABYCircuitCodeGenerator(
                     args.last(),
                     args.first(),
 
-                    )
+                )
 
             else -> throw UnsupportedOperationException("Unknown operator $op.")
         }
@@ -436,11 +436,14 @@ class ABYCircuitCodeGenerator(
     private fun valueToBigInt(value: CodeBlock, type: ValueType) =
         CodeBlock.of(
             "%L.toBigInteger()",
-            if (type is IntegerType) value
-            else CodeBlock.of(
-                "%L.compareTo(false)",
-                value,
-            )
+            if (type is IntegerType) {
+                value
+            } else {
+                CodeBlock.of(
+                    "%L.compareTo(false)",
+                    value,
+                )
+            },
         )
 
     override fun import(
@@ -513,7 +516,7 @@ class ABYCircuitCodeGenerator(
                             inputName,
                             protocolToAbyPartyCircuit(protocol),
                             valueToBigInt(argument.value, argument.type.elementType.value),
-                            BIT_LENGTH
+                            BIT_LENGTH,
                         )
                     } else {
                         builder.addStatement(

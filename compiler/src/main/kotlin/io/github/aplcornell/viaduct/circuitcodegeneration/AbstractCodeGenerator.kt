@@ -100,16 +100,18 @@ abstract class AbstractCodeGenerator(val context: CodeGeneratorContext) : CodeGe
         builder.beginControlFlow(
             "if (%L <= 0) %L else",
             indexExpression(r.indices.bound, context),
-            exp(protocol, r.defaultValue)
+            exp(protocol, r.defaultValue),
         )
         val acc = context.newTemporary("acc")
         val element = context.newTemporary("element")
-        builder.add(listOf(r.indices.bound).new(context) {
-            val innerBuilder = CodeBlock.builder()
-            innerBuilder.add("val %L = %L\n", context.kotlinName(r.indices.name.value), it.first())
-            innerBuilder.add(exp(protocol, r.body))
-            innerBuilder.build()
-        })
+        builder.add(
+            listOf(r.indices.bound).new(context) {
+                val innerBuilder = CodeBlock.builder()
+                innerBuilder.add("val %L = %L\n", context.kotlinName(r.indices.name.value), it.first())
+                innerBuilder.add(exp(protocol, r.body))
+                innerBuilder.build()
+            },
+        )
         builder.beginControlFlow(
             ".%M { %N, %N ->",
             MemberName("kotlin.collections", "reduce"),
@@ -121,7 +123,7 @@ abstract class AbstractCodeGenerator(val context: CodeGeneratorContext) : CodeGe
                 protocol,
                 r.operator,
                 listOf(CodeBlock.of(acc), CodeBlock.of(element)),
-            )
+            ),
         )
         builder.endControlFlow()
         builder.endControlFlow()

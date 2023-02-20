@@ -469,16 +469,13 @@ class ABYCircuitCodeGenerator(
                                 "val %L = %L",
                                 inputName,
                                 argument.type.shape.new(context) { indices ->
-                                    val valueBuilder = CodeBlock.builder()
-                                    valueBuilder.add("%L", argument.value)
-                                    indices.forEach {
-                                        valueBuilder.add("[%L]", it)
-                                    }
-                                    val value = valueBuilder.build()
+                                    val value = CodeBlock.builder()
+                                    value.add("%L", argument.value)
+                                    indices.forEach { value.add("[%L]", it) }
                                     CodeBlock.of(
                                         "%L.putINGate(%L, %L, %L)",
                                         protocolToAbyPartyCircuit(protocol),
-                                        valueToBigInt(value, argument.type.elementType.value),
+                                        valueToBigInt(value.build(), argument.type.elementType.value),
                                         BIT_LENGTH,
                                         roleToCodeBlock(role(protocol, context.host)),
                                     )
@@ -516,23 +513,20 @@ class ABYCircuitCodeGenerator(
                             inputName,
                             protocolToAbyPartyCircuit(protocol),
                             valueToBigInt(argument.value, argument.type.elementType.value),
-                            BIT_LENGTH,
+                            BIT_LENGTH
                         )
                     } else {
                         builder.addStatement(
                             "val %L = %L",
                             inputName,
                             argument.type.shape.new(context) { indices ->
-                                val valueBuilder = CodeBlock.builder()
-                                valueBuilder.add("%L", argument.value)
-                                indices.forEach {
-                                    valueBuilder.add("[%L]", it)
-                                }
-                                val value = valueBuilder.build()
+                                val value = CodeBlock.builder()
+                                value.add("%L", argument.value)
+                                indices.forEach { value.add("[%L]", it) }
                                 CodeBlock.of(
                                     "%L.putCONSGate(%L, %L)",
                                     protocolToAbyPartyCircuit(protocol),
-                                    valueToBigInt(value, argument.type.elementType.value),
+                                    valueToBigInt(value.build(), argument.type.elementType.value),
                                     BIT_LENGTH,
                                 )
                             },

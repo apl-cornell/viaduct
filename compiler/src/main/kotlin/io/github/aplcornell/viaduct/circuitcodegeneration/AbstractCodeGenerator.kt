@@ -104,14 +104,14 @@ abstract class AbstractCodeGenerator(val context: CodeGeneratorContext) : CodeGe
         )
         val acc = context.newTemporary("acc")
         val element = context.newTemporary("element")
-        builder.add(
-            listOf(r.indices.bound).new(context) {
-                val innerBuilder = CodeBlock.builder()
-                innerBuilder.add("val %L = %L\n", context.kotlinName(r.indices.name.value), it.first())
-                innerBuilder.add(exp(protocol, r.body))
-                innerBuilder.build()
-            },
+        builder.beginControlFlow(
+            "%T(%L) { %L ->",
+            Array::class,
+            indexExpression(r.indices.bound, context),
+            context.kotlinName(r.indices.name.value),
         )
+        builder.add(exp(protocol, r.body))
+        builder.endControlFlow()
         builder.beginControlFlow(
             ".%M { %N, %N ->",
             MemberName("kotlin.collections", "reduce"),

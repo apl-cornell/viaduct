@@ -54,7 +54,7 @@ abstract class AbstractCodeGenerator(val context: CodeGeneratorContext) : CodeGe
             is CircuitLetNode -> {
                 val rhsBuilder = CodeBlock.builder()
                 for (indexParameter in stmt.indices) {
-                    rhsBuilder.add(
+                    rhsBuilder.beginControlFlow(
                         "%T(%L){ %N -> ",
                         Array::class,
                         indexExpression(indexParameter.bound, context),
@@ -62,7 +62,7 @@ abstract class AbstractCodeGenerator(val context: CodeGeneratorContext) : CodeGe
                     )
                 }
                 rhsBuilder.add("%L", exp(protocol, stmt.value))
-                repeat(stmt.indices.size) { rhsBuilder.add(" }") }
+                repeat(stmt.indices.size) { rhsBuilder.endControlFlow() }
                 builder.addStatement("val %N = %L", context.kotlinName(stmt.name.value), rhsBuilder.build())
             }
         }

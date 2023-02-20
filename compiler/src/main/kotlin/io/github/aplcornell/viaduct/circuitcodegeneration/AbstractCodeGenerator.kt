@@ -96,24 +96,36 @@ abstract class AbstractCodeGenerator(val context: CodeGeneratorContext) : CodeGe
         throw UnsupportedOperatorException(protocol, op)
 
     private fun reduce(protocol: Protocol, r: ReduceNode): CodeBlock {
+        val builder = CodeBlock.builder()
+        builder.beginControlFlow(
+            "if (%L <= 0) %L else",
+            indexExpression(r.indices.bound, context),
+            exp(protocol, r.defaultValue)
+        )
         val acc = context.newTemporary("acc")
         val element = context.newTemporary("element")
-        return CodeBlock.of(
-            "(0 until %L).%M { %N -> %L }.%M(%L) { %N, %N -> %L }",
-            indexExpression(r.indices.bound, context),
-            MemberName("kotlin.collections", "map"),
-            context.kotlinName(r.indices.name.value),
-            exp(protocol, r.body),
-            MemberName("kotlin.collections", "fold"),
-            exp(protocol, r.defaultValue),
+        builder.add(listOf(r.indices.bound).new(context) {
+            val innerBuilder = CodeBlock.builder()
+            innerBuilder.add("val %L = %L\n", context.kotlinName(r.indices.name.value), it.first())
+            innerBuilder.add(exp(protocol, r.body))
+            innerBuilder.build()
+        })
+        builder.beginControlFlow(
+            ".%M { %N, %N ->",
+            MemberName("kotlin.collections", "reduce"),
             acc,
             element,
+        )
+        builder.add(
             operatorApplication(
                 protocol,
                 r.operator,
                 listOf(CodeBlock.of(acc), CodeBlock.of(element)),
-            ),
+            )
         )
+        builder.endControlFlow()
+        builder.endControlFlow()
+        return builder.build()
     }
 
     override fun setup(protocol: Protocol): Iterable<PropertySpec> = listOf()

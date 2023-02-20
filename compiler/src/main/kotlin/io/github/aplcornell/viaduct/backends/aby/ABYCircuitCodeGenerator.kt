@@ -24,6 +24,7 @@ import io.github.aplcornell.viaduct.circuitcodegeneration.new
 import io.github.aplcornell.viaduct.syntax.Host
 import io.github.aplcornell.viaduct.syntax.Operator
 import io.github.aplcornell.viaduct.syntax.Protocol
+import io.github.aplcornell.viaduct.syntax.circuit.CircuitDeclarationNode
 import io.github.aplcornell.viaduct.syntax.circuit.ExpressionNode
 import io.github.aplcornell.viaduct.syntax.circuit.LiteralNode
 import io.github.aplcornell.viaduct.syntax.circuit.OperatorNode
@@ -58,6 +59,7 @@ class ABYCircuitCodeGenerator(
 
     private val nameAnalysis: NameAnalysis = NameAnalysis.get(context.program)
     private var protocolToABYPartyMap: MutableMap<ABYPair, String> = mutableMapOf()
+    private var currentABYPartyCircuit: CodeBlock? = null
 
     companion object {
         const val BIT_LENGTH: Int = 32
@@ -182,10 +184,8 @@ class ABYCircuitCodeGenerator(
         protocol: Protocol,
         shareType: SharingType = protocolToShareType(protocol as ABY),
     ): CodeBlock {
-        if (protocol !is ABY) {
-            return CodeBlock.of("%L", "")
-        }
-        return CodeBlock.of(
+        require(protocol is ABY)
+        return currentABYPartyCircuit ?: CodeBlock.of(
             "%L.getCircuitBuilder(%T.%L)",
             protocolToABYPartyMap.getValue(ABYPair(protocol.server, protocol.client)),
             shareType::class.asClassName(),
@@ -419,6 +419,30 @@ class ABYCircuitCodeGenerator(
 
     private fun roleToCodeBlock(role: Role): CodeBlock = CodeBlock.of("%T.%L", role::class.asClassName(), role)
 
+    override fun circuitBody(
+        protocol: Protocol,
+        circuitDeclaration: CircuitDeclarationNode,
+        outParams: List<CodeBlock>,
+    ): CodeBlock {
+        val builder = CodeBlock.builder()
+        val circuit = CodeBlock.of("%N", context.newTemporary("circuit"))
+        builder.addStatement("val %L = %L", circuit, protocolToAbyPartyCircuit(protocol))
+        currentABYPartyCircuit = circuit
+        builder.add(super.circuitBody(protocol, circuitDeclaration, outParams))
+        currentABYPartyCircuit = null
+        return builder.build()
+    }
+
+    private fun valueToBigInt(value: CodeBlock, type: ValueType) =
+        CodeBlock.of(
+            "%L.toBigInteger()",
+            if (type is IntegerType) value
+            else CodeBlock.of(
+                "%L.compareTo(false)",
+                value,
+            )
+        )
+
     override fun import(
         protocol: Protocol,
         arguments: List<Argument>,
@@ -433,17 +457,10 @@ class ABYCircuitCodeGenerator(
                     if (argument.protocol.host == context.host) {
                         if (argument.type.shape.isEmpty()) {
                             builder.addStatement(
-                                "val %L = %L.putINGate(%L.toBigInteger(), %L, %L)",
+                                "val %L = %L.putINGate(%L, %L, %L)",
                                 inputName,
                                 protocolToAbyPartyCircuit(protocol),
-                                if (argument.type.elementType.value is IntegerType) {
-                                    argument.value
-                                } else {
-                                    CodeBlock.of(
-                                        "%L.compareTo(false)",
-                                        argument.value,
-                                    )
-                                },
+                                valueToBigInt(argument.value, argument.type.elementType.value),
                                 BIT_LENGTH,
                                 roleToCodeBlock(role(protocol, context.host)),
                             )
@@ -459,16 +476,9 @@ class ABYCircuitCodeGenerator(
                                     }
                                     val value = valueBuilder.build()
                                     CodeBlock.of(
-                                        "%L.putINGate(%L.toBigInteger(), %L, %L)",
+                                        "%L.putINGate(%L, %L, %L)",
                                         protocolToAbyPartyCircuit(protocol),
-                                        if (argument.type.elementType.value is IntegerType) {
-                                            value
-                                        } else {
-                                            CodeBlock.of(
-                                                "%L.compareTo(false)",
-                                                value,
-                                            )
-                                        },
+                                        valueToBigInt(value, argument.type.elementType.value),
                                         BIT_LENGTH,
                                         roleToCodeBlock(role(protocol, context.host)),
                                     )
@@ -502,17 +512,10 @@ class ABYCircuitCodeGenerator(
                 argument.protocol is Replication && argument.protocol.hosts == protocol.hosts -> {
                     if (argument.type.shape.isEmpty()) {
                         builder.addStatement(
-                            "val %L = %L.putCONSGate(%L.toBigInteger(), %L)",
+                            "val %L = %L.putCONSGate(%L, %L)",
                             inputName,
                             protocolToAbyPartyCircuit(protocol),
-                            if (argument.type.elementType.value is IntegerType) {
-                                argument.value
-                            } else {
-                                CodeBlock.of(
-                                    "%L.compareTo(false)",
-                                    argument.value,
-                                )
-                            },
+                            valueToBigInt(argument.value, argument.type.elementType.value),
                             BIT_LENGTH,
                         )
                     } else {
@@ -527,16 +530,9 @@ class ABYCircuitCodeGenerator(
                                 }
                                 val value = valueBuilder.build()
                                 CodeBlock.of(
-                                    "%L.putCONSGate(%L.toBigInteger(), %L)",
+                                    "%L.putCONSGate(%L, %L)",
                                     protocolToAbyPartyCircuit(protocol),
-                                    if (argument.type.elementType.value is IntegerType) {
-                                        value
-                                    } else {
-                                        CodeBlock.of(
-                                            "%L.compareTo(false)",
-                                            value,
-                                        )
-                                    },
+                                    valueToBigInt(value, argument.type.elementType.value),
                                     BIT_LENGTH,
                                 )
                             },

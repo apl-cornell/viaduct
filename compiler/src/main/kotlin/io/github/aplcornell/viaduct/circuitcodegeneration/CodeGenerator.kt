@@ -31,13 +31,12 @@ interface CodeGenerator {
     ): CodeBlock
 
     /**
-     * Generates code for importing values from storage formats, and the names associated with imported results.
+     * Generates code for importing values into [protocol], and the names associated with imported results.
      * @param protocol The protocol values are being imported to.
-     * @param valuesAndSources CodeBlocks which reference the values to be imported, and the protocols on which the
-     * values are stored.
+     * @param arguments The arguments to be imported.
      * @return (codeBlock, names) such that codeBlock is the code which imports values, names is the list of names
      * associated with the results.
-     */ // TODO updateme
+     */
     fun import(
         protocol: Protocol,
         arguments: List<Argument>,

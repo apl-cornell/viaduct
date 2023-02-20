@@ -7,6 +7,12 @@ circuit fun <> f@Local(host = alice)(a: int[], b: int[m, n]) -> c: int[] {
     return tmp
 }
 
+/* Add the sizes */
+circuit fun <i, j> sumSizes@YaoABY(client = bob, server = alice)() → res: int[] {
+    val r[]: int[] = i + j
+    return r
+}
+
 /* No returns reduce with literal on RHS */
 circuit fun <> g@Local(host = alice)() -> {
     val fivetimesthree[]: int[] = reduce(::+, 0) { i < 3 -> 5 }

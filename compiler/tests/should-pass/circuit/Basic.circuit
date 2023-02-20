@@ -11,14 +11,7 @@ fun <> main() -> {
     val b@Local(host = bob) = bob.input<int[]>()
     val u@Local(host = alice) = alice.output<int[10]>(a)  /* remove type annotation once type-checking complete */
 
-    /* val arr[a[]] = input int[a[]] from alice  // bad */
     val c@Local(host = alice) = basic<10>(a, b)  /* no brackets bc passing entire arr */
     val d@Local(host = alice) = alice.output<int[]>(c)
     return
 }
-
-/*
- alice and bob have same signature
- commitments: one has committed and commitment
- */
-/* fun basic(a: share<int>, b: share<int>, d:out<share>) { } */

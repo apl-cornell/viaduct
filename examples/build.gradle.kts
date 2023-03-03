@@ -22,7 +22,7 @@ dependencies {
     implementation("${project.group}:runtime")
 
     // Command-line-argument parsing
-    implementation("com.github.ajalt.clikt:clikt:3.5.1")
+    implementation("com.github.ajalt.clikt:clikt:3.5.2")
 
     // Logging
     implementation("io.github.microutils:kotlin-logging:3.0.5")

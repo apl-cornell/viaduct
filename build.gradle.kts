@@ -6,10 +6,10 @@ plugins {
     id("com.palantir.git-version") version "1.0.0"
 
     // Documentation
-    id("org.jetbrains.dokka") version "1.7.20"
+    id("org.jetbrains.dokka") version "1.8.10"
 
     // Style checking
-    id("com.diffplug.spotless") version "6.15.0"
+    id("com.diffplug.spotless") version "6.16.0"
 }
 
 // Derive version from Git tags
@@ -72,8 +72,9 @@ subprojects {
         dependencies {
             // Logging
             "implementation"("io.github.microutils:kotlin-logging:3.0.5")
-            "testImplementation"("org.apache.logging.log4j:log4j-core:2.19.0")
-            "testImplementation"("org.apache.logging.log4j:log4j-slf4j2-impl:2.19.0")
+            "testImplementation"(platform("org.apache.logging.log4j:log4j-bom:2.20.0"))
+            "testImplementation"("org.apache.logging.log4j:log4j-core")
+            "testImplementation"("org.apache.logging.log4j:log4j-slf4j2-impl")
         }
 
         /** Testing */

@@ -1,6 +1,7 @@
 package io.github.aplcornell.viaduct.passes
 
 import io.github.aplcornell.viaduct.algebra.FreeDistributiveLattice
+import io.github.aplcornell.viaduct.analysis.HostTrustConfiguration
 import io.github.aplcornell.viaduct.security.ConfidentialityComponent
 import io.github.aplcornell.viaduct.security.HostPrincipal
 import io.github.aplcornell.viaduct.security.IntegrityComponent
@@ -18,7 +19,6 @@ import io.github.aplcornell.viaduct.security.LabelParameter
 import io.github.aplcornell.viaduct.security.LabelTop
 import io.github.aplcornell.viaduct.security.PolymorphicPrincipal
 import io.github.aplcornell.viaduct.security.interpret
-import io.github.aplcornell.viaduct.syntax.HostTrustConfiguration
 
 class Rewrite(
     private val rewrites: Map<PrincipalComponent, LabelConstant>,

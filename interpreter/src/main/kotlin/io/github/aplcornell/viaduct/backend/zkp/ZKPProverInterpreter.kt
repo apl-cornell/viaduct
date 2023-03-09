@@ -67,7 +67,7 @@ class ZKPProverInterpreter(
 ) :
     SingleProtocolInterpreter<ZKPObject>(program, runtime.projection.protocol) {
 
-    private val typeAnalysis = TypeAnalysis.get(program)
+    private val typeAnalysis = program.analyses.get<TypeAnalysis>()
     private val ensureInit = ZKPInit
 
     private val verifiers = (runtime.projection.protocol as ZKP).verifiers
@@ -136,6 +136,7 @@ class ZKPProverInterpreter(
             } else {
                 0
             }
+
             else -> throw Exception("runtime error: unexpected value $value")
         }
         return wireGenerator.mkConst(i)
@@ -149,6 +150,7 @@ class ZKPProverInterpreter(
             } else {
                 0
             }
+
             else -> throw Exception("runtime error: unexpected value $value")
         }
         val nonce = genNonce(32) // 256 / 8 = 32
@@ -171,6 +173,7 @@ class ZKPProverInterpreter(
                     else -> throw Error("toValue: cannot convert value $this to boolean")
                 }
             }
+
             is IntegerType -> IntegerValue(this)
             else -> throw Exception("toValue: cannot convert type $t")
         }
@@ -192,6 +195,7 @@ class ZKPProverInterpreter(
                 val length = runCleartextExpr(arguments[0]) as IntegerValue
                 ZKPObject.ZKPVectorObject(length.value, length.type.defaultValue, wireGenerator)
             }
+
             else -> throw Exception("unknown object")
         }
     }
@@ -207,17 +211,20 @@ class ZKPProverInterpreter(
             } else {
                 throw Exception("bad query")
             }
+
             is ZKPObject.ZKPMutableCell -> if (query.value is Get) {
                 obj.value
             } else {
                 throw Exception("bad query")
             }
+
             is ZKPObject.ZKPVectorObject -> if (query.value is Get) {
                 val index = runCleartextExpr(args[0]) as IntegerValue
                 obj.gates[index.value]
             } else {
                 throw Exception("bad query")
             }
+
             ZKPObject.ZKPNullObject -> throw Exception("null query")
         }
 
@@ -235,6 +242,7 @@ class ZKPProverInterpreter(
                 val args = expr.arguments.map { getExprWire(it) }
                 wireGenerator.mkOp(expr.operator, args)
             }
+
             is QueryNode -> runQuery(getObject(getObjectLocation(expr.variable.value)), expr.query, expr.arguments)
             is DeclassificationNode -> getExprWire(expr.expression)
             is EndorsementNode -> getExprWire(expr.expression)
@@ -266,28 +274,34 @@ class ZKPProverInterpreter(
                 when (val updateValue = stmt.update.value) {
                     is io.github.aplcornell.viaduct.syntax.datatypes.Set ->
                         o.value = getAtomicExprWire(stmt.arguments[0])
+
                     is io.github.aplcornell.viaduct.syntax.datatypes.Modify -> {
                         val arg = getAtomicExprWire(stmt.arguments[0])
                         o.value = wireGenerator.mkOp(updateValue.operator, listOf(o.value, arg))
                     }
+
                     else ->
                         throw Exception("runtime error")
                 }
             }
+
             is ZKPObject.ZKPVectorObject -> {
                 val index = runCleartextExpr(stmt.arguments[0]) as IntegerValue
                 when (val updateValue = stmt.update.value) {
                     is io.github.aplcornell.viaduct.syntax.datatypes.Set ->
                         o.gates[index.value] = getAtomicExprWire(stmt.arguments[1])
+
                     is io.github.aplcornell.viaduct.syntax.datatypes.Modify -> {
                         val arg = getAtomicExprWire(stmt.arguments[1])
                         o.gates[index.value] =
                             wireGenerator.mkOp(updateValue.operator, listOf(o.gates[index.value], arg))
                     }
+
                     else ->
                         throw Exception("runtime error")
                 }
             }
+
             ZKPObject.ZKPNullObject -> throw Exception("runtime error")
         }
     }
@@ -386,6 +400,7 @@ class ZKPProverInterpreter(
                     tempStore = tempStore.put(sender.name.value, msg)
                     wireStore = wireStore.put(sender.name.value, wire)
                 }
+
                 secretInputs.isEmpty() && publicInputs.isNotEmpty() -> {
                     var cleartextValue: Value? = null
                     for (event in publicInputs) {
@@ -402,6 +417,7 @@ class ZKPProverInterpreter(
                     tempStore = tempStore.put(sender.name.value, cleartextValue)
                     wireStore = wireStore.put(sender.name.value, wire)
                 }
+
                 else -> throw ViaductInterpreterError("Got weird ZKP situation: secret = $secretInputs, public = $publicInputs")
             }
         }

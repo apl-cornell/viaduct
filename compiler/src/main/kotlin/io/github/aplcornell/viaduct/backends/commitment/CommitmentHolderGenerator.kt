@@ -26,7 +26,7 @@ import io.github.aplcornell.viaduct.backends.commitment.Commitment as Commitment
 internal class CommitmentHolderGenerator(
     context: CodeGeneratorContext,
 ) : AbstractCodeGenerator(context) {
-    private val typeAnalysis: TypeAnalysis = TypeAnalysis.get(context.program)
+    private val typeAnalysis = context.program.analyses.get<TypeAnalysis>()
 
     override fun kotlinType(protocol: Protocol, sourceType: ValueType): TypeName =
         (Commitment::class).asTypeName().parameterizedBy(typeTranslator(sourceType))

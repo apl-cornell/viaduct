@@ -12,14 +12,14 @@ internal class InformationFlowAnalysisTest {
     @ParameterizedTest
     @ArgumentsSource(PositiveTestProgramProvider::class)
     fun `it information flow checks`(program: ProgramNode) {
-        InformationFlowAnalysis.get(program.elaborated()).check()
+        program.elaborated().analyses.get<InformationFlowAnalysis>().check()
     }
 
     @ParameterizedTest
     @ArgumentsSource(PositiveTestProgramProvider::class)
     fun `it has a valid constraint graph representation`(program: ProgramNode) {
         val elaboratedProgram = program.elaborated()
-        val informationFlowAnalysis = InformationFlowAnalysis.get(elaboratedProgram)
+        val informationFlowAnalysis = elaboratedProgram.analyses.get<InformationFlowAnalysis>()
         elaboratedProgram.check()
         val writer = StringWriter()
         informationFlowAnalysis.exportConstraintGraph(writer)

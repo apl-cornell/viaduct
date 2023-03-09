@@ -85,7 +85,7 @@ class ABYProtocolInterpreter(
             setOf(ArithABY(otherHost, host), BoolABY(otherHost, host), YaoABY(otherHost, host))
         }
 
-    private val typeAnalysis = TypeAnalysis.get(program)
+    private val typeAnalysis = program.analyses.get<TypeAnalysis>()
     private val aby: ABYParty
 
     private val ssTempStoreStack: Stack<PersistentMap<Temporary, ABYCircuitGate>> = Stack()

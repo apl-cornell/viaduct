@@ -50,7 +50,7 @@ fun SourceFile.compile(
         }
 
         // Dump label constraint graph.
-        saveLabelConstraintGraph?.invoke(InformationFlowAnalysis.get(elaborated)::exportConstraintGraph)
+        saveLabelConstraintGraph?.invoke(elaborated.analyses.get<InformationFlowAnalysis>()::exportConstraintGraph)
 
         // Perform static checks.
         elaborated.check()
@@ -67,7 +67,7 @@ fun SourceFile.compile(
 
     // Dump program annotated with inferred labels.
     if (saveInferredLabels != null) {
-        val ifcAnalysis = InformationFlowAnalysis.get(program)
+        val ifcAnalysis = program.analyses.get<InformationFlowAnalysis>()
         val labelMetadata: Metadata =
             (
                 program.descendantsIsInstance<LetNode>()

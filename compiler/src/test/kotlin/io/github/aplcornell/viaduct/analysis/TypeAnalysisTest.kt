@@ -10,6 +10,6 @@ internal class TypeAnalysisTest {
     @ParameterizedTest
     @ArgumentsSource(PositiveTestProgramProvider::class)
     fun `it type checks`(program: ProgramNode) {
-        TypeAnalysis.get(program.elaborated()).check()
+        program.elaborated().analyses.get<TypeAnalysis>().check()
     }
 }

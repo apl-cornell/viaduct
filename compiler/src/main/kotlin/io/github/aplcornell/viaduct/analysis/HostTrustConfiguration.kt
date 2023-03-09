@@ -1,8 +1,7 @@
-package io.github.aplcornell.viaduct.syntax
+package io.github.aplcornell.viaduct.analysis
 
 import io.github.aplcornell.viaduct.algebra.FreeDistributiveLattice
 import io.github.aplcornell.viaduct.algebra.FreeDistributiveLatticeCongruence
-import io.github.aplcornell.viaduct.analysis.AnalysisProvider
 import io.github.aplcornell.viaduct.passes.PrincipalComponent
 import io.github.aplcornell.viaduct.security.Component
 import io.github.aplcornell.viaduct.security.ConfidentialityComponent
@@ -16,8 +15,7 @@ import io.github.aplcornell.viaduct.syntax.intermediate.HostDeclarationNode
 import io.github.aplcornell.viaduct.syntax.intermediate.ProgramNode
 
 /** A map that associates each host with its authority label. */
-class HostTrustConfiguration private constructor(val program: ProgramNode) {
-
+class HostTrustConfiguration internal constructor(val program: ProgramNode) : Analysis<ProgramNode> {
     val congruence: FreeDistributiveLatticeCongruence<Component<Principal>> =
         FreeDistributiveLatticeCongruence(
             program.filterIsInstance<AuthorityDelegationDeclarationNode>()
@@ -32,13 +30,5 @@ class HostTrustConfiguration private constructor(val program: ProgramNode) {
 
     fun actsFor(from: Label, to: Label) = actsFor(from, to, congruence)
 
-    fun equals(from: Label, to: Label) =
-        actsFor(from, to) && actsFor(to, from)
-
-    companion object : AnalysisProvider<HostTrustConfiguration> {
-        private fun construct(program: ProgramNode) =
-            HostTrustConfiguration(program)
-
-        override fun get(program: ProgramNode): HostTrustConfiguration = program.cached(::construct)
-    }
+    fun equals(from: Label, to: Label) = actsFor(from, to) && actsFor(to, from)
 }

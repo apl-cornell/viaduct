@@ -63,7 +63,7 @@ class ZKPVerifierInterpreter(
     private val ensureInit = ZKPInit
 
     private val prover = (runtime.projection.protocol as ZKP).prover
-    private val typeAnalysis = TypeAnalysis.get(program)
+    private val typeAnalysis = program.analyses.get<TypeAnalysis>()
 
     private val tempStack: Stack<PersistentMap<Temporary, Value>> = Stack()
 
@@ -121,6 +121,7 @@ class ZKPVerifierInterpreter(
             } else {
                 0
             }
+
             else -> throw Exception("value.toInt: Unknown value type: $this")
         }
     }
@@ -138,6 +139,7 @@ class ZKPVerifierInterpreter(
                     else -> throw Error("toValue: cannot convert value $this to boolean")
                 }
             }
+
             is IntegerType -> IntegerValue(this)
             else -> throw Exception("toValue: cannot convert type $t")
         }
@@ -165,6 +167,7 @@ class ZKPVerifierInterpreter(
                 val length = runCleartextExpr(arguments[0]) as IntegerValue
                 ZKPObject.ZKPVectorObject(length.value, length.type.defaultValue, wireGenerator)
             }
+
             else -> throw Exception("unknown object")
         }
     }
@@ -180,17 +183,20 @@ class ZKPVerifierInterpreter(
             } else {
                 throw Exception("bad query")
             }
+
             is ZKPObject.ZKPMutableCell -> if (query.value is Get) {
                 obj.value
             } else {
                 throw Exception("bad query")
             }
+
             is ZKPObject.ZKPVectorObject -> if (query.value is Get) {
                 val index = runCleartextExpr(args[0]) as IntegerValue
                 obj.gates[index.value]
             } else {
                 throw Exception("bad query")
             }
+
             ZKPObject.ZKPNullObject -> throw Exception("null query")
         }
 
@@ -208,6 +214,7 @@ class ZKPVerifierInterpreter(
                 val args = expr.arguments.map { getExprWire(it) }
                 wireGenerator.mkOp(expr.operator, args)
             }
+
             is QueryNode -> runQuery(getObject(getObjectLocation(expr.variable.value)), expr.query, expr.arguments)
             is DeclassificationNode -> getExprWire(expr.expression)
             is EndorsementNode -> getExprWire(expr.expression)
@@ -232,28 +239,34 @@ class ZKPVerifierInterpreter(
                 when (val updateValue = stmt.update.value) {
                     is io.github.aplcornell.viaduct.syntax.datatypes.Set ->
                         o.value = getAtomicExprWire(stmt.arguments[0])
+
                     is io.github.aplcornell.viaduct.syntax.datatypes.Modify -> {
                         val arg = getAtomicExprWire(stmt.arguments[0])
                         o.value = wireGenerator.mkOp(updateValue.operator, listOf(o.value, arg))
                     }
+
                     else ->
                         throw Exception("runtime error")
                 }
             }
+
             is ZKPObject.ZKPVectorObject -> {
                 val index = runCleartextExpr(stmt.arguments[0]) as IntegerValue
                 when (val updateValue = stmt.update.value) {
                     is io.github.aplcornell.viaduct.syntax.datatypes.Set ->
                         o.gates[index.value] = getAtomicExprWire(stmt.arguments[1])
+
                     is io.github.aplcornell.viaduct.syntax.datatypes.Modify -> {
                         val arg = getAtomicExprWire(stmt.arguments[1])
                         o.gates[index.value] =
                             wireGenerator.mkOp(updateValue.operator, listOf(o.gates[index.value], arg))
                     }
+
                     else ->
                         throw Exception("runtime error")
                 }
             }
+
             ZKPObject.ZKPNullObject -> throw Exception("runtime error")
         }
     }

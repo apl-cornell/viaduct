@@ -15,7 +15,7 @@ import io.github.aplcornell.viaduct.syntax.intermediate.VariableDeclarationNode
 import io.github.aplcornell.viaduct.util.subsequences
 
 class CommitmentProtocolFactory(val program: ProgramNode) : ProtocolFactory {
-    private val nameAnalysis = NameAnalysis.get(program)
+    private val nameAnalysis = program.analyses.get<NameAnalysis>()
 
     private val protocols: Set<Protocol> = run {
         val hostSubsets = program.hosts.sorted().subsequences().map { it.toSet() }

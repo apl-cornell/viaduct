@@ -1,13 +1,13 @@
 package io.github.aplcornell.viaduct.security
 
 import io.github.aplcornell.viaduct.algebra.FreeDistributiveLattice
+import io.github.aplcornell.viaduct.analysis.HostTrustConfiguration
 import io.github.aplcornell.viaduct.prettyprinting.Document
 import io.github.aplcornell.viaduct.prettyprinting.PrettyPrintable
 import io.github.aplcornell.viaduct.prettyprinting.plus
 import io.github.aplcornell.viaduct.prettyprinting.times
 import io.github.aplcornell.viaduct.prettyprinting.tupled
 import io.github.aplcornell.viaduct.syntax.Host
-import io.github.aplcornell.viaduct.syntax.HostTrustConfiguration
 import io.github.aplcornell.viaduct.syntax.LabelVariable
 
 sealed class LabelExpression : PrettyPrintable {

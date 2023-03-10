@@ -17,6 +17,9 @@ dependencies {
     implementation(project(":shared"))
     implementation(project(":runtime"))
 
+    // Kotlin
+    implementation(kotlin("reflect"))
+
     // Data structures
     implementation("org.jetbrains.kotlinx:kotlinx-collections-immutable-jvm:0.3.5")
     implementation("com.uchuhimo:kotlinx-bimap:1.2")
@@ -41,7 +44,6 @@ dependencies {
 
     // Testing
     testImplementation(project(":test-utilities"))
-    testImplementation(kotlin("reflect"))
 }
 
 /** Compilation */

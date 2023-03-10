@@ -22,7 +22,7 @@ fun ProgramNode.annotateWithProtocols(assignment: ProtocolAssignment): ProgramNo
 
 /** Annotate AST with protocol assignment. */
 private class ProtocolAnnotator(val program: ProgramNode, val selection: ProtocolAssignment) {
-    private val nameAnalysis = NameAnalysis.get(program)
+    private val nameAnalysis = program.analyses.get<NameAnalysis>()
 
     fun run(stmt: StatementNode): StatementNode {
         return when (stmt) {

@@ -1,8 +1,6 @@
 package io.github.aplcornell.viaduct.syntax.intermediate
 
-import io.github.aplcornell.viaduct.attributes.Attribute
-import io.github.aplcornell.viaduct.attributes.Tree
-import io.github.aplcornell.viaduct.attributes.attribute
+import io.github.aplcornell.viaduct.analysis.AnalysisProvider
 import io.github.aplcornell.viaduct.passes.elaborated
 import io.github.aplcornell.viaduct.syntax.FunctionName
 import io.github.aplcornell.viaduct.syntax.Host
@@ -38,20 +36,7 @@ private constructor(
     val functionMap: Map<FunctionName, FunctionDeclarationNode>
         get() = functions.associateBy { function -> function.name.value }
 
-    /** A lazily constructed [Tree] instance for the program. */
-    val tree: Tree<Node, ProgramNode> by lazy { Tree(this) }
-
-    private val functionCache: Attribute<(ProgramNode) -> Any?, Any?> = attribute {
-        this.invoke(this@ProgramNode)
-    }
-
-    /**
-     * Applies [function] to this program and returns the results.
-     * The result is cached, so future calls with the same function do not evaluate [function].
-     */
-    @Suppress("UNCHECKED_CAST")
-    fun <T> cached(function: (ProgramNode) -> T): T =
-        functionCache(function) as T
+    val analyses: AnalysisProvider<Node, ProgramNode> = AnalysisProvider(this)
 
     override val children: Iterable<TopLevelDeclarationNode>
         get() = declarations

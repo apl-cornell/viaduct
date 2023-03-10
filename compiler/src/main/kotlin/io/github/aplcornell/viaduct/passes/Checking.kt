@@ -17,11 +17,13 @@ private val logger = KotlinLogging.logger("Check")
  * @throws CompilationError if there are errors in the program.
  */
 fun ProgramNode.check() {
-    logger.duration("name analysis") { NameAnalysis.get(this).check() }
+    logger.duration("name analysis") { analyses.get<NameAnalysis>().check() }
 
-    logger.duration("type analysis") { TypeAnalysis.get(this).check() }
+    logger.duration("type analysis") { analyses.get<TypeAnalysis>().check() }
 
-    logger.duration("out parameter initialization analysis") { OutParameterInitializationAnalysis.get(this).check() }
+    logger.duration("out parameter initialization analysis") {
+        analyses.get<OutParameterInitializationAnalysis>().check()
+    }
 
-    logger.duration("information flow analysis") { InformationFlowAnalysis.get(this).check() }
+    logger.duration("information flow analysis") { analyses.get<InformationFlowAnalysis>().check() }
 }

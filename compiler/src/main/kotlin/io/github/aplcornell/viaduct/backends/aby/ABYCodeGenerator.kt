@@ -67,9 +67,9 @@ private data class ABYPair(val server: Host, val client: Host)
 class ABYCodeGenerator(
     context: CodeGeneratorContext,
 ) : AbstractCodeGenerator(context) {
-    private val typeAnalysis: TypeAnalysis = TypeAnalysis.get(context.program)
-    private val nameAnalysis: NameAnalysis = NameAnalysis.get(context.program)
-    private val protocolAnalysis: ProtocolAnalysis = ProtocolAnalysis(context.program, context.protocolComposer)
+    private val typeAnalysis = context.program.analyses.get<TypeAnalysis>()
+    private val nameAnalysis = context.program.analyses.get<NameAnalysis>()
+    private val protocolAnalysis = ProtocolAnalysis(context.program, context.protocolComposer)
     private var protocolToABYPartyMap: MutableMap<ABYPair, String> = mutableMapOf()
 
     companion object {

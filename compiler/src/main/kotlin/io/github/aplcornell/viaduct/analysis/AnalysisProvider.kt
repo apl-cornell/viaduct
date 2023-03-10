@@ -13,7 +13,7 @@ class AnalysisProvider<Node : TreeNode<Node>, RootNode : Node>(rootNode: RootNod
     val tree: Tree<Node, RootNode> by lazy { Tree(rootNode) }
 
     val KClass<Analysis<RootNode>>.instance: Analysis<RootNode> by attribute {
-        logger.debug("Constructing instance for $this")
+        logger.debug("Constructing instance for $this.")
         val constructor = this.constructors.first()
         val arguments = constructor.parameters.map {
             when (it.type.classifier) {

@@ -36,10 +36,7 @@ private constructor(
     val functionMap: Map<FunctionName, FunctionDeclarationNode>
         get() = functions.associateBy { function -> function.name.value }
 
-    private val internal_analyses = AnalysisProvider(this)
-
-    val analyses: AnalysisProvider<Node, ProgramNode>
-        get() = internal_analyses
+    val analyses: AnalysisProvider<Node, ProgramNode> = AnalysisProvider(this)
 
     override val children: Iterable<TopLevelDeclarationNode>
         get() = declarations

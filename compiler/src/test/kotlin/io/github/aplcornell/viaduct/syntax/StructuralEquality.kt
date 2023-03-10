@@ -1,5 +1,6 @@
 package io.github.aplcornell.viaduct.syntax
 
+import io.github.aplcornell.viaduct.analysis.AnalysisProvider
 import io.github.aplcornell.viaduct.prettyprinting.PrettyPrintable
 import org.junit.jupiter.api.assertThrows
 import org.opentest4j.AssertionFailedError
@@ -23,6 +24,9 @@ internal fun assertStructurallyNotEquals(expected: HasSourceLocation, actual: Ha
 private fun assertEquals(expected: Any?, actual: Any?) {
     when {
         expected is SourceLocation && actual is SourceLocation ->
+            return
+
+        expected is AnalysisProvider<*, *> && actual is AnalysisProvider<*, *> ->
             return
 
         expected is List<*> && actual is List<*> -> {

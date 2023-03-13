@@ -3,6 +3,7 @@ package io.github.aplcornell.viaduct.parsing
 import io.github.aplcornell.viaduct.backends.cleartext.Local
 import io.github.aplcornell.viaduct.backends.cleartext.LocalProtocolParser
 import io.github.aplcornell.viaduct.errors.CompilationError
+import io.github.aplcornell.viaduct.errors.MalformedProtocolAnnotationError
 import io.github.aplcornell.viaduct.errors.TypeMismatchError
 import io.github.aplcornell.viaduct.errors.UndefinedNameError
 import io.github.aplcornell.viaduct.syntax.ArgumentLabel
@@ -47,9 +48,9 @@ class ProtocolArguments internal constructor(private val arguments: NamedArgumen
     private val usedArguments: MutableSet<String> = mutableSetOf()
 
     /**
-     * Returns the argument associated with label [label], automatically casting it to type [V].
+     * Returns the argument associated with [label], automatically casting it to type [V].
      *
-     * @throws UndefinedNameError if there is no argument with label [label].
+     * @throws UndefinedNameError if there is no argument associated with [label].
      * @throws TypeMismatchError if the argument does not have type [V].
      */
     inline fun <reified V : Value> get(label: String): V {
@@ -63,14 +64,19 @@ class ProtocolArguments internal constructor(private val arguments: NamedArgumen
                 when (V::class) {
                     BooleanValue::class ->
                         BooleanType
+
                     IntegerValue::class ->
                         IntegerType
+
                     StringValue::class ->
                         StringType
+
                     HostValue::class ->
                         HostType
+
                     HostSetValue::class ->
                         HostSetType
+
                     else ->
                         throw RuntimeException("Unexpected value type ${V::class}.")
                 }
@@ -80,11 +86,29 @@ class ProtocolArguments internal constructor(private val arguments: NamedArgumen
     }
 
     /**
-     * Returns the argument associated with label [label].
+     * Similar to [get], retrieves the argument associated with [label].
+     * Applies [check] to the argument before returning,
+     * converting [IllegalArgumentException] to [MalformedProtocolAnnotationError] if thrown.
+     *
+     * @throws UndefinedNameError if there is no argument associated with [label].
+     * @throws TypeMismatchError if the argument does not have type [V].
+     * @throws MalformedProtocolAnnotationError if [check] throws an [IllegalArgumentException].
+     */
+    inline fun <reified V : Value> getAndAlso(label: String, check: (argument: V) -> Unit) =
+        try {
+            val argument = this.get<V>(label)
+            check(argument)
+            argument
+        } catch (e: IllegalArgumentException) {
+            throw MalformedProtocolAnnotationError(this.getArgument(label), e.message!!)
+        }
+
+    /**
+     * Returns the argument associated with [label].
      *
      * It is usually better to use [get].
      *
-     * @throws UndefinedNameError if there is no argument with label [label].
+     * @throws UndefinedNameError if there is no argument associated with [label].
      */
     fun getArgument(label: String): ValueNode {
         usedArguments.add(label)

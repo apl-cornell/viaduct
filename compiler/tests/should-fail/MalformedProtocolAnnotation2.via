@@ -1,0 +1,7 @@
+/* MalformedProtocolAnnotationError */
+
+host alice
+
+fun main() {
+    val x:int@Commitment(sender = alice, receivers = {}) = 5;
+}

@@ -1,0 +1,33 @@
+host alice
+host bob
+
+circuit fun <> f@BoolABY(client = bob, server = alice)(
+  c: bool[2],
+  d: bool[2]
+) ->
+  not: bool[2],
+  and: bool[2],
+  or: bool[2]
+ {
+    val not[i < 2]: bool[2] = !c[i]
+    val and[i < 2]: bool[2] = c[i] && d[i]
+    val or[i < 2]:  bool[2] = c[i] || d[i]
+    return not, and, or
+}
+
+fun <> main() -> {
+    val aliceLocal@Local(host = alice) = alice.input<bool[2]>()
+    val bobLocal@Local(host = bob) = bob.input<bool[2]>()
+
+    val not@Replication(hosts = {alice, bob}),
+        and@Replication(hosts = {alice, bob}),
+        or@Replication(hosts = {alice, bob})
+        = f<>(aliceLocal, bobLocal)
+    val a0@Local(host=alice) = alice.output<bool[2]>(not)
+    val b0@Local(host=bob) = bob.output<bool[2]>(not)
+    val a1@Local(host=alice) = alice.output<bool[2]>(and)
+    val b1@Local(host=bob) = bob.output<bool[2]>(and)
+    val a2@Local(host=alice) = alice.output<bool[2]>(or)
+    val b2@Local(host=bob) = bob.output<bool[2]>(or)
+    return
+}

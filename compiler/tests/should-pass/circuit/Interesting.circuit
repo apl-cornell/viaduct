@@ -3,14 +3,14 @@ host bob
 
 /* Biometric matching */
 circuit fun <n, d> biometric@YaoABY(client = bob, server = alice)(database: int[n, d], sample: int[d]) → dist: int[] {
-    val dists[i < n]: int[] = reduce(::+, 0) { j < d -> (database[i, j] - sample[j]) * (database[i, j] - sample[j]) }
+    val dists[i < n]: int[n] = reduce(::+, 0) { j < d -> (database[i, j] - sample[j]) * (database[i, j] - sample[j]) }
     val result[]: int[] = reduce(::min, 999999) { i < n -> dists[i] }
     return result
 }
 
 /* Calculates the Herfindahl-Hirschman index for market competitiveness. */
 circuit fun <stores> hhi@YaoABY(client = bob, server = alice)(a_sales: int[stores], b_sales: int[stores]) → hhi: int[] {
-    val revenues[i < 2]: int[] = reduce(::+, 0) { j < stores -> mux(i == 0, a_sales[j], b_sales[j]) }
+    val revenues[i < 2]: int[2] = reduce(::+, 0) { j < stores -> mux(i == 0, a_sales[j], b_sales[j]) }
     val total[]: int[] = reduce(::+, 0) { i < 2 -> revenues[i] }
     val result[]: int[] = reduce(::+, 0) { i < 2 -> ((100 * revenues[i]) / total[]) * ((100 * revenues[i]) / total[]) }
     return result
@@ -26,7 +26,7 @@ circuit fun <n> historical@YaoABY(client = bob, server = alice)(a: int[n], b: in
 
 /* One-round bidding for n items; not two-rounds because inputs/outputs not permitted in circuits */
 circuit fun <n> bidding@YaoABY(client = bob, server = alice)(a: int[n], b: int[n]) → a_wins: bool[n] {
-    val result[i < n]: int[] = a[i] < b[i]
+    val result[i < n]: int[n] = a[i] < b[i]
     return result
 }
 

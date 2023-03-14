@@ -1,0 +1,16 @@
+host alice
+host bob
+
+circuit fun <> difference@ArithABY(client = bob, server = alice)(aliceLocal: int[], bobLocal: int[]) -> d: int[] {
+  val res[]: int[] = aliceLocal[] - bobLocal[]
+  return res
+}
+
+fun <> main() -> {
+    val aliceLocal@Local(host = alice) = alice.input<int[]>()
+    val bobLocal@Local(host = bob) = bob.input<int[]>()
+    val clearDiff@Replication(hosts = {alice, bob}) = difference<>(aliceLocal, bobLocal)
+    val a@Local(host=alice) = alice.output<int[]>(clearDiff)
+    val b@Local(host=bob) = bob.output<int[]>(clearDiff)
+    return
+}

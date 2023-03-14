@@ -1,0 +1,23 @@
+host alice
+host bob
+
+circuit fun <> choose@BoolABY(client = bob, server = alice)(
+  a: int[2],
+  b: bool[]
+) -> m: int[]
+{
+    val result[]: int[] = mux(b[], a[0], a[1])
+    return result
+}
+
+fun <> main() -> {
+    val options@Local(host = alice) = alice.input<int[2]>()
+    val choice@Local(host = bob) = bob.input<bool[]>()
+
+    val result@Replication(hosts = {alice, bob}) = choose<>(options, choice)
+
+    val a0@Local(host=alice) = alice.output<int[]>(result)
+    val b0@Local(host=bob) = bob.output<int[]>(result)
+
+    return
+}

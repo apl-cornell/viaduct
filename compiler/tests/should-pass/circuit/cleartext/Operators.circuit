@@ -1,0 +1,98 @@
+host alice
+host bob
+
+circuit fun <> operators@Replication(hosts = {alice, bob})(a: int[], b: int[], c: bool[], d: bool[]) ->
+  neg: int[],
+  add: int[],
+  sub: int[],
+  mul: int[],
+  div: int[],
+  mnn: int[],
+  mxx: int[],
+  not: bool[],
+  and: bool[],
+  or: bool[],
+  equ: bool[],
+  neq: bool[],
+  lt: bool[],
+  gt: bool[],
+  leq: bool[],
+  geq: bool[] {
+    val neg[]: int[] = -a[]
+    val add[]: int[] = a[] + b[]
+    val sub[]: int[] = a[] - b[]
+    val mul[]: int[] = a[] * b[]
+    val div[]: int[] = a[] / b[]
+    val mnn[]: int[] = min(a[], b[])
+    val mxx[]: int[] = max(a[], b[])
+
+    val not[]: bool[] = !c[]
+    val and[]: bool[] = c[] && d[]
+    val or[]:  bool[] = c[] || d[]
+    val equ[]: bool[] = a[] == b[]
+    val neq[]: bool[] = a[] != b[]
+    val lt[]: bool[] = a[] < b[]
+    val gt[]: bool[] = a[] > b[]
+    val leq[]: bool[] = a[] <= b[]
+    val geq[]: bool[] = a[] >= b[]
+
+    return neg, add, sub, mul, div, mnn, mxx, not, and, or, equ, neq, lt, gt, leq, geq
+}
+
+fun <> main() -> {
+    val aliceInt@Local(host = alice) = alice.input<int[]>()
+    val bobInt@Local(host = bob) = bob.input<int[]>()
+    val aliceBool@Local(host = alice) = alice.input<bool[]>()
+    val bobBool@Local(host = bob) = bob.input<bool[]>()
+
+    val neg@Replication(hosts = {alice, bob}),
+        add@Replication(hosts = {alice, bob}),
+        sub@Replication(hosts = {alice, bob}),
+        mul@Replication(hosts = {alice, bob}),
+        div@Replication(hosts = {alice, bob}),
+        mnn@Replication(hosts = {alice, bob}),
+        mxx@Replication(hosts = {alice, bob}),
+        not@Replication(hosts = {alice, bob}),
+        and@Replication(hosts = {alice, bob}),
+        or@Replication(hosts = {alice, bob}),
+        equ@Replication(hosts = {alice, bob}),
+        neq@Replication(hosts = {alice, bob}),
+        lt@Replication(hosts = {alice, bob}),
+        gt@Replication(hosts = {alice, bob}),
+        leq@Replication(hosts = {alice, bob}),
+        geq@Replication(hosts = {alice, bob})
+        = operators<>(aliceInt, bobInt, aliceBool, bobBool)
+    val a0@Local(host=alice) = alice.output<int[]>(neg)
+    val b0@Local(host=bob) = bob.output<int[]>(neg)
+    val a1@Local(host=alice) = alice.output<int[]>(add)
+    val b1@Local(host=bob) = bob.output<int[]>(add)
+    val a2@Local(host=alice) = alice.output<int[]>(sub)
+    val b2@Local(host=bob) = bob.output<int[]>(sub)
+    val a3@Local(host=alice) = alice.output<int[]>(mul)
+    val b3@Local(host=bob) = bob.output<int[]>(mul)
+    val a4@Local(host=alice) = alice.output<int[]>(div)
+    val b4@Local(host=bob) = bob.output<int[]>(div)
+    val a5@Local(host=alice) = alice.output<int[]>(mnn)
+    val b5@Local(host=bob) = bob.output<int[]>(mnn)
+    val a6@Local(host=alice) = alice.output<int[]>(mxx)
+    val b6@Local(host=bob) = bob.output<int[]>(mxx)
+    val a7@Local(host=alice) = alice.output<bool[]>(not)
+    val b7@Local(host=bob) = bob.output<bool[]>(not)
+    val a8@Local(host=alice) = alice.output<bool[]>(and)
+    val b8@Local(host=bob) = bob.output<bool[]>(and)
+    val a9@Local(host=alice) = alice.output<bool[]>(or)
+    val b9@Local(host=bob) = bob.output<bool[]>(or)
+    val a10@Local(host=alice) = alice.output<bool[]>(equ)
+    val b10@Local(host=bob) = bob.output<bool[]>(equ)
+    val a11@Local(host=alice) = alice.output<bool[]>(neq)
+    val b11@Local(host=bob) = bob.output<bool[]>(neq)
+    val a12@Local(host=alice) = alice.output<bool[]>(lt)
+    val b12@Local(host=bob) = bob.output<bool[]>(lt)
+    val a13@Local(host=alice) = alice.output<bool[]>(gt)
+    val b13@Local(host=bob) = bob.output<bool[]>(gt)
+    val a14@Local(host=alice) = alice.output<bool[]>(leq)
+    val b14@Local(host=bob) = bob.output<bool[]>(leq)
+    val a15@Local(host=alice) = alice.output<bool[]>(geq)
+    val b15@Local(host=bob) = bob.output<bool[]>(geq)
+    return
+}

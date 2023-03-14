@@ -1,0 +1,37 @@
+host alice
+host bob
+
+circuit fun <> arith@ArithABY(client = bob, server = alice)(
+  a: int[2],
+  b: int[2]
+) ->
+  neg: int[2],
+  add: int[2],
+  sub: int[2],
+  mul: int[2] {
+    val neg[i < 2]: int[2] = -a[i]
+    val add[i < 2]: int[2] = a[i] + b[i]
+    val sub[i < 2]: int[2] = a[i] - b[i]
+    val mul[i < 2]: int[2] = a[i] * b[i]
+    return neg, add, sub, mul
+}
+
+fun <> main() -> {
+    val aliceLocal@Local(host = alice) = alice.input<int[2]>()
+    val bobLocal@Local(host = bob) = bob.input<int[2]>()
+
+    val neg@Replication(hosts = {alice, bob}),
+        add@Replication(hosts = {alice, bob}),
+        sub@Replication(hosts = {alice, bob}),
+        mul@Replication(hosts = {alice, bob})
+        = arith<>(aliceLocal, bobLocal)
+    val a0@Local(host=alice) = alice.output<int[2]>(neg)
+    val b0@Local(host=bob) = bob.output<int[2]>(neg)
+    val a1@Local(host=alice) = alice.output<int[2]>(add)
+    val b1@Local(host=bob) = bob.output<int[2]>(add)
+    val a2@Local(host=alice) = alice.output<int[2]>(sub)
+    val b2@Local(host=bob) = bob.output<int[2]>(sub)
+    val a3@Local(host=alice) = alice.output<int[2]>(mul)
+    val b3@Local(host=bob) = bob.output<int[2]>(mul)
+    return
+}

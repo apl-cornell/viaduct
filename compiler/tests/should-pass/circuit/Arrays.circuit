@@ -1,0 +1,16 @@
+host alice
+
+circuit fun <m, n> transpose@Local(host = alice)(a: int[m, n]) ->
+  b: int[n, m] {
+    val result[i < n, j < m]: int[n, m] = a[j, i]
+    return result
+}
+
+fun <> main() -> {
+    val in@Local(host = alice) = alice.input<int[2, 3]>()
+    val = alice.output<int[2, 3]>(in)
+
+    val tr@Local(host = alice) = transpose<2, 3>(in)
+    val = alice.output<int[3, 2]>(tr)
+    return
+}

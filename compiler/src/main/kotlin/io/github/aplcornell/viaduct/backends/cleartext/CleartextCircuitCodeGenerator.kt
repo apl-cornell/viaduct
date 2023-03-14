@@ -6,7 +6,6 @@ import io.github.aplcornell.viaduct.circuitcodegeneration.AbstractCodeGenerator
 import io.github.aplcornell.viaduct.circuitcodegeneration.Argument
 import io.github.aplcornell.viaduct.circuitcodegeneration.CodeGeneratorContext
 import io.github.aplcornell.viaduct.circuitcodegeneration.UnsupportedCommunicationException
-import io.github.aplcornell.viaduct.circuitcodegeneration.forEachIndexed
 import io.github.aplcornell.viaduct.circuitcodegeneration.receiveExpected
 import io.github.aplcornell.viaduct.circuitcodegeneration.receiveReplicated
 import io.github.aplcornell.viaduct.syntax.BinaryOperator
@@ -96,13 +95,7 @@ class CleartextCircuitCodeGenerator(context: CodeGeneratorContext) : AbstractCod
         val receivingHosts = target.hosts - source.hosts
         return when (context.host) {
             in source.hosts -> {
-                receivingHosts.forEach {
-                    builder.add(
-                        argument.value.forEachIndexed(argument.type.shape, context) { _, value ->
-                            context.send(value, it)
-                        },
-                    )
-                }
+                receivingHosts.forEach { builder.addStatement("%L", context.send(argument.value, it)) }
                 argument.value
             }
 

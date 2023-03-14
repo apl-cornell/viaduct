@@ -23,11 +23,11 @@ fun <> main() -> {
         and@Replication(hosts = {alice, bob}),
         or@Replication(hosts = {alice, bob})
         = f<>(aliceLocal, bobLocal)
-    val a0@Local(host=alice) = alice.output<bool[2]>(not)
-    val b0@Local(host=bob) = bob.output<bool[2]>(not)
-    val a1@Local(host=alice) = alice.output<bool[2]>(and)
-    val b1@Local(host=bob) = bob.output<bool[2]>(and)
-    val a2@Local(host=alice) = alice.output<bool[2]>(or)
-    val b2@Local(host=bob) = bob.output<bool[2]>(or)
+    val = alice.output<bool[2]>(not)
+    val = bob.output<bool[2]>(not)
+    val = alice.output<bool[2]>(and)
+    val = bob.output<bool[2]>(and)
+    val = alice.output<bool[2]>(or)
+    val = bob.output<bool[2]>(or)
     return
 }

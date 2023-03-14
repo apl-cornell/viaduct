@@ -16,8 +16,8 @@ fun <> main() -> {
 
     val result@Replication(hosts = {alice, bob}) = choose<>(options, choice)
 
-    val a0@Local(host=alice) = alice.output<int[]>(result)
-    val b0@Local(host=bob) = bob.output<int[]>(result)
+    val = alice.output<int[]>(result)
+    val = bob.output<int[]>(result)
 
     return
 }

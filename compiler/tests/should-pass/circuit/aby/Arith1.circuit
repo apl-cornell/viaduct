@@ -10,7 +10,7 @@ fun <> main() -> {
     val aliceLocal@Local(host = alice) = alice.input<int[]>()
     val bobLocal@Local(host = bob) = bob.input<int[]>()
     val clearDiff@Replication(hosts = {alice, bob}) = difference<>(aliceLocal, bobLocal)
-    val a@Local(host=alice) = alice.output<int[]>(clearDiff)
-    val b@Local(host=bob) = bob.output<int[]>(clearDiff)
+    val = alice.output<int[]>(clearDiff)
+    val = bob.output<int[]>(clearDiff)
     return
 }

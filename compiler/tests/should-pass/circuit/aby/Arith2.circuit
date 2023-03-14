@@ -25,13 +25,13 @@ fun <> main() -> {
         sub@Replication(hosts = {alice, bob}),
         mul@Replication(hosts = {alice, bob})
         = arith<>(aliceLocal, bobLocal)
-    val a0@Local(host=alice) = alice.output<int[2]>(neg)
-    val b0@Local(host=bob) = bob.output<int[2]>(neg)
-    val a1@Local(host=alice) = alice.output<int[2]>(add)
-    val b1@Local(host=bob) = bob.output<int[2]>(add)
-    val a2@Local(host=alice) = alice.output<int[2]>(sub)
-    val b2@Local(host=bob) = bob.output<int[2]>(sub)
-    val a3@Local(host=alice) = alice.output<int[2]>(mul)
-    val b3@Local(host=bob) = bob.output<int[2]>(mul)
+    val = alice.output<int[2]>(neg)
+    val = bob.output<int[2]>(neg)
+    val = alice.output<int[2]>(add)
+    val = bob.output<int[2]>(add)
+    val = alice.output<int[2]>(sub)
+    val = bob.output<int[2]>(sub)
+    val = alice.output<int[2]>(mul)
+    val = bob.output<int[2]>(mul)
     return
 }

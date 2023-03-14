@@ -4,19 +4,18 @@ import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.MemberName
 import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.TypeName
-import com.squareup.kotlinpoet.joinToCode
+import io.github.aplcornell.viaduct.syntax.Arguments
 import io.github.aplcornell.viaduct.syntax.Protocol
 import io.github.aplcornell.viaduct.syntax.circuit.ArrayTypeNode
 import io.github.aplcornell.viaduct.syntax.circuit.CircuitDeclarationNode
 import io.github.aplcornell.viaduct.syntax.circuit.CircuitLetNode
 import io.github.aplcornell.viaduct.syntax.circuit.CircuitStatementNode
 import io.github.aplcornell.viaduct.syntax.circuit.ExpressionNode
-import io.github.aplcornell.viaduct.syntax.circuit.LiteralNode
+import io.github.aplcornell.viaduct.syntax.circuit.IndexExpressionNode
 import io.github.aplcornell.viaduct.syntax.circuit.LookupNode
 import io.github.aplcornell.viaduct.syntax.circuit.OperatorApplicationNode
 import io.github.aplcornell.viaduct.syntax.circuit.OperatorNode
 import io.github.aplcornell.viaduct.syntax.circuit.ReduceNode
-import io.github.aplcornell.viaduct.syntax.circuit.ReferenceNode
 import io.github.aplcornell.viaduct.syntax.types.ValueType
 
 abstract class AbstractCodeGenerator(val context: CodeGeneratorContext) : CodeGenerator {
@@ -52,37 +51,21 @@ abstract class AbstractCodeGenerator(val context: CodeGeneratorContext) : CodeGe
     private fun generate(protocol: Protocol, builder: CodeBlock.Builder, stmt: CircuitStatementNode) {
         when (stmt) {
             is CircuitLetNode -> {
-                val rhsBuilder = CodeBlock.builder()
-                for (indexParameter in stmt.indices) {
-                    rhsBuilder.beginControlFlow(
-                        "%T(%L){ %N -> ",
-                        Array::class,
-                        indexExpression(indexParameter.bound, context),
-                        context.kotlinName(indexParameter.name.value),
-                    )
-                }
-                rhsBuilder.add("%L", exp(protocol, stmt.value))
-                repeat(stmt.indices.size) { rhsBuilder.endControlFlow() }
-                builder.addStatement("val %N = %L", context.kotlinName(stmt.name.value), rhsBuilder.build())
+                builder.addStatement(
+                    "val %N = %L",
+                    context.kotlinName(stmt.name.value),
+                    stmt.indices.new(context, exp(protocol, stmt.value)),
+                )
             }
         }
     }
 
     open fun exp(protocol: Protocol, expr: ExpressionNode): CodeBlock = when (expr) {
-        is LiteralNode -> {
-            CodeBlock.of("%L", expr.value)
-        }
-
-        is ReferenceNode -> {
-            CodeBlock.of("%N", context.kotlinName(expr.name.value))
-        }
+        is IndexExpressionNode -> indexExpression(expr, context)
 
         is LookupNode -> {
-            CodeBlock.of(
-                "%N%L",
-                context.kotlinName(expr.variable.value),
-                expr.indices.map { CodeBlock.of("[%L]", indexExpression(it, context)) }.joinToCode(separator = ""),
-            )
+            CodeBlock.of("%N", context.kotlinName(expr.variable.value))
+                .lookup(expr.indices.map { indexExpression(it, context) })
         }
 
         is ReduceNode -> reduce(protocol, expr)
@@ -97,36 +80,24 @@ abstract class AbstractCodeGenerator(val context: CodeGeneratorContext) : CodeGe
 
     private fun reduce(protocol: Protocol, r: ReduceNode): CodeBlock {
         val builder = CodeBlock.builder()
-        builder.beginControlFlow(
-            "if (%L <= 0) %L else",
-            indexExpression(r.indices.bound, context),
-            exp(protocol, r.defaultValue),
-        )
-        val acc = context.newTemporary("acc")
-        val element = context.newTemporary("element")
-        builder.add(
-            listOf(r.indices.bound).new(context) {
-                val innerBuilder = CodeBlock.builder()
-                innerBuilder.add("val %L = %L\n", context.kotlinName(r.indices.name.value), it.first())
-                innerBuilder.add(exp(protocol, r.body))
-                innerBuilder.build()
-            },
-        )
+        builder.add(Arguments(listOf(r.indices), r.indices.bound.sourceLocation).new(context, exp(protocol, r.body)))
+        val left = context.newTemporary("left")
+        val right = context.newTemporary("right")
         builder.beginControlFlow(
             ".%M { %N, %N ->",
-            MemberName("kotlin.collections", "reduce"),
-            acc,
-            element,
+            MemberName("kotlin.collections", "reduceOrNull"),
+            left,
+            right,
         )
         builder.add(
             operatorApplication(
                 protocol,
                 r.operator,
-                listOf(CodeBlock.of(acc), CodeBlock.of(element)),
+                listOf(CodeBlock.of(left), CodeBlock.of(right)),
             ),
         )
         builder.endControlFlow()
-        builder.endControlFlow()
+        builder.add("?: %L", exp(protocol, r.defaultValue))
         return builder.build()
     }
 

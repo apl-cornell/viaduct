@@ -15,6 +15,7 @@ import com.squareup.kotlinpoet.TypeSpec
 import com.squareup.kotlinpoet.asClassName
 import com.squareup.kotlinpoet.joinToCode
 import io.github.aplcornell.viaduct.circuitanalysis.NameAnalysis
+import io.github.aplcornell.viaduct.circuitanalysis.protocols
 import io.github.aplcornell.viaduct.runtime.Out
 import io.github.aplcornell.viaduct.runtime.ViaductGeneratedProgram
 import io.github.aplcornell.viaduct.runtime.ViaductRuntime
@@ -52,18 +53,17 @@ private class BackendCodeGenerator(
             PropertySpec.builder("runtime", ViaductRuntime::class).initializer("runtime")
                 .addModifiers(KModifier.PRIVATE).build(),
         )
-        // TODO Replace with a call to ProtocolAnalysis
-        val participatingProtocols = program.circuits.map { it.protocol.value }
-        for (protocol in participatingProtocols) {
+        for (protocol in program.protocols()) {
             for (property in codeGenerator.setup(protocol)) {
                 classBuilder.addProperty(property)
             }
         }
-        for (circuit in program.circuits) {
-            classBuilder.addFunction(generate(circuit)).build()
-        }
-        for (function in program.functions) {
-            classBuilder.addFunction(generate(function)).build()
+        for (declaration in program.declarations) {
+            when (declaration) {
+                is CircuitDeclarationNode -> classBuilder.addFunction(generate(declaration)).build()
+                is FunctionDeclarationNode -> classBuilder.addFunction(generate(declaration)).build()
+                else -> {} // Do nothing for hosts
+            }
         }
         return classBuilder.build()
     }
@@ -182,25 +182,19 @@ private class BackendCodeGenerator(
             builder.addParameter(context.kotlinName(bound.name.value), INT)
         }
         for (param in circuitDeclaration.inputs) {
-            val paramName = context.kotlinName(param.name.value)
-            val paramType = if (param.type.shape.isEmpty()) {
-                codeGenerator.paramType(protocol, param.type.elementType.value)
-            } else {
-                kotlinType(param.type.shape, codeGenerator.paramType(protocol, param.type.elementType.value))
-            }
-            builder.addParameter(paramName, paramType)
+            builder.addParameter(
+                context.kotlinName(param.name.value),
+                kotlinType(param.type.shape, codeGenerator.paramType(protocol, param.type.elementType.value)),
+            )
         }
         val outParams = circuitDeclaration.outputs.map { param ->
             val paramName = context.newTemporary(param.name.value.name + "Box")
-            val baseType = param.type.elementType.value
-            val paramType = Out::class.asClassName().parameterizedBy(
-                if (param.type.shape.isEmpty()) {
-                    codeGenerator.paramType(protocol, baseType)
-                } else {
-                    kotlinType(param.type.shape, codeGenerator.paramType(protocol, baseType))
-                },
+            builder.addParameter(
+                paramName,
+                Out::class.asClassName().parameterizedBy(
+                    kotlinType(param.type.shape, codeGenerator.paramType(protocol, param.type.elementType.value)),
+                ),
             )
-            builder.addParameter(paramName, paramType)
             CodeBlock.of(paramName)
         }
         builder.addCode(codeGenerator.circuitBody(protocol, circuitDeclaration, outParams))

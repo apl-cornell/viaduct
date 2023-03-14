@@ -9,8 +9,8 @@ import io.github.aplcornell.viaduct.syntax.circuit.Variable
 interface CodeGeneratorContext {
     val program: ProgramNode
     val host: Host
-//    val protocolComposer: ProtocolComposer
 
+    /** Returns a kotlin name for the variable [sourceName] used in the source program. */
     fun kotlinName(sourceName: Variable): String
 
     /** Returns a fresh kotlin name based on [baseName]. */

@@ -11,8 +11,10 @@ import com.squareup.kotlinpoet.TypeName
 import com.squareup.kotlinpoet.U_BYTE_ARRAY
 import io.github.aplcornell.viaduct.group
 import io.github.aplcornell.viaduct.runtime.EquivocationException
+import io.github.aplcornell.viaduct.syntax.Arguments
 import io.github.aplcornell.viaduct.syntax.Host
 import io.github.aplcornell.viaduct.syntax.circuit.IndexExpressionNode
+import io.github.aplcornell.viaduct.syntax.circuit.IndexParameterNode
 import io.github.aplcornell.viaduct.syntax.circuit.LiteralNode
 import io.github.aplcornell.viaduct.syntax.circuit.ReferenceNode
 import io.github.aplcornell.viaduct.syntax.types.BooleanType
@@ -63,6 +65,36 @@ fun indexExpression(expression: IndexExpressionNode, context: CodeGeneratorConte
     }
 }
 
+fun CodeBlock.lookup(indices: List<CodeBlock>): CodeBlock {
+    val builder = CodeBlock.builder()
+    builder.add(this)
+    indices.forEach { builder.add("[%L]", it) }
+    return builder.build()
+}
+
+/**
+ * Generates code that constructs a new array with bounds and indexing variables in the initializer determined by [this].
+ *
+ * @param init returns the value of an element.
+ */
+fun Arguments<IndexParameterNode>.new(
+    context: CodeGeneratorContext,
+    init: CodeBlock,
+): CodeBlock {
+    val builder = CodeBlock.builder()
+    for (indexParameter in this) {
+        builder.beginControlFlow(
+            "%T(%L){ %N -> ",
+            Array::class,
+            indexExpression(indexParameter.bound, context),
+            context.kotlinName(indexParameter.name.value),
+        )
+    }
+    builder.add(init)
+    repeat(this.size) { builder.endControlFlow() }
+    return builder.build()
+}
+
 /**
  * Generates code that constructs a new array with [this] shape.
  *
@@ -99,7 +131,7 @@ fun Shape.new(
  * The action is given the index and value of the processed element.
  */
 fun CodeBlock.forEachIndexed(
-    shape: List<IndexExpressionNode>,
+    shape: Shape,
     context: CodeGeneratorContext,
     action: (indices: List<CodeBlock>, value: CodeBlock) -> CodeBlock,
 ): CodeBlock {
@@ -109,21 +141,16 @@ fun CodeBlock.forEachIndexed(
         builder.beginControlFlow("for (%L in 0 until %L)", indexVar, indexExpression(size, context))
         indexVar
     }
-
-    val valueBuilder = CodeBlock.builder()
-    valueBuilder.add(this)
-    indexVariables.forEach { valueBuilder.add("[%L]", it) }
-    val value = valueBuilder.build()
-
-    builder.addStatement("%L", action(indexVariables, value))
+    builder.addStatement("%L", action(indexVariables, this.lookup(indexVariables)))
     repeat(shape.size) { builder.endControlFlow() }
-
     return builder.build()
 }
 
+/** Code for the replicated value being received from [senders], along with associated equivocation checks. */
 fun receiveReplicated(type: TypeName, senders: List<Host>, context: CodeGeneratorContext) =
     receiveExpected(context.receive(type, senders.first()), senders.first(), type, senders.drop(1), context)
 
+/** Code for receiving values from [senders] expected to match [expectedValue]. */
 fun receiveExpected(
     expectedValue: CodeBlock,
     expectedValueProvider: Host,
@@ -136,10 +163,9 @@ fun receiveExpected(
     val builder = CodeBlock.builder()
     builder.beginControlFlow("%L.also", expectedValue)
     for (host in senders) {
-        builder.addStatement(
-            "%T.assertEquals(%L, %L, %L, %L)",
+        builder.add(
+            "%T.assertEquals(it, %L, %L, %L)\n",
             EquivocationException::class,
-            expectedValue,
             context.codeOf(expectedValueProvider),
             context.receive(type, host),
             context.codeOf(host),

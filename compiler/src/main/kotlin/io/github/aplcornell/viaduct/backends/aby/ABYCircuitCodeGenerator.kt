@@ -20,9 +20,9 @@ import io.github.aplcornell.viaduct.circuitcodegeneration.Argument
 import io.github.aplcornell.viaduct.circuitcodegeneration.CodeGeneratorContext
 import io.github.aplcornell.viaduct.circuitcodegeneration.UnsupportedCommunicationException
 import io.github.aplcornell.viaduct.circuitcodegeneration.findAvailableTcpPort
+import io.github.aplcornell.viaduct.circuitcodegeneration.lookup
 import io.github.aplcornell.viaduct.circuitcodegeneration.new
 import io.github.aplcornell.viaduct.syntax.Host
-import io.github.aplcornell.viaduct.syntax.Operator
 import io.github.aplcornell.viaduct.syntax.Protocol
 import io.github.aplcornell.viaduct.syntax.circuit.CircuitDeclarationNode
 import io.github.aplcornell.viaduct.syntax.circuit.ExpressionNode
@@ -59,14 +59,17 @@ class ABYCircuitCodeGenerator(
 
     private val nameAnalysis: NameAnalysis = NameAnalysis.get(context.program)
     private var protocolToABYPartyMap: MutableMap<ABYPair, String> = mutableMapOf()
+
+    // An alias in Kotlin code for the current circuit being built, to make generated code prettier.
+    // Updated at the beginning and end of each circuit body.
     private var currentABYPartyCircuit: CodeBlock? = null
 
     companion object {
         const val BIT_LENGTH: Int = 32
     }
 
-    private fun role(protocol: Protocol, host: Host): Role =
-        if ((protocol as ABY).client == host) {
+    private fun role(protocol: ABY, host: Host): Role =
+        if (protocol.client == host) {
             Role.CLIENT
         } else {
             Role.SERVER
@@ -127,14 +130,10 @@ class ABYCircuitCodeGenerator(
     }
 
     private fun addConversionGates(
-        destProtocol: Protocol,
-        sourceProtocol: Protocol,
+        destProtocol: ABY,
+        sourceProtocol: ABY,
         kotlinName: String,
     ): CodeBlock {
-        if (sourceProtocol !is ABY || destProtocol !is ABY) {
-            return CodeBlock.of("")
-        }
-
         return when (sourceProtocol) {
             is YaoABY -> {
                 when (destProtocol) {
@@ -181,10 +180,9 @@ class ABYCircuitCodeGenerator(
         }
 
     private fun protocolToAbyPartyCircuit(
-        protocol: Protocol,
-        shareType: SharingType = protocolToShareType(protocol as ABY),
+        protocol: ABY,
+        shareType: SharingType = protocolToShareType(protocol),
     ): CodeBlock {
-        require(protocol is ABY)
         return currentABYPartyCircuit ?: CodeBlock.of(
             "%L.getCircuitBuilder(%T.%L)",
             protocolToABYPartyMap.getValue(ABYPair(protocol.server, protocol.client)),
@@ -193,22 +191,41 @@ class ABYCircuitCodeGenerator(
         )
     }
 
+    private fun CodeBlock.toInt(type: ValueType): CodeBlock =
+        CodeBlock.of(
+            "%L.toBigInteger()",
+            when (type) {
+                is BooleanType -> CodeBlock.of(
+                    "%L.compareTo(false)",
+                    this,
+                )
+                is IntegerType -> this
+                else -> throw java.lang.IllegalArgumentException("Unknown value type: $type.")
+            },
+        )
+
     private fun valueToShare(value: Value, protocol: Protocol): CodeBlock =
         CodeBlock.of("%L", value).toShare(protocol as ABY, value.type)
 
-    private fun CodeBlock.toShare(protocol: ABY, type: ValueType): CodeBlock {
-        val valueAsInt = when (type) {
-            is BooleanType -> CodeBlock.of("%L.toInt()", this)
-            is IntegerType -> this
-            else -> throw java.lang.IllegalArgumentException("Unknown value type: $type.")
-        }
-        return CodeBlock.of(
-            "%L.putCONSGate(%L.toBigInteger(), %L)",
+    private fun CodeBlock.toShare(protocol: ABY, type: ValueType): CodeBlock =
+        CodeBlock.of(
+            "%L.putCONSGate(%L, %L)",
             protocolToAbyPartyCircuit(protocol),
-            valueAsInt,
+            this.toInt(type),
             BIT_LENGTH,
         )
-    }
+
+    private fun CodeBlock.fromShare(type: ValueType): CodeBlock =
+        CodeBlock.of(
+            "%L.getClearValue32().%L",
+            this,
+            when (type) {
+                is IntegerType -> "toInt()"
+                is BooleanType ->
+                    CodeBlock.of("%M", MemberName("io.github.aplcornell.viaduct.runtime.aby", "bool"))
+                else -> throw java.lang.IllegalArgumentException("Unknown value type: $type.")
+            },
+        )
 
     private fun binaryOpToShare(
         circuit: CodeBlock,
@@ -218,15 +235,16 @@ class ABYCircuitCodeGenerator(
     ): CodeBlock =
         CodeBlock.of("%L.%L(%L, %L)", circuit, gateMethod, arg1, arg2)
 
-    private fun shareOfOperatorApplication(protocol: Protocol, op: Operator, args: List<CodeBlock>): CodeBlock =
-        when (op) {
+    override fun operatorApplication(protocol: Protocol, op: OperatorNode, arguments: List<CodeBlock>): CodeBlock {
+        require(protocol is ABY)
+        return when (op.operator) {
             Minimum ->
                 CodeBlock.of(
                     "%M(%L, %L, %L)",
                     MemberName("io.github.apl_cornell.aby.Aby", "putMinGate"),
                     protocolToAbyPartyCircuit(protocol),
-                    args.first(),
-                    args.last(),
+                    arguments.first(),
+                    arguments.last(),
                 )
 
             Maximum ->
@@ -234,8 +252,8 @@ class ABYCircuitCodeGenerator(
                     "%M(%L, %L, %L)",
                     MemberName("io.github.apl_cornell.aby.Aby", "putMaxGate"),
                     protocolToAbyPartyCircuit(protocol),
-                    args.first(),
-                    args.last(),
+                    arguments.first(),
+                    arguments.last(),
                 )
 
             Negation ->
@@ -248,47 +266,47 @@ class ABYCircuitCodeGenerator(
                         BigInteger::class.asClassName(),
                         BIT_LENGTH,
                     ),
-                    args.first(),
+                    arguments.first(),
                 )
 
             Addition ->
                 binaryOpToShare(
                     protocolToAbyPartyCircuit(protocol),
                     CodeBlock.of("putADDGate"),
-                    args.first(),
-                    args.last(),
+                    arguments.first(),
+                    arguments.last(),
                 )
 
             Subtraction ->
                 binaryOpToShare(
                     protocolToAbyPartyCircuit(protocol),
                     CodeBlock.of("putSUBGate"),
-                    args.first(),
-                    args.last(),
+                    arguments.first(),
+                    arguments.last(),
                 )
 
             Multiplication ->
                 binaryOpToShare(
                     protocolToAbyPartyCircuit(protocol),
                     CodeBlock.of("putMULGate"),
-                    args.first(),
-                    args.last(),
+                    arguments.first(),
+                    arguments.last(),
                 )
 
             Not ->
                 CodeBlock.of(
                     "%L.%M(%L)",
                     protocolToAbyPartyCircuit(protocol),
-                    MemberName("io.github.apl_cornell.viaduct.runtime.aby", "putNOTGate"),
-                    args.first(),
+                    MemberName("io.github.aplcornell.viaduct.runtime.aby", "putNOTGate"),
+                    arguments.first(),
                 )
 
             And ->
                 binaryOpToShare(
                     protocolToAbyPartyCircuit(protocol),
                     CodeBlock.of("putANDGate"),
-                    args.first(),
-                    args.last(),
+                    arguments.first(),
+                    arguments.last(),
                 )
 
             // a | b = ~(~a & ~b)
@@ -303,14 +321,14 @@ class ABYCircuitCodeGenerator(
                         CodeBlock.of(
                             "%L.%M(%L)",
                             protocolToAbyPartyCircuit(protocol),
-                            MemberName("io.github.apl_cornell.viaduct.runtime.aby", "putNOTGate"),
-                            args.first(),
+                            MemberName("io.github.aplcornell.viaduct.runtime.aby", "putNOTGate"),
+                            arguments.first(),
                         ),
                         CodeBlock.of(
                             "%L.%M(%L)",
                             protocolToAbyPartyCircuit(protocol),
-                            MemberName("io.github.apl_cornell.viaduct.runtime.aby", "putNOTGate"),
-                            args.last(),
+                            MemberName("io.github.aplcornell.viaduct.runtime.aby", "putNOTGate"),
+                            arguments.last(),
                         ),
                     ),
                 )
@@ -319,16 +337,16 @@ class ABYCircuitCodeGenerator(
                 binaryOpToShare(
                     protocolToAbyPartyCircuit(protocol),
                     CodeBlock.of("putEQGate"),
-                    args.first(),
-                    args.last(),
+                    arguments.first(),
+                    arguments.last(),
                 )
 
             LessThan ->
                 binaryOpToShare(
                     protocolToAbyPartyCircuit(protocol),
                     CodeBlock.of("putGTGate"),
-                    args.last(),
-                    args.first(),
+                    arguments.last(),
+                    arguments.first(),
                 )
 
             // (x <= y) <=> not (x > y)
@@ -340,8 +358,8 @@ class ABYCircuitCodeGenerator(
                     binaryOpToShare(
                         protocolToAbyPartyCircuit(protocol),
                         CodeBlock.of("putGTGate"),
-                        args.first(),
-                        args.last(),
+                        arguments.first(),
+                        arguments.last(),
                     ),
                 )
 
@@ -349,8 +367,8 @@ class ABYCircuitCodeGenerator(
                 binaryOpToShare(
                     protocolToAbyPartyCircuit(protocol),
                     CodeBlock.of("putGTGate"),
-                    args.first(),
-                    args.last(),
+                    arguments.first(),
+                    arguments.last(),
                 )
 
             // (x >= y) <=> not (x < y)
@@ -362,8 +380,8 @@ class ABYCircuitCodeGenerator(
                     binaryOpToShare(
                         protocolToAbyPartyCircuit(protocol),
                         CodeBlock.of("putLTGate"),
-                        args.first(),
-                        args.last(),
+                        arguments.first(),
+                        arguments.last(),
                     ),
                 )
 
@@ -372,17 +390,17 @@ class ABYCircuitCodeGenerator(
                     "%L.%L(%L, %L, %L)",
                     protocolToAbyPartyCircuit(protocol),
                     "putMUXGate",
-                    args.first(),
-                    args[1],
-                    args.last(),
+                    arguments[1],
+                    arguments[2],
+                    arguments[0],
                 )
 
             ExclusiveOr ->
                 binaryOpToShare(
                     protocolToAbyPartyCircuit(protocol),
                     CodeBlock.of("putXORGate"),
-                    args.first(),
-                    args.last(),
+                    arguments.first(),
+                    arguments.last(),
                 )
 
             Division ->
@@ -390,13 +408,14 @@ class ABYCircuitCodeGenerator(
                     "%M(%L, %L, %L)",
                     MemberName("io.github.apl_cornell.aby.Aby", "putInt32DIVGate"),
                     protocolToAbyPartyCircuit(protocol),
-                    args.last(),
-                    args.first(),
+                    arguments.last(),
+                    arguments.first(),
 
                 )
 
             else -> throw UnsupportedOperationException("Unknown operator $op.")
         }
+    }
 
     override fun paramType(protocol: Protocol, sourceType: ValueType): TypeName = (Share::class).asTypeName()
 
@@ -410,13 +429,6 @@ class ABYCircuitCodeGenerator(
             else -> super.exp(protocol, expr)
         }
 
-    override fun operatorApplication(protocol: Protocol, op: OperatorNode, arguments: List<CodeBlock>) =
-        shareOfOperatorApplication(
-            protocol,
-            op.operator,
-            arguments,
-        )
-
     private fun roleToCodeBlock(role: Role): CodeBlock = CodeBlock.of("%T.%L", role::class.asClassName(), role)
 
     override fun circuitBody(
@@ -424,6 +436,7 @@ class ABYCircuitCodeGenerator(
         circuitDeclaration: CircuitDeclarationNode,
         outParams: List<CodeBlock>,
     ): CodeBlock {
+        require(protocol is ABY)
         val builder = CodeBlock.builder()
         val circuit = CodeBlock.of("%N", context.newTemporary("circuit"))
         builder.addStatement("val %L = %L", circuit, protocolToAbyPartyCircuit(protocol))
@@ -432,19 +445,6 @@ class ABYCircuitCodeGenerator(
         currentABYPartyCircuit = null
         return builder.build()
     }
-
-    private fun valueToBigInt(value: CodeBlock, type: ValueType) =
-        CodeBlock.of(
-            "%L.toBigInteger()",
-            if (type is IntegerType) {
-                value
-            } else {
-                CodeBlock.of(
-                    "%L.compareTo(false)",
-                    value,
-                )
-            },
-        )
 
     override fun import(
         protocol: Protocol,
@@ -458,83 +458,47 @@ class ABYCircuitCodeGenerator(
             when {
                 argument.protocol is Local && argument.protocol.host in protocol.hosts -> {
                     if (argument.protocol.host == context.host) {
-                        if (argument.type.shape.isEmpty()) {
-                            builder.addStatement(
-                                "val %L = %L.putINGate(%L, %L, %L)",
-                                inputName,
-                                protocolToAbyPartyCircuit(protocol),
-                                valueToBigInt(argument.value, argument.type.elementType.value),
-                                BIT_LENGTH,
-                                roleToCodeBlock(role(protocol, context.host)),
-                            )
-                        } else {
-                            builder.addStatement(
-                                "val %L = %L",
-                                inputName,
-                                argument.type.shape.new(context) { indices ->
-                                    val value = CodeBlock.builder()
-                                    value.add("%L", argument.value)
-                                    indices.forEach { value.add("[%L]", it) }
-                                    CodeBlock.of(
-                                        "%L.putINGate(%L, %L, %L)",
-                                        protocolToAbyPartyCircuit(protocol),
-                                        valueToBigInt(value.build(), argument.type.elementType.value),
-                                        BIT_LENGTH,
-                                        roleToCodeBlock(role(protocol, context.host)),
-                                    )
-                                },
-                            )
-                        }
-                    } else {
-                        if (argument.type.shape.isEmpty()) {
-                            builder.addStatement(
-                                "val %L = %L.putDummyINGate(%L)",
-                                inputName,
-                                protocolToAbyPartyCircuit(protocol),
-                                BIT_LENGTH,
-                            )
-                        } else {
-                            builder.addStatement(
-                                "val %L = %L",
-                                inputName,
-                                argument.type.shape.new(context) {
-                                    CodeBlock.of(
-                                        "%L.putDummyINGate(%L)",
-                                        protocolToAbyPartyCircuit(protocol),
-                                        BIT_LENGTH,
-                                    )
-                                },
-                            )
-                        }
-                    }
-                }
-
-                argument.protocol is Replication && argument.protocol.hosts == protocol.hosts -> {
-                    if (argument.type.shape.isEmpty()) {
                         builder.addStatement(
-                            "val %L = %L.putCONSGate(%L, %L)",
+                            "val %L = %L",
                             inputName,
-                            protocolToAbyPartyCircuit(protocol),
-                            valueToBigInt(argument.value, argument.type.elementType.value),
-                            BIT_LENGTH,
+                            argument.type.shape.new(context) { indices ->
+                                CodeBlock.of(
+                                    "%L.putINGate(%L, %L, %L)",
+                                    protocolToAbyPartyCircuit(protocol),
+                                    argument.value.lookup(indices).toInt(argument.type.elementType.value),
+                                    BIT_LENGTH,
+                                    roleToCodeBlock(role(protocol, context.host)),
+                                )
+                            },
                         )
                     } else {
                         builder.addStatement(
                             "val %L = %L",
                             inputName,
-                            argument.type.shape.new(context) { indices ->
-                                val value = CodeBlock.builder()
-                                value.add("%L", argument.value)
-                                indices.forEach { value.add("[%L]", it) }
+                            argument.type.shape.new(context) {
                                 CodeBlock.of(
-                                    "%L.putCONSGate(%L, %L)",
+                                    "%L.putDummyINGate(%L)",
                                     protocolToAbyPartyCircuit(protocol),
-                                    valueToBigInt(value.build(), argument.type.elementType.value),
                                     BIT_LENGTH,
                                 )
                             },
                         )
                     }
+                }
+
+                argument.protocol is Replication && argument.protocol.hosts == protocol.hosts -> {
+                    builder.addStatement(
+                        "val %L = %L",
+                        inputName,
+                        argument.type.shape.new(context) { indices ->
+                            CodeBlock.of(
+                                "%L.putCONSGate(%L, %L)",
+                                protocolToAbyPartyCircuit(protocol),
+                                argument.value.lookup(indices).toShare(protocol, argument.type.elementType.value),
+                                BIT_LENGTH,
+                            )
+                        },
+                    )
                 }
 
                 else -> throw UnsupportedCommunicationException(argument.protocol, protocol, argument.sourceLocation)
@@ -560,11 +524,16 @@ class ABYCircuitCodeGenerator(
                 else -> throw IllegalStateException()
             }
             builder.addStatement(
-                "val %N = %L.putOUTGate(%L, %L)",
+                "val %N = %L",
                 outShareName,
-                protocolToAbyPartyCircuit(protocol),
-                argument.value,
-                roleToCodeBlock(outRole),
+                argument.type.shape.new(context) { indices ->
+                    CodeBlock.of(
+                        "%L.putOUTGate(%L, %L)",
+                        protocolToAbyPartyCircuit(protocol),
+                        argument.value.lookup(indices),
+                        roleToCodeBlock(outRole),
+                    )
+                },
             )
             CodeBlock.of("%N", outShareName)
         }
@@ -576,16 +545,10 @@ class ABYCircuitCodeGenerator(
             .map { (arg, outShareName) ->
                 val cleartextTmp = context.newTemporary("cleartextTmp")
                 builder.addStatement(
-                    "val %N = %L.getClearValue32().%L",
+                    "val %N = %L",
                     cleartextTmp,
-                    outShareName,
-                    if (arg.type.elementType.value is IntegerType) {
-                        "toInt()"
-                    } else {
-                        MemberName(
-                            "io.github.apl_cornell.viaduct.runtime.aby",
-                            "bool",
-                        )
+                    arg.type.shape.new(context) { indices ->
+                        outShareName.lookup(indices).fromShare(arg.type.elementType.value)
                     },
                 )
                 CodeBlock.of(cleartextTmp)

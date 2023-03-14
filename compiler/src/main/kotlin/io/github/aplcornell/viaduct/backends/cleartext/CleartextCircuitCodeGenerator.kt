@@ -6,10 +6,11 @@ import io.github.aplcornell.viaduct.circuitcodegeneration.AbstractCodeGenerator
 import io.github.aplcornell.viaduct.circuitcodegeneration.Argument
 import io.github.aplcornell.viaduct.circuitcodegeneration.CodeGeneratorContext
 import io.github.aplcornell.viaduct.circuitcodegeneration.UnsupportedCommunicationException
-import io.github.aplcornell.viaduct.circuitcodegeneration.UnsupportedOperatorException
+import io.github.aplcornell.viaduct.circuitcodegeneration.forEachIndexed
 import io.github.aplcornell.viaduct.circuitcodegeneration.receiveExpected
 import io.github.aplcornell.viaduct.circuitcodegeneration.receiveReplicated
 import io.github.aplcornell.viaduct.syntax.BinaryOperator
+import io.github.aplcornell.viaduct.syntax.Host
 import io.github.aplcornell.viaduct.syntax.Protocol
 import io.github.aplcornell.viaduct.syntax.UnaryOperator
 import io.github.aplcornell.viaduct.syntax.circuit.OperatorNode
@@ -50,22 +51,11 @@ class CleartextCircuitCodeGenerator(context: CodeGeneratorContext) : AbstractCod
                     arguments[1],
                 )
 
-            else -> throw UnsupportedOperatorException(protocol, op)
+            else -> super.operatorApplication(protocol, op, arguments)
         }
-
-    private fun send(
-        receiver: Protocol,
-        argument: Argument,
-    ): CodeBlock {
-        val builder = CodeBlock.builder()
-        receiver.hosts.forEach {
-            if (it != context.host) builder.addStatement("%L", context.send(argument.value, it))
-        }
-        return builder.build()
-    }
 
     private fun receive(
-        receiver: Protocol,
+        receivers: Set<Host>,
         argument: Argument,
     ): Pair<CodeBlock, CodeBlock> {
         val builder = CodeBlock.builder()
@@ -77,17 +67,20 @@ class CleartextCircuitCodeGenerator(context: CodeGeneratorContext) : AbstractCod
             receiveReplicated(argType, argument.protocol.hosts.toList(), context),
         )
         // Check other receiving hosts for equivocation
-        val peers = receiver.hosts.filter { it != context.host }
-        for (host in peers) builder.addStatement("%L", context.send(CodeBlock.of(clearTextTemp), host))
-        builder.add(
-            receiveExpected(
-                CodeBlock.of(clearTextTemp),
-                argument.protocol.hosts.first(),
-                argType,
-                peers,
-                context,
-            ),
-        )
+        val peers = receivers.filter { it != context.host }
+        if (peers.isNotEmpty()) {
+            for (host in peers) builder.addStatement("%L", context.send(CodeBlock.of(clearTextTemp), host))
+            builder.addStatement(
+                "%L",
+                receiveExpected(
+                    CodeBlock.of(clearTextTemp),
+                    argument.protocol.hosts.first(),
+                    argType,
+                    peers,
+                    context,
+                ),
+            )
+        }
         return Pair(builder.build(), CodeBlock.of(clearTextTemp))
     }
 
@@ -100,14 +93,21 @@ class CleartextCircuitCodeGenerator(context: CodeGeneratorContext) : AbstractCod
         require(context.host in source.hosts || context.host in target.hosts)
         require(source is Cleartext)
         require(target is Cleartext)
+        val receivingHosts = target.hosts - source.hosts
         return when (context.host) {
             in source.hosts -> {
-                builder.add(send(target, argument))
+                receivingHosts.forEach {
+                    builder.add(
+                        argument.value.forEachIndexed(argument.type.shape, context) { _, value ->
+                            context.send(value, it)
+                        },
+                    )
+                }
                 argument.value
             }
 
-            in target.hosts -> {
-                val (receiveCode, value) = receive(target, argument)
+            in receivingHosts -> {
+                val (receiveCode, value) = receive(receivingHosts, argument)
                 builder.add(receiveCode)
                 value
             }

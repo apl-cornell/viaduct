@@ -81,10 +81,10 @@ private class BackendCodeGenerator(
 
                             val importingHosts = command.inputs.map {
                                 (nameAnalysis.declaration(it) as VariableBindingNode).protocol.value.hosts
-                            }.flatten().toSet() - circuitHosts  // hosts who import to but do not run the circuit
+                            }.flatten().toSet() - circuitHosts // hosts who import to but do not run the circuit
                             val exportingHosts = stmt.bindings.map {
                                 it.protocol.value.hosts
-                            }.flatten().toSet()  // hosts who export from the circuit (and may also run the circuit)
+                            }.flatten().toSet() // hosts who export from the circuit (and may also run the circuit)
 
                             val (importCode, inputs) = codeGenerator.import(
                                 circuitDecl.protocol.value,
@@ -95,7 +95,7 @@ private class BackendCodeGenerator(
                                         (nameAnalysis.declaration(arg) as VariableBindingNode).protocol.value,
                                         arg.sourceLocation,
                                     )
-                                }
+                                },
                             )
                             val outTmps = circuitDecl.outputs.map {
                                 val tmp = context.newTemporary(it.name.value.name)
@@ -145,9 +145,11 @@ private class BackendCodeGenerator(
                                     builder.addStatement(
                                         "%N(%L)",
                                         command.name.value.name,
-                                        ((command.bounds).map { indexExpression(it, context) } + inputs +
-                                            circuitDecl.outputs.map { CodeBlock.of("%N", outNames[it]) }
-                                            ).joinToCode())
+                                        (
+                                            (command.bounds).map { indexExpression(it, context) } + inputs +
+                                                circuitDecl.outputs.map { CodeBlock.of("%N", outNames[it]) }
+                                            ).joinToCode(),
+                                    )
                                     circuitDecl.outputs.forEachIndexed { index, param ->
                                         builder.addStatement("val %L = %N.get()", outTmps[index], outNames[param]!!)
                                     }

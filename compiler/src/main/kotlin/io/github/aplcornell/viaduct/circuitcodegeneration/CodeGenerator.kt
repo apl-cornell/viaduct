@@ -23,7 +23,10 @@ interface CodeGenerator {
 
     fun storageType(protocol: Protocol, sourceType: ValueType): TypeName
 
-    /** Generates code for the body of circuit [circuitDeclaration]. */
+    /**
+     * Generates code for the body of circuit [circuitDeclaration].
+     * @param outParams The list of names of Out boxes in which return values are to be stored.
+     * */
     fun circuitBody(
         protocol: Protocol,
         circuitDeclaration: CircuitDeclarationNode,
@@ -42,6 +45,13 @@ interface CodeGenerator {
         arguments: List<Argument>,
     ): Pair<CodeBlock, List<CodeBlock>>
 
+    /**
+     * Generates code for exporting values from [protocol], and the names associated with exported results.
+     * @param protocol The protocol values are being exported from.
+     * @param arguments The arguments to be exported.
+     * @return (codeBlock, names) such that codeBlock is the code which exports values, names is the list of names
+     * associated with the results.
+     */
     fun export(
         protocol: Protocol,
         arguments: List<Argument>,

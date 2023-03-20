@@ -65,6 +65,7 @@ fun indexExpression(expression: IndexExpressionNode, context: CodeGeneratorConte
     }
 }
 
+/** Generates code for array lookup into [this] at [indices]. */
 fun CodeBlock.lookup(indices: List<CodeBlock>): CodeBlock {
     val builder = CodeBlock.builder()
     builder.add(this)

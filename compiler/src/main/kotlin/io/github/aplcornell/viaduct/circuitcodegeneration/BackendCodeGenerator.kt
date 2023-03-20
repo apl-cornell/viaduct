@@ -68,7 +68,7 @@ private class BackendCodeGenerator(
         return classBuilder.build()
     }
 
-    /** Generates code the function [functionDeclaration]. Currently only supports main. */
+    /** Generates code for the function [functionDeclaration]. Currently only supports main. */
     fun generate(functionDeclaration: FunctionDeclarationNode): FunSpec {
         val builder = FunSpec.builder(functionDeclaration.name.value.name)
         for (stmt in functionDeclaration.body.statements) {
@@ -77,13 +77,15 @@ private class BackendCodeGenerator(
                     when (val command = stmt.command) {
                         is CircuitCallNode -> {
                             val circuitDecl: CircuitDeclarationNode = nameAnalysis.declaration(command)
-                            circuitDecl.sizes.zip(command.bounds) { sizeParam, sizeArg ->
-                                builder.addStatement(
-                                    "val %N = %L",
-                                    context.kotlinName(sizeParam.name.value),
-                                    indexExpression(sizeArg, context),
-                                )
-                            }
+                            val circuitHosts = circuitDecl.protocol.value.hosts
+
+                            val importingHosts = command.inputs.map {
+                                (nameAnalysis.declaration(it) as VariableBindingNode).protocol.value.hosts
+                            }.flatten().toSet() - circuitHosts  // hosts who import to but do not run the circuit
+                            val exportingHosts = stmt.bindings.map {
+                                it.protocol.value.hosts
+                            }.flatten().toSet()  // hosts who export from the circuit (and may also run the circuit)
+
                             val (importCode, inputs) = codeGenerator.import(
                                 circuitDecl.protocol.value,
                                 command.inputs.zip(circuitDecl.inputs).map { (arg, inParam) ->
@@ -93,37 +95,10 @@ private class BackendCodeGenerator(
                                         (nameAnalysis.declaration(arg) as VariableBindingNode).protocol.value,
                                         arg.sourceLocation,
                                     )
-                                },
-                            )
-                            builder.addCode(importCode)
-                            val outNames = circuitDecl.outputs.associateWith { outParam ->
-                                val outName = context.newTemporary(context.kotlinName(outParam.name.value) + "_boxed")
-                                builder.addStatement(
-                                    "val %L = %T()",
-                                    outName,
-                                    Out::class.asClassName().parameterizedBy(
-                                        kotlinType(
-                                            outParam.type.shape,
-                                            codeGenerator.paramType(
-                                                circuitDecl.protocol.value,
-                                                outParam.type.elementType.value,
-                                            ),
-                                        ),
-                                    ),
-                                )
-                                outName
-                            }
-                            builder.addStatement(
-                                "%N(%L)",
-                                command.name.value.name,
-                                (
-                                    (command.bounds).map { indexExpression(it, context) } + inputs +
-                                        circuitDecl.outputs.map { CodeBlock.of("%N", outNames[it]) }
-                                    ).joinToCode(),
+                                }
                             )
                             val outTmps = circuitDecl.outputs.map {
                                 val tmp = context.newTemporary(it.name.value.name)
-                                builder.addStatement("val %N = %N.get()", tmp, outNames[it]!!)
                                 CodeBlock.of("%N", tmp)
                             }
                             val (exportCode, outputs) = codeGenerator.export(
@@ -137,9 +112,53 @@ private class BackendCodeGenerator(
                                     )
                                 },
                             )
-                            builder.addCode(exportCode)
-                            stmt.bindings.zip(outputs).forEach { (binding, output) ->
-                                builder.addStatement("val %N = %L", context.kotlinName(binding.name.value), output)
+
+                            when (context.host) {
+                                in importingHosts -> builder.addCode(importCode)
+                                in circuitHosts -> {
+                                    circuitDecl.sizes.zip(command.bounds) { sizeParam, sizeArg ->
+                                        builder.addStatement(
+                                            "val %N = %L",
+                                            context.kotlinName(sizeParam.name.value),
+                                            indexExpression(sizeArg, context),
+                                        )
+                                    }
+                                    builder.addCode(importCode)
+                                    val outNames = circuitDecl.outputs.associateWith { outParam ->
+                                        val outName =
+                                            context.newTemporary(context.kotlinName(outParam.name.value) + "_boxed")
+                                        builder.addStatement(
+                                            "val %L = %T()",
+                                            outName,
+                                            Out::class.asClassName().parameterizedBy(
+                                                kotlinType(
+                                                    outParam.type.shape,
+                                                    codeGenerator.paramType(
+                                                        circuitDecl.protocol.value,
+                                                        outParam.type.elementType.value,
+                                                    ),
+                                                ),
+                                            ),
+                                        )
+                                        outName
+                                    }
+                                    builder.addStatement(
+                                        "%N(%L)",
+                                        command.name.value.name,
+                                        ((command.bounds).map { indexExpression(it, context) } + inputs +
+                                            circuitDecl.outputs.map { CodeBlock.of("%N", outNames[it]) }
+                                            ).joinToCode())
+                                    circuitDecl.outputs.forEachIndexed { index, param ->
+                                        builder.addStatement("val %L = %N.get()", outTmps[index], outNames[param]!!)
+                                    }
+                                    builder.addCode(exportCode)
+                                }
+                                in exportingHosts -> builder.addCode(exportCode)
+                            }
+                            if (context.host in exportingHosts) {
+                                stmt.bindings.zip(outputs).forEach { (binding, output) ->
+                                    builder.addStatement("val %N = %L", context.kotlinName(binding.name.value), output)
+                                }
                             }
                         }
 
@@ -245,7 +264,12 @@ private class BackendCodeGenerator(
 
         override fun receive(type: TypeName, sender: Host): CodeBlock =
             if (sender == context.host) {
-                CodeBlock.of("%L", selfSends.remove())
+                try {
+                    CodeBlock.of("%L", selfSends.remove())
+                } catch (e: NoSuchElementException) {
+                    println("Failing on: " + context.host.name)
+                    throw e
+                }
             } else {
                 CodeBlock.of("%N.%M<%T>(%L)", "runtime", receiveMember, type, codeOf(sender))
             }

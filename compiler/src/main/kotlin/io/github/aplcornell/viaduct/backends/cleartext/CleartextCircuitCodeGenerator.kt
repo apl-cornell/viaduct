@@ -54,6 +54,7 @@ class CleartextCircuitCodeGenerator(context: CodeGeneratorContext) : AbstractCod
         }
 
     private fun receive(
+        source: Protocol,
         receivers: Set<Host>,
         argument: Argument,
     ): Pair<CodeBlock, CodeBlock> {
@@ -63,7 +64,7 @@ class CleartextCircuitCodeGenerator(context: CodeGeneratorContext) : AbstractCod
         builder.addStatement(
             "val %L = %L",
             clearTextTemp,
-            receiveReplicated(argType, argument.protocol.hosts.toList(), context),
+            receiveReplicated(argType, source.hosts.toList(), context),
         )
         // Check other receiving hosts for equivocation
         val peers = receivers.filter { it != context.host }
@@ -73,7 +74,7 @@ class CleartextCircuitCodeGenerator(context: CodeGeneratorContext) : AbstractCod
                 "%L",
                 receiveExpected(
                     CodeBlock.of(clearTextTemp),
-                    argument.protocol.hosts.first(),
+                    source.hosts.first(),
                     argType,
                     peers,
                     context,
@@ -100,7 +101,7 @@ class CleartextCircuitCodeGenerator(context: CodeGeneratorContext) : AbstractCod
             }
 
             in receivingHosts -> {
-                val (receiveCode, value) = receive(receivingHosts, argument)
+                val (receiveCode, value) = receive(source, receivingHosts, argument)
                 builder.add(receiveCode)
                 value
             }
@@ -118,7 +119,8 @@ class CleartextCircuitCodeGenerator(context: CodeGeneratorContext) : AbstractCod
         val values = arguments.map { arg ->
             when (arg.protocol) {
                 is Cleartext -> {
-                    move(arg.protocol, protocol, arg, builder)
+                    if (context.host in protocol.hosts + arg.protocol.hosts) move(arg.protocol, protocol, arg, builder)
+                    else arg.value
                 }
 
                 else -> throw UnsupportedCommunicationException(arg.protocol, protocol, arg.sourceLocation)
@@ -136,7 +138,8 @@ class CleartextCircuitCodeGenerator(context: CodeGeneratorContext) : AbstractCod
         val values = arguments.map { arg ->
             when (arg.protocol) {
                 is Cleartext -> {
-                    move(protocol, arg.protocol, arg, builder)
+                    if (context.host in protocol.hosts + arg.protocol.hosts) move(protocol, arg.protocol, arg, builder)
+                    else arg.value
                 }
 
                 else -> throw UnsupportedCommunicationException(protocol, arg.protocol, arg.sourceLocation)

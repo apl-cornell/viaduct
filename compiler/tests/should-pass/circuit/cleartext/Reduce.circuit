@@ -1,0 +1,29 @@
+host alice
+
+circuit fun <> f@Local(host = alice)(a: int[5]) -> r: int[] {
+    val res[]: int[] = reduce(::+, 0) { i < 5 -> a[i] }
+    return res
+}
+
+circuit fun <> g@Local(host = alice)(a: int[3, 2]) -> r: int[3] {
+    val res[i < 3]: int[3] = reduce(::+, 0) { j < 2 -> a[i, j] }
+    return res
+}
+
+circuit fun <> h@Local(host = alice)(a: int[0]) -> r: int[] {
+    val res[]: int[] = reduce(::+, 0) { i < 0 -> a[i] }
+    return res
+}
+
+fun <> main() -> {
+    val x@Local(host = alice) = alice.input<int[5]>()
+    val y@Local(host = alice) = alice.input<int[3, 2]>()
+    val z@Local(host = alice) = alice.input<int[0]>()
+    val fx@Local(host = alice) = f<>(x)
+    val gy@Local(host = alice) = g<>(y)
+    val hz@Local(host = alice) = h<>(z)
+    val = alice.output<int[]>(fx)
+    val = alice.output<int[3]>(gy)
+    val = alice.output<int[]>(hz)
+    return
+}

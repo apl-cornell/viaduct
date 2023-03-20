@@ -54,17 +54,19 @@ class CleartextCircuitCodeGenerator(context: CodeGeneratorContext) : AbstractCod
         }
 
     private fun receive(
-        source: Protocol,
+        senders: Set<Host>,
         receivers: Set<Host>,
         argument: Argument,
     ): Pair<CodeBlock, CodeBlock> {
+        require(context.host !in senders)
+        require(context.host in receivers)
         val builder = CodeBlock.builder()
         val argType = storageType(argument.protocol, argument.type)
         val clearTextTemp = context.newTemporary("clearTextTemp")
         builder.addStatement(
             "val %L = %L",
             clearTextTemp,
-            receiveReplicated(argType, source.hosts.toList(), context),
+            receiveReplicated(argType, senders.toList(), context),
         )
         // Check other receiving hosts for equivocation
         val peers = receivers.filter { it != context.host }
@@ -74,7 +76,7 @@ class CleartextCircuitCodeGenerator(context: CodeGeneratorContext) : AbstractCod
                 "%L",
                 receiveExpected(
                     CodeBlock.of(clearTextTemp),
-                    source.hosts.first(),
+                    senders.first(),
                     argType,
                     peers,
                     context,
@@ -101,7 +103,7 @@ class CleartextCircuitCodeGenerator(context: CodeGeneratorContext) : AbstractCod
             }
 
             in receivingHosts -> {
-                val (receiveCode, value) = receive(source, receivingHosts, argument)
+                val (receiveCode, value) = receive(source.hosts, receivingHosts, argument)
                 builder.add(receiveCode)
                 value
             }
@@ -122,7 +124,7 @@ class CleartextCircuitCodeGenerator(context: CodeGeneratorContext) : AbstractCod
                     if (context.host in protocol.hosts + arg.protocol.hosts) {
                         move(arg.protocol, protocol, arg, builder)
                     } else {
-                        arg.value
+                        CodeBlock.of("")
                     }
                 }
 
@@ -144,7 +146,7 @@ class CleartextCircuitCodeGenerator(context: CodeGeneratorContext) : AbstractCod
                     if (context.host in protocol.hosts + arg.protocol.hosts) {
                         move(protocol, arg.protocol, arg, builder)
                     } else {
-                        arg.value
+                        CodeBlock.of("")
                     }
                 }
 

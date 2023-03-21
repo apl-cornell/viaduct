@@ -170,10 +170,15 @@ private class BackendCodeGenerator(
 
                         is InputNode -> {
                             if (command.host.value != context.host) continue
+                            val unnamedIndices = command.type.shape.map { CodeBlock.of("_") }
                             builder.addStatement(
                                 "val %N = %L",
                                 context.kotlinName(stmt.bindings[0].name.value),
-                                command.type.shape.new(context) { context.input(command.type.elementType.value) },
+                                command.type.shape.new(
+                                    context,
+                                    unnamedIndices,
+                                    context.input(command.type.elementType.value),
+                                ),
                             )
                         }
 

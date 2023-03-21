@@ -1,10 +1,10 @@
 package io.github.aplcornell.viaduct.circuitcodegeneration
 
-import com.squareup.kotlinpoet.ARRAY
 import com.squareup.kotlinpoet.BOOLEAN
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.INT
+import com.squareup.kotlinpoet.LIST
 import com.squareup.kotlinpoet.MemberName
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.STRING
@@ -30,7 +30,7 @@ import kotlin.reflect.KClass
 typealias Shape = List<IndexExpressionNode>
 
 /** Kotlin class used throughout the generated code to represent arrays. */
-private val arrayType: ClassName = ARRAY
+private val arrayType: ClassName = LIST
 
 /** Top level package name for the `runtime` module. */
 // TODO: is there a better way of doing this?

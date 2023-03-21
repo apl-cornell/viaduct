@@ -1,0 +1,14 @@
+host alice
+host bob
+host chuck
+
+circuit fun <m, n> id@Replication(hosts = {bob, chuck})(x: int[m, n]) -> ret: int[m, n] {
+  return x
+}
+
+fun <> main() -> {
+    val a@Local(host = alice) = alice.input<int[2, 2]>()
+    val b@Local(host = alice) = id<2, 2>(a)
+    val = alice.output<int[2, 2]>(b)
+    return
+}

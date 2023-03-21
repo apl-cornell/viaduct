@@ -2,6 +2,7 @@ package io.github.aplcornell.viaduct.circuitcodegeneration
 
 import com.squareup.kotlinpoet.ARRAY
 import com.squareup.kotlinpoet.BOOLEAN
+import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.INT
 import com.squareup.kotlinpoet.MemberName
@@ -25,9 +26,13 @@ import io.github.aplcornell.viaduct.syntax.types.ValueType
 import io.github.aplcornell.viaduct.syntax.values.Value
 import kotlin.reflect.KClass
 
+/** Lists the size of each dimension of a multidimensional array. */
 typealias Shape = List<IndexExpressionNode>
 
-/** Top level package name for the runtime module. */
+/** Kotlin class used throughout the generated code to represent arrays. */
+private val arrayType: ClassName = ARRAY
+
+/** Top level package name for the `runtime` module. */
 // TODO: is there a better way of doing this?
 val runtimePackage = "${group.replace("-", "")}.runtime"
 
@@ -52,18 +57,20 @@ fun kotlinType(shape: Shape, elementType: TypeName): TypeName =
     if (shape.isEmpty()) {
         elementType
     } else {
-        ARRAY.parameterizedBy(kotlinType(shape.drop(1), elementType))
+        arrayType.parameterizedBy(kotlinType(shape.drop(1), elementType))
     }
 
-fun indexExpression(expression: IndexExpressionNode, context: CodeGeneratorContext): CodeBlock = when (expression) {
-    is LiteralNode -> {
-        CodeBlock.of("%L", expression.value)
-    }
+/** Translates [expression] to Kotlin code. */
+fun indexExpression(expression: IndexExpressionNode, context: CodeGeneratorContext): CodeBlock =
+    when (expression) {
+        is LiteralNode -> {
+            CodeBlock.of("%L", expression.value)
+        }
 
-    is ReferenceNode -> {
-        CodeBlock.of("%N", context.kotlinName(expression.name.value))
+        is ReferenceNode -> {
+            CodeBlock.of("%N", context.kotlinName(expression.name.value))
+        }
     }
-}
 
 /** Generates code for array lookup into [this] at [indices]. */
 fun CodeBlock.lookup(indices: List<CodeBlock>): CodeBlock {
@@ -74,7 +81,8 @@ fun CodeBlock.lookup(indices: List<CodeBlock>): CodeBlock {
 }
 
 /**
- * Generates code that constructs a new array with bounds and indexing variables in the initializer determined by [this].
+ * Generates code that constructs a new array with bounds and indexing variables
+ * in the initializer determined by [this].
  *
  * @param init returns the value of an element.
  */
@@ -82,22 +90,14 @@ fun Arguments<IndexParameterNode>.new(
     context: CodeGeneratorContext,
     init: CodeBlock,
 ): CodeBlock {
-    val builder = CodeBlock.builder()
-    for (indexParameter in this) {
-        builder.beginControlFlow(
-            "%T(%L){ %N -> ",
-            Array::class,
-            indexExpression(indexParameter.bound, context),
-            context.kotlinName(indexParameter.name.value),
-        )
-    }
-    builder.add(init)
-    repeat(this.size) { builder.endControlFlow() }
-    return builder.build()
+    val shape = this.map { it.bound }
+    val indices = this.map { CodeBlock.of("%N", context.kotlinName(it.name.value)) }
+    return shape.new(context, indices, init)
 }
 
 /**
  * Generates code that constructs a new array with [this] shape.
+ * Generates fresh names for indices.
  *
  * @param init returns the value of an element given its indices.
  */
@@ -105,22 +105,32 @@ fun Shape.new(
     context: CodeGeneratorContext,
     init: (indices: List<CodeBlock>) -> CodeBlock,
 ): CodeBlock {
+    val indices = this.map { CodeBlock.of("%N", context.newTemporary("i")) }
+    return this.new(context, indices, init(indices))
+}
+
+/**
+ * Generates code that constructs a new array with [this] shape.
+ *
+ * @param indices names of index variables for each dimension of the array.
+ * @param init gives the value of each element in the array based on [indices].
+ */
+fun Shape.new(context: CodeGeneratorContext, indices: List<CodeBlock>, init: CodeBlock): CodeBlock {
+    require(this.size == indices.size)
     val builder = CodeBlock.builder()
-    val indexVariables: List<CodeBlock> = this.map { size ->
-        val indexVar = CodeBlock.of("%N", context.newTemporary("i"))
+    this.zip(indices) { size, index ->
         builder.beginControlFlow(
             "%T(%L) { %L ->",
-            Array::class,
+            arrayType,
             indexExpression(size, context),
-            indexVar,
+            index,
         )
-        indexVar
     }
     // Don't add a newline if we did not create any blocks.
-    if (indexVariables.isEmpty()) {
-        builder.add(init(indexVariables))
+    if (this.isEmpty()) {
+        builder.add(init)
     } else {
-        builder.add("%L\n", init(indexVariables))
+        builder.add("%L\n", init)
     }
     repeat(this.size) { builder.endControlFlow() }
     return builder.build()

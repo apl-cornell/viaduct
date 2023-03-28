@@ -26,7 +26,7 @@ import io.github.aplcornell.viaduct.syntax.types.ValueType
 internal class CommitmentCreatorGenerator(
     context: CodeGeneratorContext,
 ) : AbstractCodeGenerator(context) {
-    private val typeAnalysis = TypeAnalysis.get(context.program)
+    private val typeAnalysis = context.program.analyses.get<TypeAnalysis>()
 
     override fun kotlinType(protocol: Protocol, sourceType: ValueType): TypeName =
         (Committed::class).asTypeName().parameterizedBy(typeTranslator(sourceType))

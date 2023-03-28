@@ -1,6 +1,7 @@
 package io.github.aplcornell.viaduct.passes
 
 import io.github.aplcornell.viaduct.algebra.FreeDistributiveLattice
+import io.github.aplcornell.viaduct.analysis.HostTrustConfiguration
 import io.github.aplcornell.viaduct.analysis.InformationFlowAnalysis
 import io.github.aplcornell.viaduct.analysis.main
 import io.github.aplcornell.viaduct.security.Component
@@ -11,7 +12,6 @@ import io.github.aplcornell.viaduct.security.PolymorphicPrincipal
 import io.github.aplcornell.viaduct.security.Principal
 import io.github.aplcornell.viaduct.syntax.Arguments
 import io.github.aplcornell.viaduct.syntax.FunctionName
-import io.github.aplcornell.viaduct.syntax.HostTrustConfiguration
 import io.github.aplcornell.viaduct.syntax.LabelNode
 import io.github.aplcornell.viaduct.syntax.Located
 import io.github.aplcornell.viaduct.syntax.ObjectTypeNode
@@ -78,8 +78,8 @@ private class Specializer(
     // old main program
     private val mainProgram: BlockNode = program.main.body
 
-    private val informationFlowAnalysis = InformationFlowAnalysis.get(program)
-    private val hostTrustConfiguration = HostTrustConfiguration.get(program)
+    private val hostTrustConfiguration = program.analyses.get<HostTrustConfiguration>()
+    private val informationFlowAnalysis = program.analyses.get<InformationFlowAnalysis>()
 
     // worklist identified by new functions and corresponding old functionCallNode to be specialized
     private val worklist: MutableList<Triple<FunctionName, FunctionCallNode, Rewrite>> =

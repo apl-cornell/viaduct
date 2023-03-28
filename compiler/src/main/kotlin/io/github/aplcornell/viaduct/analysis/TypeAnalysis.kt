@@ -59,10 +59,10 @@ import io.github.aplcornell.viaduct.syntax.types.ValueType
 import io.github.aplcornell.viaduct.syntax.types.VectorType
 
 /** Associates [Variable]s with their [Type]s. */
-class TypeAnalysis private constructor(
+class TypeAnalysis internal constructor(
     private val tree: Tree<Node, ProgramNode>,
     private val nameAnalysis: NameAnalysis,
-) {
+) : Analysis<ProgramNode> {
     /** Throws [TypeMismatchError] if the type of this expression is not [expectedType]. */
     private fun ExpressionNode.assertHasType(expectedType: ValueType) {
         if (type != expectedType) {
@@ -97,8 +97,10 @@ class TypeAnalysis private constructor(
         when (this) {
             is LiteralNode ->
                 value.type
+
             is ReadNode ->
                 type(nameAnalysis.declaration(this))
+
             is OperatorApplicationNode -> {
                 assert(arguments.size == operator.type.arguments.size)
 
@@ -122,6 +124,7 @@ class TypeAnalysis private constructor(
 
                 lastResultType ?: throw lastError!!
             }
+
             is QueryNode -> {
                 val methodType = nameAnalysis.declaration(this).type.getType(query.value)
                 if (methodType == null) {
@@ -130,8 +133,10 @@ class TypeAnalysis private constructor(
                 }
                 checkMethodCall(query, methodType, arguments)
             }
+
             is DowngradeNode ->
                 expression.type
+
             is InputNode ->
                 type.value
         }
@@ -145,14 +150,17 @@ class TypeAnalysis private constructor(
                 val elementType: ValueType = typeArguments[0].value
                 ImmutableCellType(elementType)
             }
+
             MutableCell -> {
                 val elementType: ValueType = typeArguments[0].value
                 MutableCellType(elementType)
             }
+
             Vector -> {
                 val elementType: ValueType = typeArguments[0].value
                 VectorType(elementType)
             }
+
             else ->
                 TODO("User defined classes.")
         }
@@ -196,10 +204,12 @@ class TypeAnalysis private constructor(
             return when (node) {
                 is LetNode ->
                     type(node)
+
                 is DeclarationNode -> {
                     val constructorType = FunctionType(type(node).constructorArguments, UnitType)
                     checkMethodCall(node.objectType.className, constructorType, node.arguments)
                 }
+
                 is UpdateNode -> {
                     val methodType = nameAnalysis.declaration(node).type.getType(node.update.value)
                     if (methodType == null) {
@@ -294,22 +304,20 @@ class TypeAnalysis private constructor(
                     check(node.thenBranch)
                     check(node.elseBranch)
                 }
+
                 is InfiniteLoopNode ->
                     check(node.body)
+
                 is BreakNode ->
                     Unit
+
                 is AssertionNode ->
                     node.condition.assertHasType(BooleanType)
+
                 is BlockNode ->
                     node.statements.forEach { check(it) }
             }
         }
         tree.root.filterIsInstance<FunctionDeclarationNode>().forEach { check(it.body) }
-    }
-
-    companion object : AnalysisProvider<TypeAnalysis> {
-        private fun construct(program: ProgramNode) = TypeAnalysis(program.tree, NameAnalysis.get(program))
-
-        override fun get(program: ProgramNode): TypeAnalysis = program.cached(::construct)
     }
 }

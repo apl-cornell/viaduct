@@ -1,5 +1,5 @@
-host alice : {A}
-host bob   : {B}
+host alice
+host bob
 
 fun main() {
   val num_turns: int = 3;
@@ -9,16 +9,16 @@ fun main() {
   val b_moves = Array[int](num_turns);
 
   for (var i: int = 0; i < num_turns; i += 1) {
-    a_moves[i] = endorse (input int from alice) from {A};
-    b_moves[i] = endorse (input int from bob) from {B};
+    a_moves[i] = endorse (input int from alice) from {alice};
+    b_moves[i] = endorse (input int from bob) from {bob};
   }
 
   for (var turn: int = 0; turn < num_turns; turn += 1) {
     val a_move: int = a_moves[turn];
     val b_move: int = b_moves[turn];
 
-    val a_move_public: int = declassify a_move to {A ⊓ B};
-    val b_move_public: int = declassify b_move to {A ⊓ B};
+    val a_move_public: int = declassify a_move to {alice ⊓ bob};
+    val b_move_public: int = declassify b_move to {alice ⊓ bob};
 
     /* 1 = rock; 2 = paper; 3 = scissors; */
     val a_valid: bool = 1 <= a_move_public && a_move_public <= 3;

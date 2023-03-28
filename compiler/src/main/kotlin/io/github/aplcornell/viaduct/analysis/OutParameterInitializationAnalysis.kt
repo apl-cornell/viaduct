@@ -55,10 +55,10 @@ private fun meet(
  * Analysis that ensures all out parameters of functions are initialized before
  * they are used and before the function returns.
  */
-class OutParameterInitializationAnalysis private constructor(
+class OutParameterInitializationAnalysis internal constructor(
     private val tree: Tree<Node, ProgramNode>,
     private val nameAnalysis: NameAnalysis,
-) {
+) : Analysis<ProgramNode> {
     /** Defines initialization map of out parameters BEFORE node has been executed. */
     private val Node.flowIn: PersistentMap<ObjectVariable, InitializationState> by attribute {
         val parent = tree.parent(this)
@@ -174,13 +174,5 @@ class OutParameterInitializationAnalysis private constructor(
     /** Begin check at ProgramNode [tree]. */
     fun check() {
         check(tree.root)
-    }
-
-    companion object : AnalysisProvider<OutParameterInitializationAnalysis> {
-        private fun construct(program: ProgramNode) =
-            OutParameterInitializationAnalysis(program.tree, NameAnalysis.get(program))
-
-        override fun get(program: ProgramNode): OutParameterInitializationAnalysis =
-            program.cached(::construct)
     }
 }

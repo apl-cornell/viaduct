@@ -1,8 +1,8 @@
 /* InvalidProtocolAnnotationError */
 
 host alice
-host b
+host bob
 
 fun main() {
-    val a: int{b}@Local(host = alice) = 42;
+    val a: int{bob}@Local(host = alice) = 42;
 }

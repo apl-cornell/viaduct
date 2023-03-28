@@ -8,10 +8,13 @@ fun main() {
         b_min = min(b_min, input int from bob);
     }
 
-    val a_wins: bool = declassify (a_min > b_min) to {A ⊓ B};
+    val a_wins: bool = declassify (a_min > b_min) to {alice ⊓ bob};
     output a_wins to alice;
     output a_wins to bob;
 }
 
-host alice : {A & B<-}
-host bob   : {B & A<-}
+host alice
+host bob
+
+assume for <- alice trusts bob
+assume for <- bob trusts alice

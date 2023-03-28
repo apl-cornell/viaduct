@@ -1,5 +1,6 @@
 package io.github.aplcornell.viaduct.selection
 
+import io.github.aplcornell.viaduct.analysis.HostTrustConfiguration
 import io.github.aplcornell.viaduct.analysis.InformationFlowAnalysis
 import io.github.aplcornell.viaduct.analysis.NameAnalysis
 import io.github.aplcornell.viaduct.analysis.descendantsIsInstance
@@ -9,7 +10,6 @@ import io.github.aplcornell.viaduct.errors.InvalidProtocolAnnotationError
 import io.github.aplcornell.viaduct.errors.NoApplicableProtocolError
 import io.github.aplcornell.viaduct.errors.NoSelectionSolutionError
 import io.github.aplcornell.viaduct.syntax.Host
-import io.github.aplcornell.viaduct.syntax.HostTrustConfiguration
 import io.github.aplcornell.viaduct.syntax.Protocol
 import io.github.aplcornell.viaduct.syntax.intermediate.AssertionNode
 import io.github.aplcornell.viaduct.syntax.intermediate.BlockNode
@@ -55,9 +55,9 @@ class SelectionConstraintGenerator(
     private val costEstimator: CostEstimator<IntegerCost>,
 ) {
     private val nameGenerator = FreshNameGenerator()
-    private val hostTrustConfiguration = HostTrustConfiguration.get(program)
-    private val nameAnalysis = NameAnalysis.get(program)
-    private val informationFlowAnalysis = InformationFlowAnalysis.get(program)
+    private val hostTrustConfiguration = program.analyses.get<HostTrustConfiguration>()
+    private val nameAnalysis = program.analyses.get<NameAnalysis>()
+    private val informationFlowAnalysis = program.analyses.get<InformationFlowAnalysis>()
 
     private val costChoiceMap =
         mutableMapOf<CostVariable, MutableList<Pair<SelectionConstraint, Cost<IntegerCost>>>>()

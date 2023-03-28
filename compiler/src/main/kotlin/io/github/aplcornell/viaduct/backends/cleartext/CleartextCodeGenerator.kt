@@ -36,8 +36,8 @@ import io.github.aplcornell.viaduct.syntax.types.MutableCellType
 import io.github.aplcornell.viaduct.syntax.types.VectorType
 
 class CleartextCodeGenerator(context: CodeGeneratorContext) : AbstractCodeGenerator(context) {
-    private val typeAnalysis = TypeAnalysis.get(context.program)
-    private val nameAnalysis = NameAnalysis.get(context.program)
+    private val nameAnalysis = context.program.analyses.get<NameAnalysis>()
+    private val typeAnalysis = context.program.analyses.get<TypeAnalysis>()
 
     override fun guard(protocol: Protocol, expr: AtomicExpressionNode): CodeBlock =
         cleartextExp(protocol, expr)
@@ -55,6 +55,7 @@ class CleartextCodeGenerator(context: CodeGeneratorContext) : AbstractCodeGenera
                             exp(protocol, expr.arguments[0]),
                             exp(protocol, expr.arguments[1]),
                         )
+
                     Maximum ->
                         CodeBlock.of(
                             "%M(%L, %L)",
@@ -62,12 +63,14 @@ class CleartextCodeGenerator(context: CodeGeneratorContext) : AbstractCodeGenera
                             exp(protocol, expr.arguments[0]),
                             exp(protocol, expr.arguments[1]),
                         )
+
                     is UnaryOperator ->
                         CodeBlock.of(
                             "%L%L",
                             expr.operator.toString(),
                             exp(protocol, expr.arguments[0]),
                         )
+
                     is BinaryOperator ->
                         CodeBlock.of(
                             "%L %L %L",
@@ -75,6 +78,7 @@ class CleartextCodeGenerator(context: CodeGeneratorContext) : AbstractCodeGenera
                             expr.operator,
                             exp(protocol, expr.arguments[1]),
                         )
+
                     else -> throw UnsupportedOperatorException(protocol, expr)
                 }
             }

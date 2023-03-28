@@ -1,5 +1,8 @@
-host alice: {A & B<-}
-host bob:   {B & A<-}
+host alice
+host bob
+
+assume for <- alice trusts bob
+assume for <- bob trusts alice
 
 fun main() {
   val n: int = 10;
@@ -16,7 +19,7 @@ fun main() {
   var cur_a: int = 0;
   var cur_b: int = 0;
   for (var iter: int = 0; iter < n; iter += 1) {
-    if (declassify (adata[cur_a] <= bdata[cur_b]) to {A ⊓ B}) {
+    if (declassify (adata[cur_a] <= bdata[cur_b]) to {alice ⊓ bob}) {
       cur_a += 1;
 
     } else {
@@ -25,11 +28,11 @@ fun main() {
   }
 
   var median: int;
-  if (declassify (adata[cur_a] <= bdata[cur_b]) to {A ⊓ B}) {
-    median = declassify adata[cur_a] to {A ⊓ B};
+  if (declassify (adata[cur_a] <= bdata[cur_b]) to {alice ⊓ bob}) {
+    median = declassify adata[cur_a] to {alice ⊓ bob};
 
   } else {
-    median = declassify bdata[cur_b] to {A ⊓ B};
+    median = declassify bdata[cur_b] to {alice ⊓ bob};
   }
 
   output median to alice;

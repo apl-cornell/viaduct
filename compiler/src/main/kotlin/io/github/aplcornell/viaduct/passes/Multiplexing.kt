@@ -80,7 +80,7 @@ class MuxPostprocessor(
     val selection: ProtocolAssignment,
 ) : ProgramPostprocessor {
     override fun postprocess(program: ProgramNode): ProgramNode {
-        val nameAnalysis = NameAnalysis.get(program)
+        val nameAnalysis = program.analyses.get<NameAnalysis>()
         return ProgramNode(
             program.declarations.map { declaration ->
                 when (declaration) {

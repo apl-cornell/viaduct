@@ -11,14 +11,14 @@ internal class NameAnalysisTest {
     @ParameterizedTest
     @ArgumentsSource(PositiveTestProgramProvider::class)
     fun `it name checks`(program: ProgramNode) {
-        NameAnalysis.get(program.elaborated()).check()
+        program.elaborated().analyses.get<NameAnalysis>().check()
     }
 
     @ParameterizedTest
     @ArgumentsSource(PositiveTestProgramProvider::class)
     fun `temporary definitions are mapped to reads`(surfaceProgram: ProgramNode) {
         val program = surfaceProgram.elaborated()
-        val nameAnalysis = NameAnalysis.get(program)
+        val nameAnalysis = program.analyses.get<NameAnalysis>()
         program.descendantsIsInstance<LetNode>().forEach { declaration -> nameAnalysis.readers(declaration) }
     }
 }

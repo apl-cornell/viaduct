@@ -61,8 +61,8 @@ private class BackendCodeGenerator(
     val protocolComposer: ProtocolComposer,
     val hostDeclarations: TypeSpec,
 ) {
-    private val typeAnalysis = TypeAnalysis.get(program)
-    private val nameAnalysis = NameAnalysis.get(program)
+    private val nameAnalysis = program.analyses.get<NameAnalysis>()
+    private val typeAnalysis = program.analyses.get<TypeAnalysis>()
     private val protocolAnalysis = ProtocolAnalysis(program, protocolComposer)
     private val context = Context()
     private val codeGenerator = codeGenerator(context)
@@ -238,6 +238,7 @@ private class BackendCodeGenerator(
                             is LiteralNode -> {
                                 CodeBlock.of("%L", guard.value)
                             }
+
                             is ReadNode -> {
                                 val guardProtocol = protocolAnalysis.primaryProtocol(guard)
                                 codeGenerator.guard(guardProtocol, guard)
@@ -281,6 +282,7 @@ private class BackendCodeGenerator(
             is ObjectReferenceArgumentNode -> {
                 CodeBlock.of("%N", context.kotlinName(argument.variable.value))
             }
+
             is ExpressionArgumentNode -> {
                 codeGenerator.exp(protocol, argument.expression)
             }
@@ -288,6 +290,7 @@ private class BackendCodeGenerator(
             is ObjectDeclarationArgumentNode -> {
                 throw UnsupportedOperatorException(protocol, argument)
             }
+
             is OutParameterArgumentNode -> { // Out box already in scope
                 CodeBlock.of("%N", outBoxName(argument.parameter.value))
             }
@@ -329,6 +332,7 @@ private class BackendCodeGenerator(
                 init.objectType,
                 init.arguments,
             )
+
             is OutParameterExpressionInitializerNode -> codeGenerator.exp(protocol, init.expression)
         }
         val parameterName = context.kotlinName(stmt.name.value)

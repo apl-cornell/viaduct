@@ -34,7 +34,7 @@ import io.github.aplcornell.viaduct.syntax.operators.Or
 import io.github.aplcornell.viaduct.util.subsequences
 
 class ZKPProtocolFactory(val program: ProgramNode) : ProtocolFactory {
-    private val nameAnalysis = NameAnalysis.get(program)
+    private val nameAnalysis = program.analyses.get<NameAnalysis>()
 
     private val protocols: Set<Protocol> = run {
         val hostSubsets = program.hosts.sorted().subsequences().map { it.toSet() }

@@ -40,7 +40,7 @@ class BackendInterpreter(
     private val protocolInterpreters: List<ProtocolInterpreter>,
     private val runtime: ViaductProcessRuntime,
 ) {
-    private val nameAnalysis = NameAnalysis.get(program)
+    private val nameAnalysis = program.analyses.get<NameAnalysis>()
     private val protocolInterpreterMap: Map<Protocol, ProtocolInterpreter>
     private val syncProtocol = Synchronization(program.hostDeclarations.map { it.name.value }.toSet())
 
@@ -51,7 +51,11 @@ class BackendInterpreter(
             val interpreterProtocols = interpreter.availableProtocols
             for (protocol in interpreterProtocols) {
                 if (currentProtocols.contains(protocol)) {
-                    throw ViaductInterpreterError("Interpreter: Multiple backends for protocol ${protocol.toDocument().print()}")
+                    throw ViaductInterpreterError(
+                        "Interpreter: Multiple backends for protocol ${
+                            protocol.toDocument().print()
+                        }",
+                    )
                 } else {
                     currentProtocols.add(protocol)
                     initInterpreterMap[protocol] = interpreter
@@ -201,7 +205,11 @@ class BackendInterpreter(
                             is ReadNode -> {
                                 val guardProtocol = protocolAnalysis.primaryProtocol(guard)
                                 protocolInterpreterMap[guardProtocol]?.runGuard(guardProtocol, guard)
-                                    ?: throw ViaductInterpreterError("no backend for protocol ${guardProtocol.toDocument().print()}")
+                                    ?: throw ViaductInterpreterError(
+                                        "no backend for protocol ${
+                                            guardProtocol.toDocument().print()
+                                        }",
+                                    )
                             }
                         }
 

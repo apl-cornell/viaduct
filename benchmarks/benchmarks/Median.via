@@ -1,22 +1,25 @@
-host alice: {A & B<-}
-host bob:   {B & A<-}
+host alice
+host bob
+
+assume for <- alice trusts bob
+assume for <- bob trusts alice
 
 fun main() {
-  val n: int{A ⊓ B} = 10;
+  val n: int{alice ⊓ bob} = 10;
 
   /* assume that input arrays are already sorted */
-  val adata = Array[int]{A & B<-}(n);
-  val bdata = Array[int]{B & A<-}(n);
+  val adata = Array[int]{alice & bob<-}(n);
+  val bdata = Array[int]{bob & alice<-}(n);
 
-  for (var i: int{A ⊓ B} = 0; i < n; i += 1) {
+  for (var i: int{alice ⊓ bob} = 0; i < n; i += 1) {
     adata[i] = input int from alice;
     bdata[i] = input int from bob;
   }
 
-  var cur_a: int{A & B<-} = 0;
-  var cur_b: int{B & A<-} = 0;
-  for (var iter: int{A ⊓ B} = 0; iter < n; iter += 1) {
-    if (declassify (adata[cur_a] <= bdata[cur_b]) to {A ⊓ B}) {
+  var cur_a: int{alice & bob<-} = 0;
+  var cur_b: int{bob & alice<-} = 0;
+  for (var iter: int{alice ⊓ bob} = 0; iter < n; iter += 1) {
+    if (declassify (adata[cur_a] <= bdata[cur_b]) to {alice ⊓ bob}) {
       cur_a += 1;
 
     } else {
@@ -24,12 +27,12 @@ fun main() {
     }
   }
 
-  var median: int{A ⊓ B};
-  if (declassify (adata[cur_a] <= bdata[cur_b]) to {A ⊓ B}) {
-    median = declassify adata[cur_a] to {A ⊓ B};
+  var median: int{alice ⊓ bob};
+  if (declassify (adata[cur_a] <= bdata[cur_b]) to {alice ⊓ bob}) {
+    median = declassify adata[cur_a] to {alice ⊓ bob};
 
   } else {
-    median = declassify bdata[cur_b] to {A ⊓ B};
+    median = declassify bdata[cur_b] to {alice ⊓ bob};
   }
 
   output median to alice;

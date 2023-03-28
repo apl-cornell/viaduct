@@ -38,7 +38,6 @@ import io.github.aplcornell.viaduct.security.solver.flowsTo
 import io.github.aplcornell.viaduct.security.solver.integrityFlowsTo
 import io.github.aplcornell.viaduct.security.solver.term
 import io.github.aplcornell.viaduct.syntax.HasSourceLocation
-import io.github.aplcornell.viaduct.syntax.HostTrustConfiguration
 import io.github.aplcornell.viaduct.syntax.Variable
 import io.github.aplcornell.viaduct.syntax.intermediate.AssertionNode
 import io.github.aplcornell.viaduct.syntax.intermediate.BlockNode
@@ -122,10 +121,11 @@ private sealed class LabelVariable {
 }
 
 /** Associates [Variable]s with their [Label]s. */
-class InformationFlowAnalysis private constructor(
+class InformationFlowAnalysis internal constructor(
     private val tree: Tree<Node, ProgramNode>,
     private val nameAnalysis: NameAnalysis,
-) {
+    private val trustConfiguration: HostTrustConfiguration,
+) : Analysis<ProgramNode> {
     private val FunctionDeclarationNode.constraintSystem: LabelConstraintSystem by attribute {
         constraints()
     }
@@ -133,8 +133,6 @@ class InformationFlowAnalysis private constructor(
     private val FunctionDeclarationNode.solution: Solution by attribute {
         constraintSystem.solution()
     }
-
-    private val trustConfiguration: HostTrustConfiguration = HostTrustConfiguration.get(tree.root)
 
     // private val solution by lazy { constraintSystem.solution() }
 
@@ -673,12 +671,5 @@ class InformationFlowAnalysis private constructor(
         tree.root.functions.forEach {
             it.constraintSystem.exportDotGraph(output)
         }
-    }
-
-    companion object : AnalysisProvider<InformationFlowAnalysis> {
-        private fun construct(program: ProgramNode) =
-            InformationFlowAnalysis(program.tree, NameAnalysis.get(program))
-
-        override fun get(program: ProgramNode): InformationFlowAnalysis = program.cached(::construct)
     }
 }

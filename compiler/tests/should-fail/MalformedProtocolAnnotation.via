@@ -1,0 +1,7 @@
+/* MalformedProtocolAnnotationError */
+
+host alice
+
+fun main() {
+    val x:int@Replication(hosts = {alice}) = 5;
+}

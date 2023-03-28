@@ -1,17 +1,20 @@
 fun main() {
-    val length: int{A ⊓ B} = 100;
+    val length: int{alice ⊓ bob} = 100;
 
-    var a_min: int{A & B<-} = 0;
-    var b_min: int{B & A<-} = 0;
-    for (var i: int{A ⊓ B} = 0; i < length; i += 1) {
+    var a_min: int{alice & bob<-} = 0;
+    var b_min: int{bob & alice<-} = 0;
+    for (var i: int{alice ⊓ bob} = 0; i < length; i += 1) {
         a_min = min(a_min, input int from alice);
         b_min = min(b_min, input int from bob);
     }
 
-    val a_wins: bool{A ⊓ B} = declassify (a_min > b_min) to {A ⊓ B};
+    val a_wins: bool{alice ⊓ bob} = declassify (a_min > b_min) to {alice ⊓ bob};
     output a_wins to alice;
     output a_wins to bob;
 }
 
-host alice : {A & B<-}
-host bob   : {B & A<-}
+host alice
+host bob
+
+assume for <- alice trusts bob
+assume for <- bob trusts alice

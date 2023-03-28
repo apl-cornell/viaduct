@@ -1,6 +1,7 @@
 package io.github.aplcornell.viaduct.passes
 
 import io.github.aplcornell.viaduct.algebra.FreeDistributiveLattice
+import io.github.aplcornell.viaduct.analysis.HostTrustConfiguration
 import io.github.aplcornell.viaduct.parsing.parse
 import io.github.aplcornell.viaduct.security.ConfidentialityComponent
 import io.github.aplcornell.viaduct.security.HostPrincipal
@@ -16,7 +17,6 @@ import io.github.aplcornell.viaduct.security.LabelTop
 import io.github.aplcornell.viaduct.security.PolymorphicPrincipal
 import io.github.aplcornell.viaduct.security.Principal
 import io.github.aplcornell.viaduct.syntax.Host
-import io.github.aplcornell.viaduct.syntax.HostTrustConfiguration
 import io.github.aplcornell.viaduct.syntax.LabelVariable
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
@@ -41,7 +41,7 @@ internal class RewriteTest {
     private fun pl(s: String) = LabelParameter(p(s))
 
     private val emptyTrustConfiguration =
-        HostTrustConfiguration.get("fun main() {}".parse().elaborated())
+        "fun main() {}".parse().elaborated().analyses.get<HostTrustConfiguration>()
 
     private val top = FreeDistributiveLattice.bounds<PrincipalComponent>().top
     private val bottom = FreeDistributiveLattice.bounds<PrincipalComponent>().bottom

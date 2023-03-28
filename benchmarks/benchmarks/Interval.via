@@ -1,51 +1,54 @@
-host alice  : {A & B<-}
-host bob    : {B & A<-}
-host chuck  : {C}
+host alice
+host bob
+host chuck
 
-/* Alice and Bob compute the interval of their numbers
- * without revealing them; then Chuck gives an attestation that
+assume for <- alice trusts bob
+assume for <- bob trusts alice
+
+/* alice and bob compute the interval of their numbers
+ * without revealing them; then chuckhuck gives an attestation that
  * his secret point does or does not lie in the interval.
  * This is the 1d version of checking whether a point lies
  * in a convex hull.
  */
 fun main() {
-  /* Chuck can read these public parameters, but doesn't need to trust them
+  /* chuck can read these public parameters, but doesn't need to trust them
      since he is not using them */
-  val a_num_points: int{A ⊓ B ⊓ C->} = 5;
-  val b_num_points: int{A ⊓ B ⊓ C->} = 5;
-  val num_points: int{A ⊓ B ⊓ C->} = a_num_points + b_num_points;
-  val chuck_point: int{C & (A&B)<-} =
-    endorse (input int from chuck) to {C & (A&B)<-} from {C};
+  val a_num_points: int{alice ⊓ bob ⊓ chuck->} = 5;
+  val b_num_points: int{alice ⊓ bob ⊓ chuck->} = 5;
+  val num_points: int{alice ⊓ bob ⊓ chuck->} = a_num_points + b_num_points;
+  val chuck_point: int{chuck & (alice&bob)<-} =
+    endorse (input int from chuck) to {chuck & (alice&bob)<-} from {chuck};
 
-  val points = Array[int]{A & B}(num_points);
-  for (var i: int{A ⊓ B ⊓ C->} = 0; i < a_num_points; i += 1) {
+  val points = Array[int]{alice & bob}(num_points);
+  for (var i: int{alice ⊓ bob ⊓ chuck->} = 0; i < a_num_points; i += 1) {
     points[i] = input int from alice;
   }
 
-  for (var i: int{A ⊓ B ⊓ C->} = 0; i < b_num_points; i += 1) {
+  for (var i: int{alice ⊓ bob ⊓ chuck->} = 0; i < b_num_points; i += 1) {
     points[a_num_points+i] = input int from bob;
   }
 
-  var min_point: int{A & B} = points[0];
-  var max_point: int{A & B} = points[0];
+  var min_point: int{alice & bob} = points[0];
+  var max_point: int{alice & bob} = points[0];
 
-  for (var i: int{A ⊓ B ⊓ C->} = 1; i < num_points; i += 1) {
+  for (var i: int{alice ⊓ bob ⊓ chuck->} = 1; i < num_points; i += 1) {
     min_point = min(min_point, points[i]);
     max_point = max(max_point, points[i]);
   }
 
-  val min_point_public: int{A ⊓ B ⊓ C->} = declassify min_point to {A ⊓ B ⊓ C->};
-  val max_point_public: int{A ⊓ B ⊓ C->} = declassify max_point to {A ⊓ B ⊓ C->};
-  val min_point_trusted: int{A ⊓ B ⊓ C} =
-    endorse min_point_public to {A ⊓ B ⊓ C} from {A ⊓ B ⊓ C->};
-  val max_point_trusted: int{A ⊓ B ⊓ C} =
-    endorse max_point_public to {A ⊓ B ⊓ C} from {A ⊓ B ⊓ C->};
+  val min_point_public: int{alice ⊓ bob ⊓ chuck->} = declassify min_point to {alice ⊓ bob ⊓ chuck->};
+  val max_point_public: int{alice ⊓ bob ⊓ chuck->} = declassify max_point to {alice ⊓ bob ⊓ chuck->};
+  val min_point_trusted: int{alice ⊓ bob ⊓ chuck} =
+    endorse min_point_public to {alice ⊓ bob ⊓ chuck} from {alice ⊓ bob ⊓ chuck->};
+  val max_point_trusted: int{alice ⊓ bob ⊓ chuck} =
+    endorse max_point_public to {alice ⊓ bob ⊓ chuck} from {alice ⊓ bob ⊓ chuck->};
 
-  val in_interval: bool{C & (A&B)<-} =
+  val in_interval: bool{chuck & (alice&bob)<-} =
     min_point_trusted <= chuck_point && chuck_point <= max_point_trusted;
 
-  /* Chuck doesn't need to trust this because it will not be part of his output */
-  val in_interval_public: bool{A ⊓ B ⊓ C->} = declassify in_interval to {A ⊓ B ⊓ C};
+  /* chuck doesn't need to trust this because it will not be part of his output */
+  val in_interval_public: bool{alice ⊓ bob ⊓ chuck->} = declassify in_interval to {alice ⊓ bob ⊓ chuck};
 
   output in_interval_public to alice;
   output in_interval_public to bob;

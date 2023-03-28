@@ -43,8 +43,8 @@ class ProtocolAnalysis(
     val program: ProgramNode,
     private val protocolComposer: ProtocolComposer,
 ) {
-    private val tree = program.tree
-    private val nameAnalysis = NameAnalysis.get(program)
+    private val tree = program.analyses.tree
+    private val nameAnalysis = program.analyses.get<NameAnalysis>()
 
     /** The outermost block this [Node] is in. */
     private val Node.enclosingBody: BlockNode by attribute {
@@ -164,11 +164,14 @@ class ProtocolAnalysis(
 
             is IfNode ->
                 thenBranch.protocols.addAll(elseBranch.protocols)
+
             is InfiniteLoopNode ->
                 body.protocols
+
             is BreakNode ->
                 // Every protocol executing the loop executes the breaks in the loop.
                 nameAnalysis.correspondingLoop(this).protocols
+
             is AssertionNode ->
                 // All protocols execute every assertion.
                 this.enclosingBody.protocols

@@ -4,7 +4,7 @@ plugins {
     application
 
     // Style checking
-    id("com.diffplug.spotless") version "6.14.1"
+    id("com.diffplug.spotless") version "6.17.0"
 }
 
 group = "io.github.apl-cornell.viaduct"
@@ -22,12 +22,13 @@ dependencies {
     implementation("${project.group}:runtime")
 
     // Command-line-argument parsing
-    implementation("com.github.ajalt.clikt:clikt:3.5.1")
+    implementation("com.github.ajalt.clikt:clikt:3.5.2")
 
     // Logging
     implementation("io.github.microutils:kotlin-logging:3.0.5")
-    implementation("org.apache.logging.log4j:log4j-core:2.19.0")
-    implementation("org.apache.logging.log4j:log4j-slf4j2-impl:2.19.0")
+    implementation(platform("org.apache.logging.log4j:log4j-bom:2.20.0"))
+    implementation("org.apache.logging.log4j:log4j-core")
+    implementation("org.apache.logging.log4j:log4j-slf4j2-impl")
 
     // Testing
     testImplementation("${project.group}:test-utilities")

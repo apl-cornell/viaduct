@@ -31,8 +31,8 @@ import io.github.aplcornell.viaduct.syntax.types.VectorType
 import io.github.aplcornell.viaduct.syntax.values.Value
 
 abstract class AbstractCodeGenerator(val context: CodeGeneratorContext) : CodeGenerator {
-    private val nameAnalysis = NameAnalysis.get(context.program)
-    private val typeAnalysis = TypeAnalysis.get(context.program)
+    private val nameAnalysis = context.program.analyses.get<NameAnalysis>()
+    private val typeAnalysis = context.program.analyses.get<TypeAnalysis>()
 
     override fun kotlinType(protocol: Protocol, sourceType: ValueType): TypeName = typeTranslator(sourceType)
 
@@ -41,12 +41,15 @@ abstract class AbstractCodeGenerator(val context: CodeGeneratorContext) : CodeGe
             is ImmutableCellType -> {
                 kotlinType(protocol, sourceType.elementType)
             }
+
             is MutableCellType -> {
                 (Boxed::class).asTypeName().parameterizedBy(kotlinType(protocol, sourceType.elementType))
             }
+
             is VectorType -> {
                 ARRAY.parameterizedBy(kotlinType(protocol, sourceType.elementType))
             }
+
             else -> {
                 throw IllegalArgumentException(
                     "Cannot convert ${
@@ -67,6 +70,7 @@ abstract class AbstractCodeGenerator(val context: CodeGeneratorContext) : CodeGe
         when (expr) {
             is LiteralNode ->
                 value(expr.value)
+
             is ReadNode ->
                 CodeBlock.of("%N", context.kotlinName(expr.temporary.value, protocol))
         }
@@ -98,8 +102,10 @@ abstract class AbstractCodeGenerator(val context: CodeGeneratorContext) : CodeGe
                                     context.kotlinName(expr.variable.value),
                                     cleartextExp(protocol, expr.arguments.first()),
                                 )
+
                             else -> throw UnsupportedOperatorException(protocol, expr)
                         }
+
                     else -> throw UnsupportedOperatorException(protocol, expr)
                 }
 
@@ -119,11 +125,13 @@ abstract class AbstractCodeGenerator(val context: CodeGeneratorContext) : CodeGe
                 protocol,
                 arguments.first(),
             )
+
             MutableCell -> CodeBlock.of(
                 "%T(%L)",
                 Boxed::class,
                 exp(protocol, arguments.first()),
             )
+
             Vector -> CodeBlock.of(
                 "%T(%L){ %L }",
                 Array::class,
@@ -136,6 +144,7 @@ abstract class AbstractCodeGenerator(val context: CodeGeneratorContext) : CodeGe
                     ),
                 ),
             )
+
             else -> throw IllegalArgumentException(
                 "Protocol ${protocol.name} does not support object ${
                     objectType.toDocument().print()

@@ -1,5 +1,8 @@
-host alice  : {A & B<-}
-host bob    : {B & A<-}
+host alice
+host bob
+
+assume for <- alice trusts bob
+assume for <- bob trusts alice
 
 /* k-means clustering */
 fun main() {
@@ -187,7 +190,7 @@ fun main() {
 
   /* declassify clusters */
   for (var h: int = 1; h < num_clusters * dim; h += 1) {
-    val public_cluster: int = declassify clusters[h] to {A ⊓ B};
+    val public_cluster: int = declassify clusters[h] to {alice ⊓ bob};
     output public_cluster to alice;
     output public_cluster to bob;
   }

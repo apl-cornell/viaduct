@@ -1,0 +1,7 @@
+/* MalformedProtocolAnnotationError */
+
+host alice
+
+fun main() {
+    val x:int@ZKP(prover = alice, verifiers = {alice}) = 5;
+}

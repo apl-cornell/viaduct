@@ -1,8 +1,8 @@
 package io.github.aplcornell.viaduct.selection
 
+import io.github.aplcornell.viaduct.analysis.HostTrustConfiguration
 import io.github.aplcornell.viaduct.analysis.InformationFlowAnalysis
 import io.github.aplcornell.viaduct.analysis.NameAnalysis
-import io.github.aplcornell.viaduct.syntax.HostTrustConfiguration
 import io.github.aplcornell.viaduct.syntax.Protocol
 import io.github.aplcornell.viaduct.syntax.intermediate.Node
 import io.github.aplcornell.viaduct.syntax.intermediate.ProgramNode
@@ -24,9 +24,9 @@ fun validateProtocolAssignment(
     val constraintGenerator =
         SelectionConstraintGenerator(program, protocolFactory, protocolComposer, costEstimator)
 
-    val nameAnalysis = NameAnalysis.get(program)
-    val informationFlowAnalysis = InformationFlowAnalysis.get(program)
-    val hostTrustConfiguration = HostTrustConfiguration.get(program)
+    val hostTrustConfiguration = program.analyses.get<HostTrustConfiguration>()
+    val nameAnalysis = program.analyses.get<NameAnalysis>()
+    val informationFlowAnalysis = program.analyses.get<InformationFlowAnalysis>()
 
     fun checkViableProtocol(selection: ProtocolAssignment, node: VariableDeclarationNode) {
         val functionName = nameAnalysis.enclosingFunctionName(node as Node)

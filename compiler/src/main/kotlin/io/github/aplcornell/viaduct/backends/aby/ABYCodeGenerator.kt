@@ -62,11 +62,11 @@ import io.github.aplcornell.viaduct.syntax.values.IntegerValue
 import io.github.aplcornell.viaduct.syntax.values.Value
 import java.math.BigInteger
 
-private data class ABYPair(val server: Host, val client: Host)
-
 class ABYCodeGenerator(
     context: CodeGeneratorContext,
 ) : AbstractCodeGenerator(context) {
+    private data class ABYPair(val server: Host, val client: Host)
+
     private val typeAnalysis = context.program.analyses.get<TypeAnalysis>()
     private val nameAnalysis = context.program.analyses.get<NameAnalysis>()
     private val protocolAnalysis = ProtocolAnalysis(context.program, context.protocolComposer)

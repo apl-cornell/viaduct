@@ -1,0 +1,16 @@
+host alice
+host bob
+host chuck
+
+fun <> main() -> {
+    val a@Local(host=alice), b@Local(host=bob) = c<>()
+    val = alice.output<int[]>(a)
+    val = bob.output<int[]>(b)
+    return
+}
+
+circuit fun <> c@Local(host = chuck)() -> a: int[], b: int[] {
+    val x[]:int[]=5
+    val y[]:int[]=7
+    return x, y
+}

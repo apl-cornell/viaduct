@@ -1,0 +1,78 @@
+host alice
+host bob
+
+circuit fun <a, b> operators@Replication(hosts = {alice, bob})() ->
+  neg: int[],
+  add: int[],
+  sub: int[],
+  mul: int[],
+  div: int[],
+  mnn: int[],
+  mxx: int[],
+  equ: bool[],
+  neq: bool[],
+  lt: bool[],
+  gt: bool[],
+  leq: bool[],
+  geq: bool[] {
+    val neg[]: int[] = -a
+    val add[]: int[] = a + b
+    val sub[]: int[] = a - b
+    val mul[]: int[] = a * b
+    val div[]: int[] = a / b
+    val mnn[]: int[] = min(a, b)
+    val mxx[]: int[] = max(a, b)
+
+    val equ[]: bool[] = a == b
+    val neq[]: bool[] = a != b
+    val lt[]: bool[] = a < b
+    val gt[]: bool[] = a > b
+    val leq[]: bool[] = a <= b
+    val geq[]: bool[] = a >= b
+
+    return neg, add, sub, mul, div, mnn, mxx, equ, neq, lt, gt, leq, geq
+}
+
+fun <> main() -> {
+    val neg@Replication(hosts = {alice, bob}),
+        add@Replication(hosts = {alice, bob}),
+        sub@Replication(hosts = {alice, bob}),
+        mul@Replication(hosts = {alice, bob}),
+        div@Replication(hosts = {alice, bob}),
+        mnn@Replication(hosts = {alice, bob}),
+        mxx@Replication(hosts = {alice, bob}),
+        equ@Replication(hosts = {alice, bob}),
+        neq@Replication(hosts = {alice, bob}),
+        lt@Replication(hosts = {alice, bob}),
+        gt@Replication(hosts = {alice, bob}),
+        leq@Replication(hosts = {alice, bob}),
+        geq@Replication(hosts = {alice, bob})
+        = operators<3, 7>()
+    val = alice.output<int[]>(neg)
+    val = bob.output<int[]>(neg)
+    val = alice.output<int[]>(add)
+    val = bob.output<int[]>(add)
+    val = alice.output<int[]>(sub)
+    val = bob.output<int[]>(sub)
+    val = alice.output<int[]>(mul)
+    val = bob.output<int[]>(mul)
+    val = alice.output<int[]>(div)
+    val = bob.output<int[]>(div)
+    val = alice.output<int[]>(mnn)
+    val = bob.output<int[]>(mnn)
+    val = alice.output<int[]>(mxx)
+    val = bob.output<int[]>(mxx)
+    val = alice.output<bool[]>(equ)
+    val = bob.output<bool[]>(equ)
+    val = alice.output<bool[]>(neq)
+    val = bob.output<bool[]>(neq)
+    val = alice.output<bool[]>(lt)
+    val = bob.output<bool[]>(lt)
+    val = alice.output<bool[]>(gt)
+    val = bob.output<bool[]>(gt)
+    val = alice.output<bool[]>(leq)
+    val = bob.output<bool[]>(leq)
+    val = alice.output<bool[]>(geq)
+    val = bob.output<bool[]>(geq)
+    return
+}

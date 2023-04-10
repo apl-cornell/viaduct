@@ -3,7 +3,6 @@ package io.github.aplcornell.viaduct.syntax
 import io.github.aplcornell.viaduct.prettyprinting.Document
 import io.github.aplcornell.viaduct.prettyprinting.PrettyPrintable
 import io.github.aplcornell.viaduct.security.LabelExpression
-import io.github.aplcornell.viaduct.syntax.circuit.ArrayType
 import io.github.aplcornell.viaduct.syntax.datatypes.ClassName
 import io.github.aplcornell.viaduct.syntax.datatypes.MethodName
 import io.github.aplcornell.viaduct.syntax.datatypes.QueryName
@@ -48,8 +47,6 @@ typealias JumpLabelNode = Located<JumpLabel>
 typealias ValueNode = Located<Value>
 
 typealias ValueTypeNode = Located<ValueType>
-
-typealias ArrayTypeNode = Located<ArrayType>
 
 typealias LabelNode = Located<LabelExpression>
 

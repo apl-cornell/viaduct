@@ -1,0 +1,53 @@
+host alice
+host bob
+
+circuit fun <> boolean@BoolABY(client = bob, server = alice)(
+  a: int[2],
+  b: int[2]
+) ->
+  neg: int[2],
+  add: int[2],
+  sub: int[2],
+  mul: int[2],
+  div: int[2],
+  mnn: int[2],
+  mxx: int[2]
+{
+    val neg[i < 2]: int[2] = -a[i]
+    val add[i < 2]: int[2] = a[i] + b[i]
+    val sub[i < 2]: int[2] = a[i] - b[i]
+    val mul[i < 2]: int[2] = a[i] * b[i]
+    val div[i < 2]: int[2] = a[i] / b[i]
+    val mnn[i < 2]: int[2] = min(a[i], b[i])
+    val mxx[i < 2]: int[2] = max(a[i], b[i])
+    return neg, add, sub, mul, div, mnn, mxx
+}
+
+fun <> main() -> {
+    val aliceLocal@Local(host = alice) = alice.input<int[2]>()
+    val bobLocal@Local(host = bob) = bob.input<int[2]>()
+
+    val neg@Replication(hosts = {alice, bob}),
+        add@Replication(hosts = {alice, bob}),
+        sub@Replication(hosts = {alice, bob}),
+        mul@Replication(hosts = {alice, bob}),
+        div@Replication(hosts = {alice, bob}),
+        mnn@Replication(hosts = {alice, bob}),
+        mxx@Replication(hosts = {alice, bob})
+        = boolean<>(aliceLocal, bobLocal)
+    val = alice.output<int[2]>(neg)
+    val = bob.output<int[2]>(neg)
+    val = alice.output<int[2]>(add)
+    val = bob.output<int[2]>(add)
+    val = alice.output<int[2]>(sub)
+    val = bob.output<int[2]>(sub)
+    val = alice.output<int[2]>(mul)
+    val = bob.output<int[2]>(mul)
+    val = alice.output<int[2]>(div)
+    val = bob.output<int[2]>(div)
+    val = alice.output<int[2]>(mnn)
+    val = bob.output<int[2]>(mnn)
+    val = alice.output<int[2]>(mxx)
+    val = bob.output<int[2]>(mxx)
+    return
+}

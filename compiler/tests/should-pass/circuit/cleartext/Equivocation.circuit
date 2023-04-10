@@ -1,0 +1,100 @@
+host alice
+host bob
+host chuck
+host david
+
+fun <> main() -> {
+    val a@Local(host = alice) = alice.input<int[]>()
+
+    /*
+    Import protocols differ, export protocols match
+    */
+
+    /* Import local to replication */
+    val im_loca_to_ab@Replication(hosts = {alice, bob}) = aliceBob<>(a)
+
+    /* Import local to replication, disjoint */
+    val im_loca_to_bc@Replication(hosts = {bob, chuck}) = bobChuck<>(a)
+
+    /* Import replication to replication, equal sets */
+    val im_ab_to_ab@Replication(hosts = {alice, bob}) = aliceBob<>(im_loca_to_ab)
+
+    /* Import replication to replication, subset */
+    val im_ab_to_abc@Replication(hosts = {alice, bob, chuck}) = aliceBobChuck<>(im_loca_to_ab)
+
+    /* Import replication to replication, superset */
+    val im_abc_to_ab@Replication(hosts = {alice, bob}) = aliceBob<>(im_ab_to_abc)
+
+    /* Import replication to replication, disjoint */
+    val im_ab_to_cd@Replication(hosts = {chuck, david}) = chuckDavid<>(im_loca_to_ab)
+
+    /* Import replication to replication, non-disjoint */
+    val im_ab_to_bc@Replication(hosts = {bob, chuck}) = bobChuck<>(im_loca_to_ab)
+
+    /*
+    Import protocols match, export protocols differ
+    */
+
+    /* Export replication to local */
+    val ex_ab_to_loca@Local(host = alice) = aliceBob<>(im_loca_to_ab)
+
+    /* Export replication to local, disjoint */
+    val ex_ab_to_locc@Local(host = chuck) = aliceBob<>(im_loca_to_ab)
+
+    /* Export replication to replication, subset */
+    val ex_ab_to_abc@Replication(hosts = {alice, bob, chuck}) = aliceBob<>(im_loca_to_ab)
+
+    /* Export replication to replication, superset */
+    val ex_abc_to_ab@Replication(hosts = {alice, bob}) = aliceBobChuck<>(im_ab_to_abc)
+
+    /* Export replication to replication, disjoint */
+    val ex_cd_to_ab@Replication(hosts = {alice, bob}) = chuckDavid<>(im_ab_to_cd)
+
+    /* Export replication to replication, non-disjoint */
+    val ex_bc_to_ab@Replication(hosts = {alice, bob}) = bobChuck<>(im_ab_to_bc)
+
+    val = alice.output<int[]>(im_loca_to_ab)
+    val = alice.output<int[]>(im_ab_to_ab)
+    val = alice.output<int[]>(im_ab_to_abc)
+    val = alice.output<int[]>(im_abc_to_ab)
+    val = alice.output<int[]>(ex_ab_to_loca)
+    val = alice.output<int[]>(ex_ab_to_abc)
+    val = alice.output<int[]>(ex_abc_to_ab)
+    val = alice.output<int[]>(ex_cd_to_ab)
+    val = alice.output<int[]>(ex_bc_to_ab)
+
+    val = bob.output<int[]>(im_loca_to_ab)
+    val = bob.output<int[]>(im_loca_to_bc)
+    val = bob.output<int[]>(im_ab_to_ab)
+    val = bob.output<int[]>(im_ab_to_abc)
+    val = bob.output<int[]>(im_abc_to_ab)
+    val = bob.output<int[]>(im_ab_to_bc)
+    val = bob.output<int[]>(ex_ab_to_abc)
+    val = bob.output<int[]>(ex_abc_to_ab)
+    val = bob.output<int[]>(ex_cd_to_ab)
+    val = bob.output<int[]>(ex_bc_to_ab)
+
+    val = chuck.output<int[]>(im_loca_to_bc)
+    val = chuck.output<int[]>(im_ab_to_abc)
+    val = chuck.output<int[]>(im_ab_to_cd)
+    val = chuck.output<int[]>(im_ab_to_bc)
+    val = chuck.output<int[]>(ex_ab_to_locc)
+    val = chuck.output<int[]>(ex_ab_to_abc)
+
+    val = david.output<int[]>(im_ab_to_cd)
+
+    return
+}
+
+circuit fun <> aliceBob@Replication(hosts = {alice, bob})(x: int[]) -> ret: int[] {
+    return x
+}
+circuit fun <> aliceBobChuck@Replication(hosts = {alice, bob, chuck})(x: int[]) -> ret: int[] {
+    return x
+}
+circuit fun <> chuckDavid@Replication(hosts = {chuck, david})(x: int[]) -> ret: int[] {
+    return x
+}
+circuit fun <> bobChuck@Replication(hosts = {bob, chuck})(x: int[]) -> ret: int[] {
+    return x
+}

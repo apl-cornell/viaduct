@@ -27,3 +27,14 @@ fun ProgramNode.check() {
 
     logger.duration("information flow analysis") { analyses.get<InformationFlowAnalysis>().check() }
 }
+
+/**
+ * Performs all static checks on this program.
+ *
+ * @throws CompilationError if there are errors in the program.
+ */
+fun io.github.aplcornell.viaduct.syntax.circuit.ProgramNode.check() {
+    logger.duration("name analysis") {
+        io.github.aplcornell.viaduct.circuitanalysis.NameAnalysis.get(this).check()
+    }
+}

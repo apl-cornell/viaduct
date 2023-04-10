@@ -9,6 +9,8 @@ import io.github.aplcornell.viaduct.selection.ProtocolFactory
 import io.github.aplcornell.viaduct.syntax.Protocol
 import io.github.aplcornell.viaduct.syntax.ProtocolName
 import io.github.aplcornell.viaduct.syntax.intermediate.ProgramNode
+import io.github.aplcornell.viaduct.circuitcodegeneration.CodeGenerator as CircuitCodeGenerator
+import io.github.aplcornell.viaduct.circuitcodegeneration.CodeGeneratorContext as CircuitCodeGeneratorContext
 
 object CommitmentBackend : Backend {
     override val protocols: Set<ProtocolName>
@@ -23,4 +25,6 @@ object CommitmentBackend : Backend {
         get() = CommitmentProtocolComposer
 
     override fun codeGenerator(context: CodeGeneratorContext): CodeGenerator = CommitmentDispatchCodeGenerator(context)
+
+    override fun circuitCodeGenerator(context: CircuitCodeGeneratorContext): CircuitCodeGenerator = TODO()
 }

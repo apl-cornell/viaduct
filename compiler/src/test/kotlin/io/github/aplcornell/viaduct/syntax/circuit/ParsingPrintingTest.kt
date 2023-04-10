@@ -10,13 +10,13 @@ import java.io.File
 internal class ParsingPrintingTest {
     @ParameterizedTest
     @ArgumentsSource(CircuitTestFileProvider::class)
-    fun `Circuit parses`(file: File) {
+    fun `parses`(file: File) {
         SourceFile.from(file).parse(DefaultCombinedBackend.protocolParsers)
     }
 
     @ParameterizedTest
     @ArgumentsSource(CircuitTestFileProvider::class)
-    fun `Circuit prettyprints`(file: File) {
+    fun `pretty prints`(file: File) {
         val program = SourceFile.from(file).parse(DefaultCombinedBackend.protocolParsers)
         println(program.toDocument().print())
     }

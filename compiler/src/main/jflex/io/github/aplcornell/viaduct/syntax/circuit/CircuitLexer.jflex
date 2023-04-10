@@ -81,7 +81,6 @@ Whitespace     = \R | [ \t\f]
 
 ALPHANUM    = [a-z]([A-Za-z0-9_])*
 CAPALPHANUM = [A-Z]([A-Za-z0-9_])*
-TMPALPHANUM = \044([A-Za-z0-9_])*
 NUM         = ((-)?[1-9][0-9]*) | 0
 
 
@@ -96,37 +95,24 @@ NUM         = ((-)?[1-9][0-9]*) | 0
   "host"          { return symbol(sym.HOST); }
   "fun"           { return symbol(sym.FUNCTION); }
   "circuit"       { return symbol(sym.CIRCUIT); }
-  "out"           { return symbol(sym.OUT); }
   "return"        { return symbol(sym.RETURN); }
 
   /* Types */
   "int"           { return symbol(sym.INT); }
   "bool"          { return symbol(sym.BOOL); }
   "unit"          { return symbol(sym.UNIT); }
-  "array"         { return symbol(sym.ARRAY); }
 
   /* Statements */
-  "let"           { return symbol(sym.LET); }
   "val"           { return symbol(sym.VAL); }
-  "var"           { return symbol(sym.VAR); }
   ":"             { return symbol(sym.COLON); }
   "::"            { return symbol(sym.COLONCOLON); }
 
-  "if"            { return symbol(sym.IF); }
-  "else"          { return symbol(sym.ELSE); }
-  "while"         { return symbol(sym.WHILE); }
-  "for"           { return symbol(sym.FOR); }
-  "loop"          { return symbol(sym.LOOP); }
-  "break"         { return symbol(sym.BREAK); }
-
   "input"         { return symbol(sym.INPUT); }
-  "from"          { return symbol(sym.FROM); }
   "output"        { return symbol(sym.OUTPUT); }
-  "to"            { return symbol(sym.TO); }
-
-  "assert"        { return symbol(sym.ASSERT); }
 
   /* Expressions */
+  "."             { return symbol(sym.PERIOD); }
+
   "reduce"        { return symbol(sym.REDUCE); }
 
   "true"          { return symbol(sym.TRUE); }
@@ -139,10 +125,6 @@ NUM         = ((-)?[1-9][0-9]*) | 0
   "||"            { return symbol(sym.OROR); }
 
   "="             { return symbol(sym.EQ); }
-  "+="            { return symbol(sym.PLUSEQ); }
-  "-="            { return symbol(sym.MINUSEQ); }
-  "*="            { return symbol(sym.TIMESEQ); }
-  "/="            { return symbol(sym.DIVIDEEQ); }
 
   "+"             { return symbol(sym.PLUS); }
   "-"             { return symbol(sym.MINUS); }
@@ -159,17 +141,7 @@ NUM         = ((-)?[1-9][0-9]*) | 0
   ">"             { return symbol(sym.GT); }
   ">="            { return symbol(sym.GEQ); }
 
-  "declassify"    { return symbol(sym.DECLASSIFY); }
-  "endorse"       { return symbol(sym.ENDORSE); }
-  "downgrade"     { return symbol(sym.DOWNGRADE); }
-
   /* Labels */
-  "⊤"             { return symbol(sym.TOP); }
-  "⊥"             { return symbol(sym.BOTTOM); }
-  "|" | "∨"       { return symbol(sym.OR); }
-  "&" | "∧"       { return symbol(sym.AND); }
-  "⊔"             { return symbol(sym.JOIN); }
-  "⊓"             { return symbol(sym.MEET); }
   "<-" | "←"      { return symbol(sym.LARROW); }
   "->" | "→"      { return symbol(sym.RARROW); }
 
@@ -189,7 +161,6 @@ NUM         = ((-)?[1-9][0-9]*) | 0
   /* Identifiers */
   {CAPALPHANUM}   { return symbol(sym.CAP_IDENT, yytext()); }
   {ALPHANUM}      { return symbol(sym.IDENT, yytext()); }
-  {TMPALPHANUM}   { return symbol(sym.TMP_IDENT, yytext()); }
 
   /* Comments and Whitespace */
   "/*"            { commentLevel++; yybegin(COMMENT); }

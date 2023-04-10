@@ -23,7 +23,8 @@ action code {:
     private OperatorApplicationNode binaryExpression(BinaryOperator op, ExpressionNode lhs, ExpressionNode rhs) {
         Arguments arguments = Arguments.from(lhs, rhs);
         SourceRange sourceLocation = lhs.getSourceLocation().merge(rhs.getSourceLocation());
-        return new OperatorApplicationNode(op, arguments, sourceLocation);
+        SourceRange opLocation = new SourceRange(lhs.getSourceLocation().getEnd(), rhs.getSourceLocation().getStart());
+        return new OperatorApplicationNode(new OperatorNode(op, opLocation), arguments, sourceLocation);
     }
 :}
 
@@ -85,23 +86,24 @@ nonterminal ProgramNode program;
 nonterminal List<TopLevelDeclarationNode> declaration_list;
 nonterminal TopLevelDeclarationNode declaration;
 
-nonterminal CircuitStatementNode circ_stmt;
 nonterminal ReturnNode return;
-//nonterminal SimpleStatementNode simple_stmt;
-//nonterminal StatementNode stmt;
-nonterminal CircuitBlockNode circ_block;
+nonterminal BlockNode<StatementNode> block;
+nonterminal List<StatementNode> stmt_list;
+nonterminal StatementNode stmt;
+nonterminal CommandNode command;
+nonterminal BlockNode<CircuitStatementNode> circ_block;
 nonterminal List<CircuitStatementNode> circ_stmt_list;
-//nonterminal List<StatementNode> stmt_list;
+nonterminal CircuitStatementNode circ_stmt;
 
-nonterminal PureExpressionNode expr;
+nonterminal ExpressionNode expr;
 nonterminal IndexExpressionNode index_expr;
 nonterminal List<IndexExpressionNode> index_expr_list, nonempty_index_expr_list;
 nonterminal ReferenceNode reference;
+nonterminal List<ReferenceNode> reference_list, nonempty_reference_list;
 nonterminal LiteralNode literal;
 nonterminal Located<Variable> variable;
-nonterminal BoundParameterNode bound;
-nonterminal List<BoundParameterNode> bound_list, nonempty_bound_list;
-nonterminal ExpressionNode optional_initial_value;
+nonterminal SizeParameterNode size;
+nonterminal List<SizeParameterNode> size_list, nonempty_size_list;
 nonterminal List<ExpressionNode> expr_list, nonempty_expr_list;
 nonterminal Located<ArgumentLabel> argument_label;
 nonterminal IndexParameterNode index_param;
@@ -110,28 +112,26 @@ nonterminal Operator operator;
 
 nonterminal Value value;
 nonterminal Located<ValueType> value_type;
-nonterminal Located<ArrayType> array_type;
+nonterminal ArrayTypeNode array_type;
 
 nonterminal Located<Host> host;
-// nonterminal List<Located<Host>> host_list, nonempty_host_list;
 nonterminal List host_list, nonempty_host_list;
 nonterminal HostSetValue host_set;
 
 nonterminal List parameter_list, nonempty_parameter_list;
 nonterminal ParameterNode parameter;
 
-//nonterminal List argument_list, nonempty_argument_list;
-//nonterminal FunctionArgumentNode argument;
+nonterminal List<VariableBindingNode> var_binding_list, nonempty_var_binding_list;
+nonterminal VariableBindingNode var_binding;
 
 nonterminal Located<Protocol> protocol;
 nonterminal Located<Protocol> protocol_annot;
 nonterminal Located<ProtocolName> protocol_name;
-//nonterminal List<Pair<Located<ArgumentLabel>, Located<Value>>> protocol_argument_list, nonempty_protocol_argument_list;
 nonterminal Pair<Located<ArgumentLabel>, Located<Value>> protocol_labelled_argument;
 nonterminal List protocol_argument_list, nonempty_protocol_argument_list;
 nonterminal Value protocol_argument;
 
-terminal String IDENT, CAP_IDENT, TMP_IDENT;
+terminal String IDENT, CAP_IDENT;
 terminal int INT_LIT;
 terminal TRUE, FALSE;
 
@@ -139,14 +139,16 @@ terminal HOST;
 terminal FUNCTION;
 terminal CIRCUIT;
 terminal RETURN;
-terminal OUT;
 terminal COLON;
 terminal COLONCOLON;
+
+terminal PERIOD;
+
+terminal INPUT, FROM, OUTPUT, TO;
 
 terminal REDUCE;
 
 terminal EQ;
-terminal PLUSEQ, MINUSEQ, TIMESEQ, DIVIDEEQ;
 
 terminal VAL;
 terminal NOT, ANDAND, OROR;
@@ -154,28 +156,19 @@ terminal EQEQ, NEQ, LT, LEQ, GT, GEQ;
 terminal PLUS, MINUS, TIMES, DIVIDE;
 terminal MIN, MAX, MUX;
 
-terminal DECLASSIFY, ENDORSE, DOWNGRADE;
-
-terminal INT, BOOL, UNIT, ARRAY;
-terminal TOP, BOTTOM, JOIN, MEET;
-terminal OR, AND, RARROW, LARROW;
+terminal INT, BOOL, UNIT;
+terminal AND, RARROW, LARROW;
 terminal AT;
 
 terminal OPEN_BRACE, CLOSE_BRACE, SEMICOLON;
 terminal OPEN_SQBRACE, CLOSE_SQBRACE;
 terminal OPEN_PAREN, CLOSE_PAREN, COMMA;
 
-// Not used here
-terminal LET, VAR;
-terminal IF, ELSE, WHILE, FOR, LOOP, BREAK;
-terminal INPUT, FROM, OUTPUT, TO;
-terminal ASSERT;
-
 // Used to support multiple start symbols
 nonterminal entry_point;
-terminal Symbol PARSE_PROGRAM, PARSE_LABEL;
+terminal Symbol PARSE_PROGRAM;
 
-precedence left ANDAND, OROR, AND, OR; //, JOIN, MEET;
+precedence left ANDAND, OROR, AND;
 precedence nonassoc EQEQ, NEQ, LT, LEQ, GT, GEQ;
 precedence left PLUS, MINUS;
 precedence left TIMES, DIVIDE;
@@ -195,7 +188,6 @@ program ::=
         /* Empty program */
         throw new NoMainError(((CircuitLexer) getScanner()).sourceFile.getPath());
       }
-
       RESULT = new ProgramNode(declarations, location(declarationsleft, declarationsright));
     :}
   ;
@@ -205,7 +197,6 @@ declaration_list ::=
       declarations.add(declaration);
       RESULT = declarations;
     :}
-
   | /* empty */ {:
       RESULT = CollectionsKt.mutableListOf();
     :}
@@ -215,25 +206,57 @@ declaration ::=
     HOST:begin host:host {:
       RESULT = new HostDeclarationNode(host, location(beginleft, hostright));
     :}
-  | CIRCUIT:begin FUNCTION LT:boundsopen bound_list:bounds GT:boundsclose IDENT:funcname protocol_annot:protocol
+  | CIRCUIT:begin FUNCTION LT:sizesopen size_list:sizes GT:sizesclose IDENT:funcname protocol_annot:protocol
       OPEN_PAREN:paramsbegin parameter_list:inparams CLOSE_PAREN:paramsclose RARROW:arrow parameter_list:outparams circ_block:body {:
         RESULT = new CircuitDeclarationNode(
           new Located(new FunctionName(funcname), location(funcnameleft, funcnameright)),
           protocol,
-          new Arguments(bounds, location(boundsopenleft, boundscloseright)),
+          new Arguments(sizes, location(sizesopenleft, sizescloseright)),
           new Arguments(inparams, location(paramsbeginleft, paramsbeginright)),
           new Arguments(outparams, location(arrowleft, arrowright)),
           body,
           location(beginleft, bodyright)
         );
     :}
+  | FUNCTION:begin LT:sizesopen size_list:sizes GT:sizesclose IDENT:funcname
+        OPEN_PAREN:paramsbegin parameter_list:inparams CLOSE_PAREN:paramsclose RARROW:arrow parameter_list:outparams block:body {:
+          RESULT = new FunctionDeclarationNode(
+            new Located(new FunctionName(funcname), location(funcnameleft, funcnameright)),
+            new Arguments(sizes, location(sizesopenleft, sizescloseright)),
+            new Arguments(inparams, location(paramsbeginleft, paramsbeginright)),
+            new Arguments(outparams, location(arrowleft, arrowright)),
+            body,
+            location(beginleft, bodyright)
+          );
+      :}
   ;
+
+size_list ::=
+    nonempty_size_list:bs {:
+      RESULT = bs;
+    :}
+  | /* empty */ {:
+      RESULT = CollectionsKt.mutableListOf();
+    :}
+  ;
+
+nonempty_size_list ::=
+    nonempty_size_list:bs COMMA size:b {:
+      bs.add(b);
+      RESULT = bs;
+    :}
+  | size:b {:
+      RESULT = CollectionsKt.mutableListOf(b);
+    :}
+  ;
+
+size ::=
+  variable:var {: RESULT = new SizeParameterNode(var, location(varleft, varright)); :};
 
 parameter_list ::=
     nonempty_parameter_list:params {:
       RESULT = params;
     :}
-
   | /* empty */ {:
       RESULT = CollectionsKt.mutableListOf();
     :}
@@ -244,38 +267,23 @@ nonempty_parameter_list ::=
       params.add(param);
       RESULT = params;
     :}
-
   | parameter:param {:
       RESULT = CollectionsKt.mutableListOf(param);
     :}
   ;
 
 parameter ::=
-    variable:name COLON array_type:type protocol_annot:protocol {:
+    variable:name COLON array_type:type {:
       RESULT = new ParameterNode(
         name,
         type,
-        protocol,
-        location(nameleft, protocolright)
-      );
-    :}
-  ;
-
-circ_stmt ::=
-  /* let binding */
-  VAL:begin variable:var OPEN_SQBRACE:open index_param_list:indices CLOSE_SQBRACE:close EQ expr:e {:
-      RESULT = new LetNode(
-        var,
-        new Arguments(indices, location(openleft, closeright)),
-        e,
-        location(beginleft, eright)
+        location(nameleft, typeright)
       );
     :}
   ;
 
 return ::=
-  /* TODO only works because expr_list currently only generates pure expressions */
-  RETURN:begin expr_list:values {:
+  RETURN:begin reference_list:values {:
       SourceRange valuesLoc = (values.size() == 0) ? location(beginleft, valuesright) : location(valuesleft, valuesright);
       RESULT = new ReturnNode(
         new Arguments(values, valuesLoc),
@@ -284,14 +292,82 @@ return ::=
     :}
   ;
 
-optional_initial_value ::=
-    EQ expr:e    {: RESULT = e; :}
-  | /* empty */  {: RESULT = null; :}
+var_binding_list ::=
+    nonempty_var_binding_list:var_bindings {:
+      RESULT = var_bindings;
+    :}
+  | /* empty */ {:
+      RESULT = CollectionsKt.mutableListOf();
+    :}
   ;
+
+nonempty_var_binding_list ::=
+    nonempty_var_binding_list:var_bindings COMMA var_binding:r {:
+      var_bindings.add(r);
+      RESULT = var_bindings;
+    :}
+  | var_binding:r {:
+      RESULT = CollectionsKt.mutableListOf(r);
+    :}
+  ;
+
+var_binding ::=
+    variable:name AT protocol:p {:
+      RESULT = new VariableBindingNode(
+        name,
+        p,
+        location(nameleft, pright)
+      );
+    :}
+  ;
+
+block ::=
+    OPEN_BRACE:begin stmt_list:statements return:ret CLOSE_BRACE:end {:
+      RESULT = new BlockNode(statements, ret, location(beginleft, endright));
+    :}
+  ;
+
+stmt_list ::=
+    stmt_list:slist stmt:s {:
+      slist.add(s);
+      RESULT = slist;
+    :}
+  | /* empty */ {:
+      RESULT = CollectionsKt.mutableListOf();
+    :}
+  ;
+
+stmt ::=
+  VAL:begin var_binding_list:varbindings EQ:e command:rhs {:
+      RESULT = new LetNode(
+          new Arguments(varbindings, location(varbindingsleft, eright)),
+          rhs,
+          location(beginleft, rhsright)
+      );
+  :}
+;
+
+command ::=
+    IDENT:funcname LT:ibegin index_expr_list:inds GT:iend
+    OPEN_PAREN:abegin reference_list:args CLOSE_PAREN:aend {:
+        RESULT = new CircuitCallNode(
+          new Located(new FunctionName(funcname), location(funcnameleft, funcnameright)),
+          new Arguments(inds, location(ibeginleft, iendright)),
+          new Arguments(args, location(abeginleft, aendright)),
+          location(funcnameleft, aendright)
+        );
+      :}
+  | host:sender PERIOD INPUT LT array_type:type GT OPEN_PAREN CLOSE_PAREN:end {:
+        RESULT = new InputNode(type, sender, location(senderleft, endright));
+    :}
+  | host:recipient PERIOD OUTPUT LT array_type:type GT OPEN_PAREN reference:message CLOSE_PAREN:end {:
+      RESULT = new OutputNode(type, message, recipient, location(recipientleft, endright));
+  :}
+;
 
 circ_block ::=
     OPEN_BRACE:begin circ_stmt_list:statements return:ret CLOSE_BRACE:end {:
-      RESULT = new CircuitBlockNode(statements, ret, location(beginleft, endright));
+      RESULT = new BlockNode(statements, ret, location(beginleft, endright));
     :}
   ;
 
@@ -300,9 +376,21 @@ circ_stmt_list ::=
       slist.add(s);
       RESULT = slist;
     :}
-
   | /* empty */ {:
       RESULT = CollectionsKt.mutableListOf();
+    :}
+  ;
+
+circ_stmt ::=
+  /* let binding */
+  VAL:begin variable:var OPEN_SQBRACE:open index_param_list:indices CLOSE_SQBRACE:close COLON array_type:type EQ expr:e {:
+      RESULT = new CircuitLetNode(
+        var,
+        new Arguments(indices, location(openleft, closeright)),
+        type,
+        e,
+        location(beginleft, eright)
+      );
     :}
   ;
 
@@ -312,39 +400,36 @@ variable ::=
     :}
   ;
 
-bound ::=
-  variable:var {: RESULT = new BoundParameterNode(var, location(varleft, varright)); :};
-
-bound_list ::=
-    nonempty_bound_list:bs {:
-      RESULT = bs;
-    :}
-
+index_param_list ::=
+    nonempty_index_param_list:plist {: RESULT = plist; :}
   | /* empty */ {:
       RESULT = CollectionsKt.mutableListOf();
     :}
   ;
 
-nonempty_bound_list ::=
-    nonempty_bound_list:bs COMMA bound:b {:
-      bs.add(b);
-      RESULT = bs;
+nonempty_index_param_list ::=
+    nonempty_index_param_list:elist COMMA index_param:e {:
+      elist.add(e);
+      RESULT = elist;
     :}
+  | index_param:e {:
+      RESULT = CollectionsKt.mutableListOf(e);
+    :}
+  ;
 
-  | bound:b {:
-      RESULT = CollectionsKt.mutableListOf(b);
+index_param ::=
+    variable:var LT index_expr:bound {:
+      RESULT = new IndexParameterNode(var, bound, location(varleft, boundright));
     :}
   ;
 
 array_type ::=
     value_type:elementtype OPEN_SQBRACE:open index_expr_list:shape CLOSE_SQBRACE:close {:
-        RESULT = new Located(
-          new ArrayType(
-            elementtype,
-            new Arguments(shape, location(openleft, closeright))
-          ),
-          location(elementtypeleft, closeright)
-        );
+      RESULT = new ArrayTypeNode(
+        elementtype,
+        new Arguments(shape, location(openleft, closeright)),
+        location(elementtypeleft, closeright)
+      );
     :}
   ;
 
@@ -360,20 +445,8 @@ value_type ::=
     :}
   ;
 
-literal ::=
-  value:value {:
-    RESULT = new LiteralNode(value, location(valueleft, valueright));
-  :};
-
-reference ::= variable:var {: RESULT = new ReferenceNode(var, location(varleft, varright)); :};
-
-/* only appears when indexing */
-index_expr ::=
-    literal:lit {: RESULT = lit; :}
-  | reference:var {: RESULT = var; :};
-
 index_expr_list ::=
-    nonempty_index_expr_list:elist {: RESULT = elist; :}
+      nonempty_index_expr_list:elist {: RESULT = elist; :}
     | /* empty */ {:
       RESULT = CollectionsKt.mutableListOf();
     :}
@@ -389,30 +462,40 @@ nonempty_index_expr_list ::=
      :}
    ;
 
-index_param ::=
-  variable:var LT index_expr:bound {: RESULT = new IndexParameterNode(
-      var, bound, location(varleft, boundright)
-  ); :};
-
-index_param_list ::=
-    nonempty_index_param_list:plist {: RESULT = plist; :}
-  | /* empty */ {:
+reference_list ::=
+      nonempty_reference_list:rlist {: RESULT = rlist; :}
+    | /* empty */ {:
       RESULT = CollectionsKt.mutableListOf();
     :}
   ;
 
-nonempty_index_param_list ::=
-  nonempty_index_param_list:elist COMMA index_param:e {:
-      elist.add(e);
-      RESULT = elist;
-    :}
-  | index_param:e {:
-      RESULT = CollectionsKt.mutableListOf(e);
+nonempty_reference_list ::=
+  nonempty_reference_list:rlist COMMA reference:r {:
+    rlist.add(r);
+    RESULT = rlist;
+  :}
+  | reference:r {:
+       RESULT = CollectionsKt.mutableListOf(r);
+     :}
+   ;
+
+index_expr ::=
+    literal:lit   {: RESULT = lit; :}
+  | reference:var {: RESULT = var; :};
+
+literal ::=
+    value:value {:
+      RESULT = new LiteralNode(value, location(valueleft, valueright));
     :}
   ;
 
+reference ::= variable:var {: RESULT = new ReferenceNode(var, location(varleft, varright)); :};
+
 expr ::=
     index_expr:exp {: RESULT = exp; :}
+  | OPEN_PAREN expr:e CLOSE_PAREN {:
+      RESULT = e;
+  :}
   /* variable/array lookup */
   | variable:var OPEN_SQBRACE:open index_expr_list:indices CLOSE_SQBRACE:close {:
       RESULT = new LookupNode(
@@ -422,24 +505,24 @@ expr ::=
       );
   :}
   | REDUCE:begin OPEN_PAREN COLONCOLON operator:op COMMA expr:defaultvalue CLOSE_PAREN OPEN_BRACE:bodybegin
-   index_param_list:params RARROW:arrow expr:expression CLOSE_BRACE:bodyend {:
+   index_param:params RARROW:arrow expr:expression CLOSE_BRACE:bodyend {:
       RESULT = new ReduceNode(
         new OperatorNode(op, location(opleft, opright)),
         defaultvalue,
-        new Arguments(params, location(bodybeginleft, arrowright)),
+        params,
         expression,
         location(beginleft, bodyendright)
       );
    :}
   | NOT:begin expr:e {:
       RESULT = new OperatorApplicationNode(
-        Not.INSTANCE,
+        new OperatorNode(Not.INSTANCE, location(beginleft, beginright)),
         Arguments.from(e),
         location(beginleft, eright));
     :}
   | MINUS:begin expr:e {:
       RESULT = new OperatorApplicationNode(
-        Negation.INSTANCE,
+        new OperatorNode(Negation.INSTANCE, location(beginleft, beginright)),
         Arguments.from(e),
         location(beginleft, eright));
     :}
@@ -490,11 +573,11 @@ expr ::=
     :}
   | MUX:begin OPEN_PAREN expr:e1 COMMA expr:e2 COMMA expr:e3 CLOSE_PAREN:end {:
       Arguments arguments = Arguments.from(e1, e2, e3);
-      SourceRange sourceLocation = e1.getSourceLocation().merge(e2.getSourceLocation()).merge(e3.getSourceLocation());
-      RESULT = new OperatorApplicationNode(Mux.INSTANCE, arguments, location(beginleft, endright));
-    :}
-  | OPEN_PAREN expr:e CLOSE_PAREN {:
-      RESULT = e;
+      RESULT = new OperatorApplicationNode(
+        new OperatorNode(Mux.INSTANCE, location(beginleft, beginright)),
+        arguments,
+        location(beginleft, endright)
+      );
     :}
   ;
 
@@ -522,7 +605,6 @@ expr_list ::=
     nonempty_expr_list:elist {:
       RESULT = elist;
     :}
-
   | /* empty */ {:
       RESULT = CollectionsKt.listOf();
     :}
@@ -533,7 +615,6 @@ nonempty_expr_list ::=
       elist.add(e);
       RESULT = elist;
     :}
-
   | expr:e {:
       RESULT = CollectionsKt.mutableListOf(e);
     :}
@@ -543,15 +624,12 @@ value ::=
     TRUE {:
       RESULT = new BooleanValue(true);
     :}
-
   | FALSE {:
       RESULT = new BooleanValue(false);
     :}
-
   | INT_LIT:literal {:
       RESULT = new IntegerValue(literal);
     :}
-
   | UNIT {:
       RESULT = UnitValue.INSTANCE;
     :}
@@ -567,7 +645,6 @@ host_list ::=
     nonempty_host_list:hosts {:
       RESULT = hosts;
     :}
-
   | /* empty */ {:
       RESULT = CollectionsKt.mutableListOf();
     :}
@@ -578,7 +655,6 @@ nonempty_host_list ::=
       hosts.add(host);
       RESULT = hosts;
     :}
-
   | host:host {:
       RESULT = CollectionsKt.mutableListOf(host);
     :}
@@ -616,7 +692,6 @@ protocol_argument_list ::=
     nonempty_protocol_argument_list:arguments {:
       RESULT = arguments;
     :}
-
   | /* empty */ {:
       RESULT = CollectionsKt.listOf();
     :}
@@ -627,7 +702,6 @@ nonempty_protocol_argument_list ::=
       arguments.add(argument);
       RESULT = arguments;
     :}
-
   | protocol_labelled_argument:argument {:
       RESULT = CollectionsKt.mutableListOf(argument);
     :}

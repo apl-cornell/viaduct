@@ -9,5 +9,8 @@ class IndexParameterNode(
     val bound: IndexExpressionNode,
     override val sourceLocation: SourceLocation,
 ) : Node(), VariableDeclarationNode {
+    override val children: Iterable<Node>
+        get() = listOf(bound)
+
     override fun toDocument(): Document = name.toDocument() * "<" * bound
 }

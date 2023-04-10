@@ -9,6 +9,8 @@ import io.github.aplcornell.viaduct.selection.ProtocolFactory
 import io.github.aplcornell.viaduct.syntax.Protocol
 import io.github.aplcornell.viaduct.syntax.ProtocolName
 import io.github.aplcornell.viaduct.syntax.intermediate.ProgramNode
+import io.github.aplcornell.viaduct.circuitcodegeneration.CodeGenerator as CircuitCodeGenerator
+import io.github.aplcornell.viaduct.circuitcodegeneration.CodeGeneratorContext as CircuitCodeGeneratorContext
 
 object ABYBackend : Backend {
     override val protocols: Set<ProtocolName>
@@ -27,4 +29,7 @@ object ABYBackend : Backend {
         get() = ABYProtocolComposer
 
     override fun codeGenerator(context: CodeGeneratorContext): CodeGenerator = ABYCodeGenerator(context)
+
+    override fun circuitCodeGenerator(context: CircuitCodeGeneratorContext): CircuitCodeGenerator =
+        ABYCircuitCodeGenerator(context)
 }

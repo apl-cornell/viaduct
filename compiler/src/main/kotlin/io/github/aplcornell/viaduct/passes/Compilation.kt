@@ -6,6 +6,7 @@ import io.github.aplcornell.viaduct.analysis.descendantsIsInstance
 import io.github.aplcornell.viaduct.backends.Backend
 import io.github.aplcornell.viaduct.backends.aby.abyMuxPostprocessor
 import io.github.aplcornell.viaduct.backends.zkp.zkpMuxPostprocessor
+import io.github.aplcornell.viaduct.circuitcodegeneration.compileToKotlin
 import io.github.aplcornell.viaduct.codegeneration.compileToKotlin
 import io.github.aplcornell.viaduct.parsing.SourceFile
 import io.github.aplcornell.viaduct.parsing.parse
@@ -28,6 +29,7 @@ import java.io.File
 import java.io.IOException
 import java.io.PrintStream
 import java.io.Writer
+import io.github.aplcornell.viaduct.syntax.circuit.parse as parseCircuit
 
 private val logger = KotlinLogging.logger("Compile")
 
@@ -167,6 +169,35 @@ fun SourceFile.compileToKotlin(
         packageName,
         backend::codeGenerator,
         backend.protocolComposer,
+    )
+}
+
+/**
+ * Compile [this] circuit source file to a Kotlin program.
+ *
+ * @param backend Cryptographic backends to use.
+ */
+fun SourceFile.compileCircuitToKotlin(
+    fileName: String,
+    packageName: String,
+    backend: Backend,
+): FileSpec {
+    val program = run {
+        val parsed = logger.duration("parsing") {
+            this.parseCircuit(backend.protocolParsers)
+        }
+
+        // Perform static checks.
+        // TODO: this causes errors.
+        // parsed.check()
+
+        parsed
+    }
+
+    return program.compileToKotlin(
+        fileName,
+        packageName,
+        backend::circuitCodeGenerator,
     )
 }
 

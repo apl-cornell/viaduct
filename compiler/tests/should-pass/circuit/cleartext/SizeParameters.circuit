@@ -1,0 +1,14 @@
+host alice
+
+fun <> main() -> {
+    val a@Local(host=alice) = f<3>()
+    val b@Local(host=alice) = f<5>()
+    val = alice.output<int[3]>(a)
+    val = alice.output<int[5]>(b)
+    return
+}
+
+circuit fun <n> f@Local(host = alice)() -> a: int[n] {
+    val x[i<n]:int[n]=0
+    return x
+}

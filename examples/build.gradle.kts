@@ -89,7 +89,6 @@ abstract class GenerateViaductProgramList : DefaultTask() {
         val source = sourceDirectory.get().asFile
         val programs = source.walk()
             .filter { it.isFile }
-            .filter { it.extension == "via" }
             .map {
                 val packageName = it.parentFile.toRelativeString(source).replace(File.separator, ".")
                 val className = it.nameWithoutExtension

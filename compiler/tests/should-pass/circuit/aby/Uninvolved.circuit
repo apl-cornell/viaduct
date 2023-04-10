@@ -1,0 +1,12 @@
+host alice
+host bob
+host chuck
+
+circuit fun <> f@ArithABY(client=bob, server=alice)() -> {
+  return
+}
+
+fun <> main() -> {
+  val = f<>()
+  return
+}

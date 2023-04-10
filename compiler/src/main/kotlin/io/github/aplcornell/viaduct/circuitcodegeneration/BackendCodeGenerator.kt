@@ -52,13 +52,19 @@ private class BackendCodeGenerator(
                 .addModifiers(KModifier.PRIVATE).build(),
         )
         for (protocol in program.protocols()) {
-            for (property in codeGenerator.setup(protocol)) {
-                classBuilder.addProperty(property)
+            if (context.host in protocol.hosts) {
+                for (property in codeGenerator.setup(protocol)) {
+                    classBuilder.addProperty(property)
+                }
             }
         }
         for (declaration in program.declarations) {
             when (declaration) {
-                is CircuitDeclarationNode -> classBuilder.addFunction(generate(declaration)).build()
+                is CircuitDeclarationNode -> {
+                    if (context.host in declaration.protocol.value.hosts) {
+                        classBuilder.addFunction(generate(declaration)).build()
+                    }
+                }
                 is FunctionDeclarationNode -> classBuilder.addFunction(generate(declaration)).build()
                 else -> {} // Do nothing for hosts
             }
@@ -84,14 +90,31 @@ private class BackendCodeGenerator(
                                 it.protocol.value.hosts
                             }.flatten().toSet() + circuitHosts
 
-                            if (context.host in importingHosts + exportingHosts) {
-                                circuitDecl.sizes.zip(command.bounds) { sizeParam, sizeArg ->
+                            if (context.host !in importingHosts + exportingHosts) continue
+
+                            // Forward declare bindings
+                            stmt.bindings.zip(circuitDecl.outputs.map { it.type }).forEach { (binding, type) ->
+                                if (context.host in binding.protocol.value.hosts) {
                                     builder.addStatement(
-                                        "val %N = %L",
-                                        context.kotlinName(sizeParam.name.value),
-                                        indexExpression(sizeArg, context),
+                                        "val %N: %T",
+                                        context.kotlinName(binding.name.value),
+                                        kotlinType(
+                                            type.shape,
+                                            codeGenerator.storageType(binding.protocol.value, type.elementType.value),
+                                        ),
                                     )
                                 }
+                            }
+
+                            builder.beginControlFlow("run")
+
+                            // Declare size parameters
+                            circuitDecl.sizes.zip(command.bounds) { sizeParam, sizeArg ->
+                                builder.addStatement(
+                                    "val %N = %L",
+                                    context.kotlinName(sizeParam.name.value),
+                                    indexExpression(sizeArg, context),
+                                )
                             }
 
                             val inputs = if (context.host in importingHosts) {
@@ -162,10 +185,18 @@ private class BackendCodeGenerator(
                                     },
                                 )
                                 builder.addCode(exportCode)
+                                // Bind results
                                 stmt.bindings.zip(outputs).forEach { (binding, output) ->
-                                    builder.addStatement("val %N = %L", context.kotlinName(binding.name.value), output)
+                                    if (context.host in binding.protocol.value.hosts) {
+                                        builder.addStatement(
+                                            "%N = %L",
+                                            context.kotlinName(binding.name.value),
+                                            output,
+                                        )
+                                    }
                                 }
                             }
+                            builder.endControlFlow()
                         }
 
                         is InputNode -> {

@@ -16,7 +16,6 @@ dependencies {
 
     // Cryptography
     implementation("io.github.apl-cornell:aby-java:0.2.2")
-    implementation(files("libs/jsnark.jar"))
 
     // Testing
     testImplementation(project(":test-utilities"))

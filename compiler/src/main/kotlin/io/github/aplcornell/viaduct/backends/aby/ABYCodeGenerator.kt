@@ -9,7 +9,6 @@ import com.squareup.kotlinpoet.TypeName
 import com.squareup.kotlinpoet.asClassName
 import com.squareup.kotlinpoet.asTypeName
 import io.github.apl_cornell.aby.ABYParty
-import io.github.apl_cornell.aby.Aby
 import io.github.apl_cornell.aby.Role
 import io.github.apl_cornell.aby.Share
 import io.github.apl_cornell.aby.SharingType
@@ -92,13 +91,10 @@ class ABYCodeGenerator(
 
     private fun abyParty(protocol: ABY, role: Role, port: String): CodeBlock =
         CodeBlock.of(
-            "ABYParty(%L, %L, %L, %N.%M(), %L)",
+            "ABYParty(%L, %L, %L)",
             roleToCodeBlock(role),
             address(protocol, context.host),
             port,
-            "Aby",
-            MemberName(Aby::class.asClassName(), "getLT"), // TODO make this not hard coded
-            BIT_LENGTH,
         )
 
     private fun abyPartySetup(protocol: Protocol, role: Role): CodeBlock {

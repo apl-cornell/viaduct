@@ -26,7 +26,7 @@ dependencies {
 
     // Graphs
     implementation("org.jgrapht:jgrapht-core:1.5.1")
-    implementation("org.jgrapht:jgrapht-io:1.5.1")
+    implementation("org.jgrapht:jgrapht-io:1.5.2")
 
     // Unicode support
     implementation("com.ibm.icu:icu4j:73.1")

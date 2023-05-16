@@ -40,7 +40,7 @@ dependencies {
     }
 
     // SMT solving
-    implementation("tools.aqua:z3-turnkey:4.11.2")
+    implementation("tools.aqua:z3-turnkey:4.12.1")
 
     // Testing
     testImplementation(project(":test-utilities"))

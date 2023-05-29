@@ -35,7 +35,7 @@ dependencies {
     implementation("com.github.vbmacher:java-cup-runtime:11b-20160615-2")
 
     // Code generation
-    api("com.squareup:kotlinpoet:1.13.2") {
+    api("com.squareup:kotlinpoet:1.14.1") {
         exclude(module = "kotlin-reflect")
     }
 

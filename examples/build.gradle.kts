@@ -4,7 +4,7 @@ plugins {
     application
 
     // Style checking
-    id("com.diffplug.spotless") version "6.18.0"
+    id("com.diffplug.spotless") version "6.19.0"
 }
 
 group = "io.github.apl-cornell.viaduct"

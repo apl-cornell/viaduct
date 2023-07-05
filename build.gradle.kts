@@ -6,7 +6,7 @@ plugins {
     id("com.palantir.git-version") version "3.0.0"
 
     // Documentation
-    id("org.jetbrains.dokka") version "1.8.10"
+    id("org.jetbrains.dokka") version "1.8.20"
 
     // Style checking
     id("com.diffplug.spotless") version "6.18.0"

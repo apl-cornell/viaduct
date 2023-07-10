@@ -9,7 +9,7 @@ dependencies {
     api(project(":shared"))
 
     // Coroutines
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.2")
 
     // Networking
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-protobuf:1.5.1")

@@ -32,7 +32,7 @@ dependencies {
 
     // Testing
     testImplementation("${project.group}:test-utilities")
-    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.1")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.2")
 }
 
 application {

@@ -12,7 +12,7 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-collections-immutable-jvm:0.3.5")
 
     // Concurrency
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
 
     // Cryptography
     implementation("io.github.apl-cornell:aby-java:0.2.2")

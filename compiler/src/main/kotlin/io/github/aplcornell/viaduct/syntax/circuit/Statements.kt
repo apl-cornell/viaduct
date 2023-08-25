@@ -143,3 +143,56 @@ class OutputNode(
 
     override fun toDocument(): Document = host + "." + keyword("output") + listOf(message).tupled()
 }
+
+/** A command that affects control flow. */
+sealed class ControlNode : CommandNode()
+
+/**
+ * Executing statements conditionally.
+ *
+ * @param thenBranch Statements to execute if the guard is true.
+ * @param elseBranch Statements to execute if the guard is false.
+ */
+class IfNode(
+    val guard: IndexExpressionNode,
+    val thenBranch: BlockNode<StatementNode>,
+    val elseBranch: BlockNode<StatementNode>,
+    override val sourceLocation: SourceLocation
+) : ControlNode() {
+    override val children: Iterable<Node>
+        get() = listOf(guard, thenBranch, elseBranch)
+
+    override fun toDocument(): Document =
+        keyword("if") + listOf(guard).tupled() + thenBranch.toDocument() + keyword("else") + elseBranch.toDocument()
+}
+
+/**
+ * A loop that is executed until a break statement is encountered.
+ *
+ * @param jumpLabel A label for the loop that break nodes can refer to.
+ */
+class LoopNode(
+    val body: BlockNode<StatementNode>,
+//    val jumpLabel: JumpLabelNode?,
+    override val sourceLocation: SourceLocation,
+) : ControlNode() {
+    override val children: Iterable<Node>
+        get() = listOf(body)
+
+    override fun toDocument(): Document = keyword("loop") + body.toDocument()
+}
+
+/**
+ * Breaking out of a loop.
+ *
+ * @param jumpLabel Label of the loop to break out of. A null value refers to the innermost loop.
+ */
+class BreakNode(
+//    val jumpLabel: JumpLabelNode,
+    override val sourceLocation: SourceLocation,
+) : ControlNode() {
+    override val children: Iterable<Nothing>
+        get() = listOf()
+
+    override fun toDocument(): Document = keyword("break")
+}

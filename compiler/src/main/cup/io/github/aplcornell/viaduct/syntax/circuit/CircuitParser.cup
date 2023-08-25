@@ -144,6 +144,7 @@ terminal COLONCOLON;
 
 terminal PERIOD;
 
+terminal IF, ELSE, WHILE, LOOP, BREAK;
 terminal INPUT, FROM, OUTPUT, TO;
 
 terminal REDUCE;
@@ -363,6 +364,13 @@ command ::=
   | host:recipient PERIOD OUTPUT LT array_type:type GT OPEN_PAREN reference:message CLOSE_PAREN:end {:
       RESULT = new OutputNode(type, message, recipient, location(recipientleft, endright));
   :}
+  | IF:begin OPEN_PAREN index_expr:guard CLOSE_PAREN block:thenbranch ELSE block:elsebranch {:
+      RESULT = new IfNode(guard, thenbranch, elsebranch, location(beginleft, elsebranchright));
+  :}
+  | LOOP:begin block:body {:
+      RESULT = new LoopNode(body, location(beginleft, bodyright));
+  :}
+  | BREAK:b {: RESULT = new BreakNode(location(bleft,bright)); :}
 ;
 
 circ_block ::=

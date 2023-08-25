@@ -1,0 +1,17 @@
+host alice
+host bob
+
+circuit fun <m> f@Local(host = alice)() ->
+  b: int[m] {
+    val result[j < m]: int[m] = 0
+    return result
+}
+
+fun <> main() -> {
+    val in@YaoABY(client = alice, server = bob) = alice.input<int[]>()
+    val res@Local(host = alice) = f<in>()
+    val = alice.output<int[in]>(res)
+    return
+}
+
+/* what is going on in the generated code here */

@@ -25,22 +25,22 @@ dependencies {
     implementation("com.uchuhimo:kotlinx-bimap:1.2")
 
     // Graphs
-    implementation("org.jgrapht:jgrapht-core:1.5.1")
-    implementation("org.jgrapht:jgrapht-io:1.5.1")
+    implementation("org.jgrapht:jgrapht-core:1.5.2")
+    implementation("org.jgrapht:jgrapht-io:1.5.2")
 
     // Unicode support
-    implementation("com.ibm.icu:icu4j:72.1")
+    implementation("com.ibm.icu:icu4j:73.1")
 
     // Parsing
     implementation("com.github.vbmacher:java-cup-runtime:11b-20160615-2")
 
     // Code generation
-    api("com.squareup:kotlinpoet:1.12.0") {
+    api("com.squareup:kotlinpoet:1.13.2") {
         exclude(module = "kotlin-reflect")
     }
 
     // SMT solving
-    implementation("tools.aqua:z3-turnkey:4.11.2")
+    implementation("tools.aqua:z3-turnkey:4.12.1")
 
     // Testing
     testImplementation(project(":test-utilities"))

@@ -1,10 +1,10 @@
 plugins {
-    kotlin("jvm") version "1.8.10"
+    kotlin("jvm") version "1.8.21"
     id("io.github.apl-cornell.viaduct")
     application
 
     // Style checking
-    id("com.diffplug.spotless") version "6.17.0"
+    id("com.diffplug.spotless") version "6.18.0"
 }
 
 group = "io.github.apl-cornell.viaduct"
@@ -32,7 +32,7 @@ dependencies {
 
     // Testing
     testImplementation("${project.group}:test-utilities")
-    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.1")
 }
 
 application {

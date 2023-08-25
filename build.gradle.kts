@@ -1,15 +1,15 @@
 plugins {
-    kotlin("multiplatform") version "1.8.10" apply false
-    kotlin("plugin.serialization") version "1.8.10" apply false
+    kotlin("multiplatform") version "1.8.21" apply false
+    kotlin("plugin.serialization") version "1.8.21" apply false
 
     // Versioning
-    id("com.palantir.git-version") version "2.0.0"
+    id("com.palantir.git-version") version "3.0.0"
 
     // Documentation
-    id("org.jetbrains.dokka") version "1.8.10"
+    id("org.jetbrains.dokka") version "1.8.20"
 
     // Style checking
-    id("com.diffplug.spotless") version "6.17.0"
+    id("com.diffplug.spotless") version "6.18.0"
 }
 
 // Derive version from Git tags

@@ -8,25 +8,23 @@ fun <> main() -> {
       val = alice.output<int[]>(x)
       return
     }
+    else { return }
+    val = if (false) {
+      val = alice.output<int[]>(y)
+      return
+    }
     else {
-      val = if (false) {
-        val = alice.output<int[]>(y)
-        return
-      }
-      else {
-        val = loop {
-            val stop@Local(host = alice) = alice.input<bool[]>()
-            val = if (stop) {
-              val = break
-              return
-            }
-            else {
-              val = alice.output<int[]>(z)
-              return
-            }
+      val = loop {
+          val stop@Local(host = alice) = alice.input<bool[]>()
+          val = if (stop) {
+            val = break
             return
-        }
-        return
+          }
+          else {
+            val = alice.output<int[]>(z)
+            return
+          }
+          return
       }
       return
     }

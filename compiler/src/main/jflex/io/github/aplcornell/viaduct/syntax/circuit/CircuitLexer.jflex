@@ -110,6 +110,11 @@ NUM         = ((-)?[1-9][0-9]*) | 0
   "input"         { return symbol(sym.INPUT); }
   "output"        { return symbol(sym.OUTPUT); }
 
+  "if"         { return symbol(sym.IF); }
+  "else"         { return symbol(sym.ELSE); }
+  "loop"        { return symbol(sym.LOOP); }
+  "break"        { return symbol(sym.BREAK); }
+
   /* Expressions */
   "."             { return symbol(sym.PERIOD); }
 

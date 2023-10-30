@@ -144,7 +144,7 @@ terminal COLONCOLON;
 
 terminal PERIOD;
 
-terminal IF, ELSE, WHILE, LOOP, BREAK;
+terminal IF, ELSE, LOOP, BREAK;
 terminal INPUT, FROM, OUTPUT, TO;
 
 terminal REDUCE;

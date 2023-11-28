@@ -6,27 +6,21 @@ fun <> main() -> {
     val z@Local(host = alice) = alice.input<int[]>()
     val = if (true) {
       val = alice.output<int[]>(x)
-      return
     }
-    else { return }
+    else { }
     val = if (false) {
       val = alice.output<int[]>(y)
-      return
     }
     else {
       val = loop {
           val stop@Local(host = alice) = alice.input<bool[]>()
           val = if (stop) {
             val = break
-            return
           }
           else {
             val = alice.output<int[]>(z)
-            return
           }
-          return
       }
-      return
     }
     return
 }

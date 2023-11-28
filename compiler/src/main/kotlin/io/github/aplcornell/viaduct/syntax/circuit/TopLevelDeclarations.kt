@@ -62,7 +62,7 @@ class CircuitDeclarationNode(
     val sizes: Arguments<SizeParameterNode>,
     val inputs: Arguments<ParameterNode>,
     val outputs: Arguments<ParameterNode>,
-    val body: BlockNode<CircuitStatementNode>,
+    val body: RoutineBlockNode<CircuitStatementNode>,
     override val sourceLocation: SourceLocation,
 ) : TopLevelDeclarationNode() {
     override val children: Iterable<Node>
@@ -77,7 +77,7 @@ class FunctionDeclarationNode(
     val sizes: Arguments<SizeParameterNode>,
     val inputs: Arguments<ParameterNode>,
     val outputs: Arguments<ParameterNode>,
-    val body: BlockNode<StatementNode>,
+    val body: RoutineBlockNode<StatementNode>,
     override val sourceLocation: SourceLocation,
 ) : TopLevelDeclarationNode() {
     override val children: Iterable<Node>

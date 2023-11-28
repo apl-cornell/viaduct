@@ -24,13 +24,38 @@ sealed class StatementNode : Node()
 
 sealed class CommandNode : Node()
 
-/** A sequence of statements. */
-class BlockNode<Statement : StatementNode>
-private constructor(
-    val statements: PersistentList<Statement>,
-    val returnStatement: ReturnNode,
+/** Any sequence of statements */
+abstract class BlockNode<Statement : StatementNode>(
+    open val statements: List<Statement>,
     override val sourceLocation: SourceLocation,
-) : Node(), List<Statement> by statements {
+) : Node(), List<Statement>
+
+/** A sequence of statements not followed by a return. */
+class ControlFlowBlockNode<Statement : StatementNode>
+private constructor(
+    statements: PersistentList<Statement>,
+    sourceLocation: SourceLocation,
+) : BlockNode<Statement>(statements = statements, sourceLocation = sourceLocation), List<Statement> by statements {
+    constructor(statements: List<Statement>, sourceLocation: SourceLocation) :
+        this(statements.toPersistentList(), sourceLocation)
+
+    override val children: Iterable<Node>
+        get() = statements
+
+    override fun toDocument(): Document {
+        val statements: MutableList<Document> = (statements.map { it.toDocument() } as MutableList<Document>)
+        val body: Document = statements.concatenated(separator = Document.forcedLineBreak)
+        return listOf((Document.forcedLineBreak + body).nested() + Document.forcedLineBreak).braced()
+    }
+}
+
+/** A sequence of statements followed by a return. */
+class RoutineBlockNode<Statement : StatementNode>
+private constructor(
+    statements: PersistentList<Statement>,
+    val returnStatement: ReturnNode,
+    sourceLocation: SourceLocation,
+) : BlockNode<Statement>(statements = statements, sourceLocation = sourceLocation), List<Statement> by statements {
     constructor(statements: List<Statement>, returnStatement: ReturnNode, sourceLocation: SourceLocation) :
         this(statements.toPersistentList(), returnStatement, sourceLocation)
 

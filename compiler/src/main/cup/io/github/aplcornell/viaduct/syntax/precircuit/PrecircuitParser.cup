@@ -87,13 +87,11 @@ nonterminal List<TopLevelDeclarationNode> declaration_list;
 nonterminal TopLevelDeclarationNode declaration;
 
 nonterminal ReturnNode return;
-nonterminal BlockNode<StatementNode> block;
+nonterminal RoutineBlockNode<StatementNode> func_block;
+nonterminal ControlFlowBlockNode<StatementNode> flow_block;
 nonterminal List<StatementNode> stmt_list;
 nonterminal StatementNode stmt;
 nonterminal CommandNode command;
-nonterminal BlockNode<CircuitStatementNode> circ_block;
-nonterminal List<CircuitStatementNode> circ_stmt_list;
-nonterminal CircuitStatementNode circ_stmt;
 
 nonterminal ExpressionNode expr;
 nonterminal IndexExpressionNode index_expr;
@@ -211,7 +209,7 @@ declaration ::=
       RESULT = new HostDeclarationNode(host, location(beginleft, hostright));
     :}
   | FUNCTION:begin LT:sizesopen size_list:sizes GT:sizesclose IDENT:funcname
-        OPEN_PAREN:paramsbegin parameter_list:inparams CLOSE_PAREN:paramsclose RARROW:arrow parameter_list:outparams block:body {:
+        OPEN_PAREN:paramsbegin parameter_list:inparams CLOSE_PAREN:paramsclose RARROW:arrow parameter_list:outparams func_block:body {:
           RESULT = new FunctionDeclarationNode(
             new Located(new FunctionName(funcname), location(funcnameleft, funcnameright)),
             new Arguments(sizes, location(sizesopenleft, sizescloseright)),
@@ -313,11 +311,18 @@ var_binding ::=
     :}
   ;
 
-block ::=
+func_block ::=
     OPEN_BRACE:begin stmt_list:statements return:ret CLOSE_BRACE:end {:
-      RESULT = new BlockNode(statements, ret, location(beginleft, endright));
+      RESULT = new RoutineBlockNode(statements, ret, location(beginleft, endright));
     :}
   ;
+
+flow_block ::=
+    OPEN_BRACE:begin stmt_list:statements CLOSE_BRACE:end {:
+      RESULT = new ControlFlowBlockNode(statements, location(beginleft, endright));
+    :}
+  ;
+
 
 stmt_list ::=
     stmt_list:slist stmt:s {:
@@ -365,10 +370,10 @@ command ::=
   | host:recipient PERIOD OUTPUT LT array_type:type GT OPEN_PAREN reference:message CLOSE_PAREN:end {:
       RESULT = new OutputNode(type, message, recipient, location(recipientleft, endright));
   :}
-  | IF:begin OPEN_PAREN index_expr:guard CLOSE_PAREN block:thenbranch ELSE block:elsebranch {:
+  | IF:begin OPEN_PAREN index_expr:guard CLOSE_PAREN flow_block:thenbranch ELSE flow_block:elsebranch {:
       RESULT = new IfNode(guard, thenbranch, elsebranch, location(beginleft, elsebranchright));
   :}
-  | LOOP:begin block:body {:
+  | LOOP:begin flow_block:body {:
       RESULT = new LoopNode(body, location(beginleft, bodyright));
   :}
   | BREAK:b {: RESULT = new BreakNode(location(bleft,bright)); :}

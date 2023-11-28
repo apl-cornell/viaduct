@@ -1,0 +1,23 @@
+/* Millionaire's problem with a trusted third party. */
+
+fun <> main() -> {
+
+  /* We endorse because Alice and Bob are free to provide any input. */
+  val aInput@Local(host = alice) = alice.input<int[]>()
+  val a@Local(host = trusted) = endorse aInput to {alice & bob<-} from {alice}
+
+  val bInput@Local(host = bob) = bob.input<int[]>()
+  val b@Local(host = trusted) = endorse bInput to {bob & alice<-} from {bob}
+
+  val bRicher[]: bool[]@Local(host = trusted) = a[] <= b[]
+  val bRicherDeclassified@Local(host = trusted) = declassify bRicher to {((alice | bob)-> & (alice & bob)<-)}
+
+  val = alice.output<bool[]>(bRicherDeclassified)
+  val = bob.output<bool[]>(bRicherDeclassified)
+
+  return
+}
+
+host alice
+host bob
+host trusted

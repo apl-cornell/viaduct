@@ -162,6 +162,8 @@ NUM         = ((-)?[1-9][0-9]*) | 0
   /* Labels */
   "<-" | "←"      { return symbol(sym.LARROW); }
   "->" | "→"      { return symbol(sym.RARROW); }
+  "to"            { return symbol(sym.TO); }
+  "from"          { return symbol(sym.FROM); }
 
   /* Demarcate protocol annotation */
   "@"             { return symbol(sym.AT); }

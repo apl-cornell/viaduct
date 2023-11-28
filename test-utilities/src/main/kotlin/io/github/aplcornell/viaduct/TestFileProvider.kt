@@ -25,6 +25,10 @@ class NegativeTestFileProvider(private val subfolder: String = "", private val e
 class CircuitTestFileProvider(subfolder: String = "") :
     ArgumentsProvider by PositiveTestFileProvider(subfolder, "circuit")
 
+/** Enumerates the paths of source files that use the circuit representation and should successfully compile. */
+class PrecircuitTestFileProvider(subfolder: String = "") :
+    ArgumentsProvider by PositiveTestFileProvider(subfolder, "precircuit")
+
 private fun testFilesAtPath(path: String, extension: String): Sequence<File> {
     // TODO: sorting will break with subdirectories
     return File("tests").resolve(path).walk()

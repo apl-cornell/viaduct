@@ -27,9 +27,9 @@ class LiteralNode(
 }
 
 class ReferenceNode(
-    val name: VariableNode,
+    override val name: VariableNode,
     override val sourceLocation: SourceLocation,
-) : IndexExpressionNode() {
+) : IndexExpressionNode(), VariableReferenceNode {
     override val children: Iterable<Nothing>
         get() = listOf()
 
@@ -37,14 +37,14 @@ class ReferenceNode(
 }
 
 class LookupNode(
-    val variable: VariableNode,
+    override val name: VariableNode,
     val indices: Arguments<IndexExpressionNode>,
     override val sourceLocation: SourceLocation,
-) : ExpressionNode() {
+) : ExpressionNode(), VariableReferenceNode {
     override val children: Iterable<Node>
         get() = indices
 
-    override fun toDocument(): Document = variable + indices.bracketed()
+    override fun toDocument(): Document = name + indices.bracketed()
 }
 
 /** An n-ary operator applied to n arguments. */

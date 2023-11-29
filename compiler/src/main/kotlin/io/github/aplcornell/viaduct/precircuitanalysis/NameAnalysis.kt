@@ -29,6 +29,7 @@ import io.github.aplcornell.viaduct.syntax.precircuit.Variable
 import io.github.aplcornell.viaduct.syntax.precircuit.VariableBindingNode
 import io.github.aplcornell.viaduct.syntax.precircuit.VariableDeclarationNode
 import io.github.aplcornell.viaduct.syntax.precircuit.VariableNode
+import io.github.aplcornell.viaduct.syntax.precircuit.VariableReferenceNode
 import kotlin.properties.ReadOnlyProperty
 import kotlin.reflect.KProperty
 
@@ -133,11 +134,8 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
     }
 
     /** Returns the statement that defines the [Variable] in [node]. */
-    fun declaration(node: ReferenceNode): VariableDeclarationNode =
-        node.variableDeclarations[node.name]
-
-    fun declaration(node: LookupNode): VariableDeclarationNode =
-        node.variableDeclarations[node.variable]
+    fun declaration(node: VariableReferenceNode): VariableDeclarationNode =
+        (node as Node).variableDeclarations[node.name]
 
     fun declaration(node: CallNode): FunctionDeclarationNode =
         node.functionDeclarations[node.name]

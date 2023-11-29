@@ -25,7 +25,7 @@ sealed class StatementNode : Node()
 sealed class CommandNode : Node()
 
 /** Any sequence of statements */
-abstract class BlockNode<Statement : StatementNode>(
+sealed class BlockNode<Statement : StatementNode>(
     open val statements: List<Statement>,
     override val sourceLocation: SourceLocation,
 ) : Node(), List<Statement>

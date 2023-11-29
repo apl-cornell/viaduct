@@ -171,17 +171,19 @@ private class BackendCodeGenerator(
                             builder.addStatement(
                                 "%N(%L)",
                                 command.name.value.name,
-                                ((command.bounds).map {
-                                    indexExpression(
-                                        it,
-                                        context
-                                    )
-                                } + inputs!! + circuitDecl.outputs.map {
-                                    CodeBlock.of(
-                                        "%N",
-                                        outNames[it]
-                                    )
-                                }).joinToCode(),
+                                (
+                                    (command.bounds).map {
+                                        indexExpression(
+                                            it,
+                                            context,
+                                        )
+                                    } + inputs!! + circuitDecl.outputs.map {
+                                        CodeBlock.of(
+                                            "%N",
+                                            outNames[it],
+                                        )
+                                    }
+                                    ).joinToCode(),
                             )
                             circuitDecl.outputs.forEachIndexed { index, param ->
                                 builder.addStatement("val %L = %N.get()", outTmps[index], outNames[param]!!)
@@ -234,7 +236,7 @@ private class BackendCodeGenerator(
                         builder.addCode(
                             indexExpression(command.message, context).forEachIndexed(
                                 command.type.shape,
-                                context
+                                context,
                             ) { _, value ->
                                 context.output(value, command.type.elementType.value)
                             },
@@ -259,7 +261,6 @@ private class BackendCodeGenerator(
                     is BreakNode -> {
                         builder.addStatement("break")
                     }
-
                 }
             }
 

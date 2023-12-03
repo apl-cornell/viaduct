@@ -12,8 +12,10 @@ fun <> main() -> {
   val bRicher[]: bool[]@Local(host = trusted) = a[] <= b[]
   val bRicherDeclassified@Local(host = trusted) = declassify bRicher to {((alice | bob)-> & (alice & bob)<-)}
 
-  val = alice.output<bool[]>(bRicherDeclassified)
-  val = bob.output<bool[]>(bRicherDeclassified)
+  val aOutput@Local(host = trusted) = alice.output<bool[]>(bRicherDeclassified)
+  val bOutput@Local(host = trusted) = bob.output<bool[]>(bRicherDeclassified)
+
+  if (bRicherDeclassified) { } else { }
 
   return
 }

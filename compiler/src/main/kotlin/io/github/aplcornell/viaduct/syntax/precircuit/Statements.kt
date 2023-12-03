@@ -10,7 +10,6 @@ import io.github.aplcornell.viaduct.prettyprinting.plus
 import io.github.aplcornell.viaduct.prettyprinting.times
 import io.github.aplcornell.viaduct.prettyprinting.tupled
 import io.github.aplcornell.viaduct.syntax.Arguments
-import io.github.aplcornell.viaduct.syntax.FunctionNameNode
 import io.github.aplcornell.viaduct.syntax.HostNode
 import io.github.aplcornell.viaduct.syntax.LabelNode
 import io.github.aplcornell.viaduct.syntax.ProtocolNode
@@ -19,10 +18,15 @@ import io.github.aplcornell.viaduct.syntax.surface.keyword
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.toPersistentList
 
-/** A computation with side effects. */
 sealed class StatementNode : Node()
 
 sealed class CommandNode : Node()
+
+/** A statement that affects control flow. */
+sealed class ControlNode : StatementNode()
+
+/** A statement that binds a variable. */
+sealed class LetNode : StatementNode(), VariableDeclarationNode
 
 /** Any sequence of statements */
 sealed class BlockNode<Statement : StatementNode>(
@@ -73,7 +77,7 @@ private constructor(
 class ReturnNode(
     val values: Arguments<ReferenceNode>,
     override val sourceLocation: SourceLocation,
-) : StatementNode() {
+) : ControlNode() {
     override val children: Iterable<Node>
         get() = values
 
@@ -92,53 +96,25 @@ class ComputeLetNode(
     val protocol: ProtocolNode,
     val value: ExpressionNode,
     override val sourceLocation: SourceLocation,
-) : StatementNode(), VariableDeclarationNode {
+) : LetNode() {
     override val children: Iterable<Node>
         get() = indices + listOf(type, value)
 
-    override fun toDocument(): Document =
+    override fun toDocument(): Document = // TODO fix to add protocol
         (keyword("val") * name + indices.bracketed() + ":") * type * "=" * value
 }
 
-class LetNode(
-    val bindings: Arguments<VariableBindingNode>,
-    val command: CommandNode,
-    override val sourceLocation: SourceLocation,
-) : StatementNode() {
-    override val children: Iterable<Node>
-        get() = bindings + listOf(command)
-
-    override fun toDocument(): Document =
-        keyword("val") * bindings.joined() * "=" * command
-}
-
-class VariableBindingNode(
+class CommandLetNode(
     override val name: VariableNode,
     val protocol: ProtocolNode,
+    val command: CommandNode,
     override val sourceLocation: SourceLocation,
-) : Node(), VariableDeclarationNode {
-    override val children: Iterable<Nothing>
-        get() = listOf()
-
-    override fun toDocument(): Document =
-        name + "@" + protocol
-}
-
-class CallNode(
-    val name: FunctionNameNode,
-    val bounds: Arguments<IndexExpressionNode>,
-    val inputs: Arguments<ReferenceNode>,
-    override val sourceLocation: SourceLocation,
-) : CommandNode() {
+) : LetNode() {
     override val children: Iterable<Node>
-        get() = bounds + inputs
+        get() = listOf(command)
 
-    override fun toDocument(): Document {
-        return name + bounds.joined(
-            prefix = Document("<"),
-            postfix = Document(">"),
-        ) + inputs.tupled()
-    }
+    override fun toDocument(): Document = // TODO fix me, compile errors, and parsing
+        keyword("val") * name + "@" + protocol * "=" * command
 }
 
 /**
@@ -168,9 +144,6 @@ class OutputNode(
 
     override fun toDocument(): Document = host + "." + keyword("output") + listOf(message).tupled()
 }
-
-/** A command that affects control flow. */
-sealed class ControlNode : CommandNode()
 
 /**
  * Executing statements conditionally.

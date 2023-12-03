@@ -14,11 +14,10 @@ import io.github.aplcornell.viaduct.syntax.ObjectVariable
 import io.github.aplcornell.viaduct.syntax.ProtocolNode
 import io.github.aplcornell.viaduct.syntax.Temporary
 import io.github.aplcornell.viaduct.syntax.precircuit.BlockNode
-import io.github.aplcornell.viaduct.syntax.precircuit.CallNode
+import io.github.aplcornell.viaduct.syntax.precircuit.CommandLetNode
 import io.github.aplcornell.viaduct.syntax.precircuit.ComputeLetNode
 import io.github.aplcornell.viaduct.syntax.precircuit.FunctionDeclarationNode
 import io.github.aplcornell.viaduct.syntax.precircuit.HostDeclarationNode
-import io.github.aplcornell.viaduct.syntax.precircuit.LetNode
 import io.github.aplcornell.viaduct.syntax.precircuit.LookupNode
 import io.github.aplcornell.viaduct.syntax.precircuit.Node
 import io.github.aplcornell.viaduct.syntax.precircuit.ParameterNode
@@ -26,7 +25,6 @@ import io.github.aplcornell.viaduct.syntax.precircuit.ProgramNode
 import io.github.aplcornell.viaduct.syntax.precircuit.ReduceNode
 import io.github.aplcornell.viaduct.syntax.precircuit.ReferenceNode
 import io.github.aplcornell.viaduct.syntax.precircuit.Variable
-import io.github.aplcornell.viaduct.syntax.precircuit.VariableBindingNode
 import io.github.aplcornell.viaduct.syntax.precircuit.VariableDeclarationNode
 import io.github.aplcornell.viaduct.syntax.precircuit.VariableNode
 import io.github.aplcornell.viaduct.syntax.precircuit.VariableReferenceNode
@@ -37,7 +35,7 @@ import kotlin.reflect.KProperty
  * Associates each use of a [Name] with its declaration, and every [Name] declaration with the
  * set of its uses.
  *
- * For example, [Temporary] variables are associated with [LetNode]s, [ObjectVariable]s with
+ * For example, [Temporary] variables are associated with [CommandLetNode]s, [ObjectVariable]s with
  * [DeclarationNode]s, and [JumpLabel]s with [InfiniteLoopNode]s.
  * */
 class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>) {
@@ -80,7 +78,7 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
         when (node) {
             is ComputeLetNode -> listOf(Pair(node.name, node))
 
-            is LetNode -> node.bindings.map { binding -> Pair(binding.name, binding) }
+            is CommandLetNode -> listOf(Pair(node.name, node))
 
             else -> listOf()
         }
@@ -133,12 +131,9 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
             thisRef.contextIn
     }
 
-    /** Returns the statement that defines the [Variable] in [node]. */
+    /** Returns the node that defines the [Variable] in [node]. */
     fun declaration(node: VariableReferenceNode): VariableDeclarationNode =
         (node as Node).variableDeclarations[node.name]
-
-    fun declaration(node: CallNode): FunctionDeclarationNode =
-        node.functionDeclarations[node.name]
 
     /** Returns the funtion declaration that contains [parameter]. */
     fun functionDeclaration(parameter: ParameterNode): FunctionDeclarationNode =
@@ -177,11 +172,9 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
         fun check(node: Node) {
             // Check that name references are valid
             when (node) {
-                is VariableBindingNode -> node.protocol.check()
                 is ComputeLetNode -> node.protocol.check()
                 is ReferenceNode -> declaration(node)
                 is LookupNode -> declaration(node)
-                is CallNode -> declaration(node)
                 else -> {}
             }
             // Check that there are no name clashes
@@ -193,7 +186,7 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
                     }
                 }
 
-                is LetNode -> node.bindings.forEach { node.variableDeclarations.put(it.name, it) }
+                is CommandLetNode -> node.variableDeclarations.put(node.name, node)
                 is ReduceNode -> node.variableDeclarations.put(node.indices.name, node.indices)
                 is ProgramNode -> {
                     // Forcing these thunks

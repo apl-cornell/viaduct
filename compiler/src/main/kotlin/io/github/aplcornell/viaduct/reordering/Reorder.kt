@@ -50,12 +50,11 @@ class Reorder(private val programNode: ProgramNode) {
     /** Returns a re-ordered copy of [blockNode] */
     private fun reorder(blockNode: BlockNode<*>): BlockNode<StatementNode> = when (blockNode) {
         is ControlFlowBlockNode<*> -> ControlFlowBlockNode(
-            statements = reorderStatements(blockNode.statements.map { reorder(it) }),
-            // TODO since we reorder the children and make new nodes, they're no longer in the dependency map. bug
+            statements = reorderStatements(blockNode.statements).map { reorder(it) },
             sourceLocation = blockNode.sourceLocation
         )
         is RoutineBlockNode<*> -> RoutineBlockNode(
-            statements = reorderStatements(blockNode.statements.map { reorder(it) }),
+            statements = reorderStatements(blockNode.statements).map { reorder(it) },
             returnStatement = blockNode.returnStatement,
             sourceLocation = blockNode.sourceLocation
         )

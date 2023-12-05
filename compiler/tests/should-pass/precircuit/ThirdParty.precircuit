@@ -1,7 +1,6 @@
 /* Millionaire's problem with a trusted third party. */
 
 fun <> main() -> {
-
   /* We endorse because Alice and Bob are free to provide any input. */
   val aInput@Local(host = alice) = alice.input<int[]>()
   val a@Local(host = trusted) = endorse aInput to {alice & bob<-} from {alice}

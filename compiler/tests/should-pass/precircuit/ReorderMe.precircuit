@@ -1,0 +1,36 @@
+fun <> main() -> {
+  val aNum@Local(host = alice) = alice.input<int[]>()
+  val aNum2@Local(host = alice) = alice.input<int[]>()
+  val a[]: int[]@ArithABY(client = bob, server = alice) = aNum[] + aNum2[]
+
+  val bNum@Local(host = bob) = bob.input<int[]>()
+  val bBool@Local(host = bob) = bob.input<bool[]>()
+
+
+  val b[]: int[]@ArithABY(client = bob, server = alice) = aNum[] + bNum[]
+  val b2[]: int[]@ArithABY(client = bob, server = alice) = aNum[] + b[]
+  val c[]: int[]@YaoABY(client = bob, server = alice) = mux(bBool, aNum, bNum)
+  val b3[]: int[]@ArithABY(client = bob, server = alice) = aNum[] + b2[]
+  val b4[]: int[]@ArithABY(client = bob, server = alice) = aNum[] + b3[]
+  val c2[]: int[]@YaoABY(client = bob, server = alice) = mux(bBool, aNum, bNum)
+  val b5[]: int[]@ArithABY(client = bob, server = alice) = aNum[] + b4[]
+  val b6[]: int[]@ArithABY(client = bob, server = alice) = aNum[] + b5[]
+
+  val c3[]: int[]@YaoABY(client = bob, server = alice) = mux(bBool, aNum, bNum)
+  val d[]: int[]@ArithABY(client = bob, server = alice) = b6[] + c[]
+  val e[]: int[]@ArithABY(client = bob, server = alice) = aNum[] + d[]
+
+/**
+  val bInput@Local(host = bob) = bob.input<int[]>()
+  val b@Local(host = trusted) = endorse bInput to {bob & alice<-} from {bob}
+
+  val bRicher[]: bool[]@Local(host = trusted) = a[] <= b[]
+  val bRicherDeclassified@Local(host = trusted) = declassify bRicher to {((alice | bob)-> & (alice & bob)<-)}
+
+  val aOutput@Local(host = trusted) = alice.output<bool[]>(bRicherDeclassified)
+  val bOutput@Local(host = trusted) = bob.output<bool[]>(bRicherDeclassified)
+
+  if (bRicherDeclassified) { } else { }*/
+
+  return
+}

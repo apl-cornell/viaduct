@@ -2,7 +2,6 @@ package io.github.aplcornell.viaduct.reordering
 
 import io.github.aplcornell.viaduct.precircuitanalysis.protocols
 import io.github.aplcornell.viaduct.syntax.Protocol
-import io.github.aplcornell.viaduct.syntax.precircuit.BlockNode
 import io.github.aplcornell.viaduct.syntax.precircuit.BreakNode
 import io.github.aplcornell.viaduct.syntax.precircuit.CommandLetNode
 import io.github.aplcornell.viaduct.syntax.precircuit.ComputeLetNode
@@ -20,14 +19,28 @@ class Reorder(private val programNode: ProgramNode) {
     private val dependencyGraph = DependencyGraph(programNode)
 
     /** Heuristically (based on the desired [protocol]) fetch the next statement from [ready] to be processed */
-    private fun fetchNext(ready: Set<StatementNode>, protocol: Protocol?): StatementNode {
+    private fun fetchNext(
+        ready: Set<StatementNode>,
+        processed: List<StatementNode>,
+        protocol: Protocol?
+    ): StatementNode {
+        // If we can continue using the same protocol, do so
         if (protocol != null) {
             val sameProtocolStatements = ready.filter { protocol in it.protocols() }
             if (sameProtocolStatements.isNotEmpty()) {
                 return sameProtocolStatements.first()
             }
         }
-        return ready.first()
+        // Otherwise, pick the next instruction based on how many more dependencies it will resolve.
+        val dependenciesResolved =
+            ready.associateWith { readyStmt -> // num dependents on other protocols under transitivity
+                (dependencyGraph.dependentsClosure(readyStmt)  // number of dependents
+                    .filter { (dependencyGraph.dependencies(it) - (processed.toSet())).isNotEmpty() }  // which are not resolved
+                    .flatMap { it.protocols() }.toSet() - readyStmt.protocols()
+                    .toSet()) // unique protocols that aren't my own
+                    .size
+            }
+        return dependenciesResolved.maxByOrNull { (_, v) -> v }!!.key
     }
 
     /** Returns a re-ordered copy of [statements] through a topological sort with constraints */
@@ -37,7 +50,7 @@ class Reorder(private val programNode: ProgramNode) {
         val processed = ArrayDeque<StatementNode>()
         var protocol: Protocol? = null
         while (ready.isNotEmpty()) {
-            val curr = fetchNext(ready = ready, protocol = protocol)
+            val curr = fetchNext(ready = ready, processed = processed, protocol = protocol)
             ready.remove(curr)
             processed.add(curr)
             protocol = curr.protocols().firstOrNull()
@@ -48,18 +61,20 @@ class Reorder(private val programNode: ProgramNode) {
     }
 
     /** Returns a re-ordered copy of [blockNode] */
-    private fun reorder(blockNode: BlockNode<*>): BlockNode<StatementNode> = when (blockNode) {
-        is ControlFlowBlockNode<*> -> ControlFlowBlockNode(
+    private fun reorder(blockNode: ControlFlowBlockNode<*>): ControlFlowBlockNode<StatementNode> =
+        ControlFlowBlockNode(
             statements = reorderStatements(blockNode.statements).map { reorder(it) },
             sourceLocation = blockNode.sourceLocation
         )
-        is RoutineBlockNode<*> -> RoutineBlockNode(
+
+    private fun reorder(blockNode: RoutineBlockNode<*>): RoutineBlockNode<StatementNode> =
+        RoutineBlockNode(
             statements = reorderStatements(blockNode.statements).map { reorder(it) },
             returnStatement = blockNode.returnStatement,
-            sourceLocation = blockNode.sourceLocation
+            sourceLocation = blockNode.sourceLocation,
         )
-    }
 
+    /** Returns a re-ordered copy of [node] */
     private fun reorder(node: StatementNode): StatementNode = when (node) {
         is LoopNode -> LoopNode(
             body = reorder(node.body), sourceLocation = node.sourceLocation
@@ -80,9 +95,6 @@ class Reorder(private val programNode: ProgramNode) {
         val newFunctions = programNode.declarations.filterIsInstance<FunctionDeclarationNode>().map {
             FunctionDeclarationNode(it.name, it.sizes, it.inputs, it.outputs, reorder(it.body), it.sourceLocation)
         }
-
-        println(newFunctions)
-
         return ProgramNode(
             declarations = programNode.declarations.filterIsInstance<HostDeclarationNode>() + newFunctions,
             sourceLocation = programNode.sourceLocation

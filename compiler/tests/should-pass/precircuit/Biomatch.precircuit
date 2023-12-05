@@ -1,0 +1,25 @@
+host alice
+host bob
+
+fun <> main() -> {
+
+    val alicen@Local(host = alice) = alice.input<int[]>()
+    val aliced@Local(host = alice) = alice.input<int[]>()
+
+    val ndec@Local(host = alice) = declassify alicen from {alice} to {((alice | bob)-> & alice<-)}
+    val ddec@Local(host = alice) = declassify aliced from {alice} to {((alice | bob)-> & alice<-)}
+    val n@Local(host = alice) = endorse ndec to {(alice ⊓ bob)} from {((alice | bob)-> & alice<-)}
+    val d@Local(host = alice) = endorse ddec to {(alice ⊓ bob)} from {((alice | bob)-> & alice<-)}
+
+    val sample@Local(host = bob) = bob.input<int[d]>()
+    val database@Local(host = alice) = alice.input<int[n, d]>()
+
+    val dists[i < n]: int[n]@ArithABY(client = bob, server = alice) = reduce(::+, 0) { j < d -> (database[i, j] - sample[j]) * (database[i, j] - sample[j]) }
+    val result[]: int[]@YaoABY(client = bob, server = alice) = reduce(::min, 999999) { i < n -> dists[i] }
+    val declassified_result@Local(host = alice) = declassify result to {(alice ⊓ bob)}
+
+    val aOutput@Local(host = alice) = alice.output<bool[]>(declassified_result)
+    val bOutput@Local(host = alice) = bob.output<bool[]>(declassified_result)
+
+    return
+}

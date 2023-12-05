@@ -100,8 +100,8 @@ class ComputeLetNode(
     override val children: Iterable<Node>
         get() = indices + listOf(type, value)
 
-    override fun toDocument(): Document = // TODO fix to add protocol
-        (keyword("val") * name + indices.bracketed() + ":") * type * "=" * value
+    override fun toDocument(): Document =
+        (keyword("val") * name + indices.bracketed() + ":") * type + "@" + protocol * "=" * value
 }
 
 class CommandLetNode(
@@ -153,15 +153,15 @@ class OutputNode(
  */
 class IfNode(
     val guard: IndexExpressionNode,
-    val thenBranch: BlockNode<StatementNode>,
-    val elseBranch: BlockNode<StatementNode>,
+    val thenBranch: ControlFlowBlockNode<StatementNode>,
+    val elseBranch: ControlFlowBlockNode<StatementNode>,
     override val sourceLocation: SourceLocation,
 ) : ControlNode() {
     override val children: Iterable<Node>
         get() = listOf(guard, thenBranch, elseBranch)
 
     override fun toDocument(): Document =
-        keyword("if") + listOf(guard).tupled() + thenBranch.toDocument() + keyword("else") + elseBranch.toDocument()
+        keyword("if") + listOf(guard).tupled() + thenBranch.toDocument() * keyword("else") + elseBranch.toDocument()
 }
 
 /**
@@ -170,7 +170,7 @@ class IfNode(
  * @param jumpLabel A label for the loop that break nodes can refer to.
  */
 class LoopNode(
-    val body: BlockNode<StatementNode>,
+    val body: ControlFlowBlockNode<StatementNode>,
 //    val jumpLabel: JumpLabelNode?,
     override val sourceLocation: SourceLocation,
 ) : ControlNode() {
@@ -217,8 +217,11 @@ class DeclassificationNode(
     override val toLabel: LabelNode,
     override val sourceLocation: SourceLocation,
 ) : DowngradeNode() {
-    override fun toDocument(): Document =
-        keyword("declassify") + expression.toDocument() + keyword("to") + toLabel.toDocument()
+    override fun toDocument(): Document {
+        val from = fromLabel?.let { Document() * keyword("from") * listOf(it).braced() } ?: Document()
+        val to = keyword("to") * listOf(toLabel).braced()
+        return keyword("declassify") * expression + from * to
+    }
 }
 
 /** Trusting the result of an expression (increasing integrity). */
@@ -228,6 +231,9 @@ class EndorsementNode(
     override val toLabel: LabelNode?,
     override val sourceLocation: SourceLocation,
 ) : DowngradeNode() {
-    override fun toDocument(): Document =
-        keyword("endorse") + expression.toDocument() + keyword("from") + fromLabel.toDocument()
+    override fun toDocument(): Document {
+        val from = keyword("from") * listOf(fromLabel).braced()
+        val to = toLabel?.let { Document() * keyword("to") * listOf(it).braced() } ?: Document()
+        return keyword("endorse") * expression + to * from
+    }
 }

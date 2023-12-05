@@ -32,8 +32,6 @@ class DependencyGraph(program: ProgramNode) {
 
     init {
         program.declarations.filterIsInstance<FunctionDeclarationNode>().forEach { buildDependencyGraph(it.body) }
-        println("HERE IS THE DEP MAP AFTER INIT")
-        nodeToDependencies.forEach { (k, _) -> println(k.toDocument().print()) }
     }
 
     private fun uses(node: StatementNode): List<VariableReferenceNode> = when (node) {
@@ -69,9 +67,22 @@ class DependencyGraph(program: ProgramNode) {
     }
 
     fun dependents(statement: StatementNode) = nodeToDependents[statement]!!
+    fun dependentsClosure(statement: StatementNode): Set<StatementNode> {
+        val seen = mutableSetOf<StatementNode>()
+        val frontier = arrayListOf<StatementNode>()
+        frontier.addAll(nodeToDependents[statement]!!)
+        while (frontier.isNotEmpty()) {
+            val curr = frontier.removeAt(0)
+            if (curr !in seen) {
+                seen.add(curr)
+                frontier.addAll(nodeToDependents[curr]!!)
+            }
+        }
+        return seen
+    }
+
     fun dependencies(statement: StatementNode): List<StatementNode> {
-        println("getting dependencies of " + statement.toDocument().print())
-        return nodeToDependencies[statement]!! //?: listOf()
+        return nodeToDependencies[statement]!!
     }
 
     private fun dataDependencies(stmt: StatementNode): List<StatementNode> {
@@ -94,11 +105,7 @@ class DependencyGraph(program: ProgramNode) {
         val prevDeclassifies: List<StatementNode> = listOf()
         val prevEndorses: List<StatementNode> = listOf()
         block.forEach { stmt ->
-            println("ADDing data dependencies for " + stmt.toDocument().print())
             addDependencies(stmt, dataDependencies(stmt))
-            println("HERE IS THE DEP MAP AFTER ADDING")
-            nodeToDependencies.forEach { (k, _) -> println(k.toDocument().print()) }
-
             when (stmt) {
                 is ComputeLetNode -> {
                     addDependencies(stmt, listOf())

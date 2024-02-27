@@ -1,10 +1,10 @@
 plugins {
-    kotlin("jvm") version "1.8.21"
+    alias(libs.plugins.kotlin.jvm)
     id("io.github.apl-cornell.viaduct")
     application
 
     // Style checking
-    id("com.diffplug.spotless") version "6.18.0"
+    alias(libs.plugins.spotless)
 }
 
 group = "io.github.apl-cornell.viaduct"
@@ -22,17 +22,17 @@ dependencies {
     implementation("${project.group}:runtime")
 
     // Command-line-argument parsing
-    implementation("com.github.ajalt.clikt:clikt:3.5.2")
+    implementation(libs.clikt)
 
     // Logging
-    implementation("io.github.microutils:kotlin-logging:3.0.5")
-    implementation(platform("org.apache.logging.log4j:log4j-bom:2.20.0"))
-    implementation("org.apache.logging.log4j:log4j-core")
-    implementation("org.apache.logging.log4j:log4j-slf4j2-impl")
+    implementation(libs.kotlin.logging)
+    implementation(platform(libs.log4j.bom))
+    implementation(libs.log4j.core)
+    implementation(libs.log4j.slf4j2.impl)
 
     // Testing
     testImplementation("${project.group}:test-utilities")
-    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.1")
+    testImplementation(libs.kotlinx.coroutines.core)
 }
 
 application {

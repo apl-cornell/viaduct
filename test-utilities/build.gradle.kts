@@ -7,7 +7,7 @@ plugins {
 dependencies {
     implementation(project(":compiler"))
 
-    api("org.junit.jupiter:junit-jupiter-api:5.9.3")
-    api("org.junit.jupiter:junit-jupiter-params")
-    runtimeOnly("org.junit.jupiter:junit-jupiter-engine")
+    api(libs.junit.jupiter.api)
+    api(libs.junit.jupiter.params)
+    runtimeOnly(libs.junit.jupiter.engine)
 }

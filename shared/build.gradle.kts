@@ -8,10 +8,10 @@ val rootPackage: String by project.ext
 
 dependencies {
     // Data structures
-    implementation("org.jetbrains.kotlinx:kotlinx-collections-immutable-jvm:0.3.5")
+    implementation(libs.kotlinx.collections.immutable.jvm)
 
     // Colored terminal output
-    implementation("org.fusesource.jansi:jansi:2.4.0")
+    implementation(libs.jansi)
 
     // Testing
     testImplementation(project(":test-utilities"))

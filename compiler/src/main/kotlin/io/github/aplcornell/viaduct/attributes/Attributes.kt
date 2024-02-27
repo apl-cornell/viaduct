@@ -17,8 +17,10 @@ import kotlin.reflect.KProperty
  * ```
  */
 abstract class Attribute<in Node, out T> : (Node) -> T, ReadOnlyProperty<Node, T> {
-    final override fun getValue(thisRef: Node, property: KProperty<*>): T =
-        this(thisRef)
+    final override fun getValue(
+        thisRef: Node,
+        property: KProperty<*>,
+    ): T = this(thisRef)
 }
 
 /**
@@ -33,8 +35,7 @@ abstract class Attribute<in Node, out T> : (Node) -> T, ReadOnlyProperty<Node, T
  *
  * @see Attribute
  */
-fun <Node, T> attribute(f: Node.() -> T): Attribute<Node, T> =
-    CachedAttribute(f)
+fun <Node, T> attribute(f: Node.() -> T): Attribute<Node, T> = CachedAttribute(f)
 
 /**
  * Defines an [Attribute] where the value of each [Node] is determined by the contributions from
@@ -45,20 +46,24 @@ fun <Node, T> attribute(f: Node.() -> T): Attribute<Node, T> =
  * Note that it is safe for [f] to use other attributes, but [f] should not depend on the attribute
  * being defined.
  */
-// TODO: improve implementation using ideas from
-//  [Extending Attribute Grammars with Collection Attributes – Evaluation and Applications](https://www.ieee-scam.org/2007/papers/40.pdf)
 fun <Node : TreeNode<Node>, T> collectedAttribute(
     tree: Tree<Node, Node>,
     f: (Node) -> Iterable<Pair<Node, T>>,
 ): Attribute<Node, Set<T>> {
+    // TODO: improve implementation using ideas from
+    //  [Extending Attribute Grammars with Collection Attributes – Evaluation and Applications](https://www.ieee-scam.org/2007/papers/40.pdf)
     val attributes: MutableMap<Node, MutableSet<T>> = mutableMapOf()
+
     fun visit(node: Node) {
         f(node).forEach { attributes.getOrPut(it.first) { mutableSetOf() }.add(it.second) }
         node.children.forEach(::visit)
     }
 
     // Traverse the tree lazily (only when any value is demanded)
-    val result: Map<Node, Set<T>> by lazy { visit(tree.root); attributes }
+    val result: Map<Node, Set<T>> by lazy {
+        visit(tree.root)
+        attributes
+    }
     return UncachedAttribute { result.getOrDefault(it, setOf()) }
 }
 
@@ -71,6 +76,7 @@ private class CachedAttribute<in Node, out T>(private val f: (Node) -> T) : Attr
             when (val valueOption = attributeValue.currentValue) {
                 is Some<T> ->
                     valueOption.value
+
                 is None ->
                     if (attributeValue.isVisited) {
                         throw CycleInAttributeDefinitionException()

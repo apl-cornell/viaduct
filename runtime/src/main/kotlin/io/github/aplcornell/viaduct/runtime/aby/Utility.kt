@@ -14,7 +14,10 @@ fun Circuit.putNOTGate(input: Share): Share {
     return Aby.createNewShare(UInt32Vector(inverses), this)
 }
 
-fun Circuit.secretIndexQuery(indexValue: Share, shareVector: Array<Share>): Share {
+fun Circuit.secretIndexQuery(
+    indexValue: Share,
+    shareVector: Array<Share>,
+): Share {
     // return 0 in case of indexing error
     var currentShare = this.putCONSGate(BigInteger.ZERO, 32)
     for (i in shareVector.indices) {
@@ -25,7 +28,11 @@ fun Circuit.secretIndexQuery(indexValue: Share, shareVector: Array<Share>): Shar
     return currentShare
 }
 
-fun Array<Share>.secretUpdateModify(circuit: Circuit, index: Share, operation: (Share) -> Share) {
+fun Array<Share>.secretUpdateModify(
+    circuit: Circuit,
+    index: Share,
+    operation: (Share) -> Share,
+) {
     for (i in this.indices) {
         val rhs = operation(this[i])
         val guard = circuit.putEQGate(index, circuit.putCONSGate(i.toBigInteger(), 32))
@@ -34,7 +41,11 @@ fun Array<Share>.secretUpdateModify(circuit: Circuit, index: Share, operation: (
     }
 }
 
-fun Array<Share>.secretUpdateSet(circuit: Circuit, index: Share, argument: Share) {
+fun Array<Share>.secretUpdateSet(
+    circuit: Circuit,
+    index: Share,
+    argument: Share,
+) {
     for (i in this.indices) {
         val guard = circuit.putEQGate(index, circuit.putCONSGate(i.toBigInteger(), 32))
         val mux = circuit.putMUXGate(this[i], argument, guard)

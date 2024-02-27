@@ -23,12 +23,19 @@ val LabelVariable.label
         )
 
 fun Label.confidentiality(): Label = confidentiality(FreeDistributiveLattice.bounds())
+
 fun Label.integrity(): Label = integrity(FreeDistributiveLattice.bounds())
 
-fun flowsTo(from: Label, to: Label, congruence: FreeDistributiveLatticeCongruence<PrincipalComponent>) =
-    congruence.lessThanOrEqualTo(to.confidentialityComponent, from.confidentialityComponent) &&
-        congruence.lessThanOrEqualTo(from.integrityComponent, to.integrityComponent)
+fun flowsTo(
+    from: Label,
+    to: Label,
+    congruence: FreeDistributiveLatticeCongruence<PrincipalComponent>,
+) = congruence.lessThanOrEqualTo(to.confidentialityComponent, from.confidentialityComponent) &&
+    congruence.lessThanOrEqualTo(from.integrityComponent, to.integrityComponent)
 
-fun actsFor(from: Label, to: Label, congruence: FreeDistributiveLatticeCongruence<PrincipalComponent>) =
-    congruence.lessThanOrEqualTo(from.confidentialityComponent, to.confidentialityComponent) &&
-        congruence.lessThanOrEqualTo(from.integrityComponent, to.integrityComponent)
+fun actsFor(
+    from: Label,
+    to: Label,
+    congruence: FreeDistributiveLatticeCongruence<PrincipalComponent>,
+) = congruence.lessThanOrEqualTo(from.confidentialityComponent, to.confidentialityComponent) &&
+    congruence.lessThanOrEqualTo(from.integrityComponent, to.integrityComponent)

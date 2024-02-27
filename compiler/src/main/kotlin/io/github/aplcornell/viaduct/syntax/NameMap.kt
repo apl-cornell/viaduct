@@ -6,8 +6,7 @@ import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentMapOf
 
 /** A persistent map from [Name]s to [Data]. */
-internal class NameMap<N : Name, Data>
-private constructor(
+internal class NameMap<N : Name, Data> private constructor(
     private val map: PersistentMap<N, Pair<Data, SourceLocation>>,
 ) {
     /** The empty map. */
@@ -46,7 +45,10 @@ private constructor(
      *
      * @throws NameClashError if [name] is already in the map.
      */
-    fun put(name: Located<N>, data: Data): NameMap<N, Data> {
+    fun put(
+        name: Located<N>,
+        data: Data,
+    ): NameMap<N, Data> {
         val previousDeclaration = map[name.value]?.second
         if (previousDeclaration != null) {
             throw NameClashError(name.value, previousDeclaration, name.sourceLocation)

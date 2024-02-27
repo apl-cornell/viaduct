@@ -28,7 +28,10 @@ fun validateProtocolAssignment(
     val nameAnalysis = program.analyses.get<NameAnalysis>()
     val informationFlowAnalysis = program.analyses.get<InformationFlowAnalysis>()
 
-    fun checkViableProtocol(selection: ProtocolAssignment, node: VariableDeclarationNode) {
+    fun checkViableProtocol(
+        selection: ProtocolAssignment,
+        node: VariableDeclarationNode,
+    ) {
         val functionName = nameAnalysis.enclosingFunctionName(node as Node)
         val protocol = selection.getAssignment(functionName, node.name.value)
         if (!constraintGenerator.viableProtocols(node).contains(protocol)) {
@@ -36,7 +39,10 @@ fun validateProtocolAssignment(
         }
     }
 
-    fun checkAuthority(selection: ProtocolAssignment, node: VariableDeclarationNode) {
+    fun checkAuthority(
+        selection: ProtocolAssignment,
+        node: VariableDeclarationNode,
+    ) {
         val functionName = nameAnalysis.enclosingFunctionName(node as Node)
         val protocol = selection.getAssignment(functionName, node.name.value)
         if (!hostTrustConfiguration.actsFor(

@@ -35,11 +35,17 @@ import java.util.concurrent.Executors
 private class FakeProtocolInterpreter(
     override val availableProtocols: Set<Protocol>,
 ) : ProtocolInterpreter {
-    override suspend fun runGuard(protocol: Protocol, expr: AtomicExpressionNode): Value {
+    override suspend fun runGuard(
+        protocol: Protocol,
+        expr: AtomicExpressionNode,
+    ): Value {
         return BooleanValue(false)
     }
 
-    override suspend fun runSimpleStatement(protocol: Protocol, stmt: SimpleStatementNode) {}
+    override suspend fun runSimpleStatement(
+        protocol: Protocol,
+        stmt: SimpleStatementNode,
+    ) {}
 
     override suspend fun runSend(
         sender: LetNode,
@@ -94,8 +100,7 @@ private object FakeStrategy : Strategy {
     override suspend fun recvOutput(value: Value) {}
 }
 
-private fun findAvailableTcpPort() =
-    ServerSocket(0).use { it.localPort }
+private fun findAvailableTcpPort() = ServerSocket(0).use { it.localPort }
 
 internal class BackendInterpreterTest {
     @ParameterizedTest
@@ -103,9 +108,10 @@ internal class BackendInterpreterTest {
     fun testInterpreter(file: File) {
         val program = SourceFile.from(file).compile(DefaultCombinedBackend, costRegime = SimpleCostRegime.LAN)
 
-        val hostAddresses = program.hosts.associateWith {
-            HostAddress(InetAddress.getLoopbackAddress().hostAddress, findAvailableTcpPort())
-        }
+        val hostAddresses =
+            program.hosts.associateWith {
+                HostAddress(InetAddress.getLoopbackAddress().hostAddress, findAvailableTcpPort())
+            }
 
         val backend = ViaductBackend(listOf(FakeProtocolBackend), hostAddresses)
 

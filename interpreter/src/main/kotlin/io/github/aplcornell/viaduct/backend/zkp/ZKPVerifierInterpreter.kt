@@ -59,7 +59,6 @@ class ZKPVerifierInterpreter(
     val runtime: ViaductProcessRuntime,
 ) :
     SingleProtocolInterpreter<ZKPObject>(program, runtime.projection.protocol) {
-
     private val ensureInit = ZKPInit
 
     private val prover = (runtime.projection.protocol as ZKP).prover
@@ -116,19 +115,19 @@ class ZKPVerifierInterpreter(
     private fun Value.toInt(): Int {
         return when (this) {
             is IntegerValue -> this.value
-            is BooleanValue -> if (this.value) {
-                1
-            } else {
-                0
-            }
+            is BooleanValue ->
+                if (this.value) {
+                    1
+                } else {
+                    0
+                }
 
             else -> throw Exception("value.toInt: Unknown value type: $this")
         }
     }
 
     /** Inject a value into a wire. **/
-    private fun mkConst(value: Value): WireTerm =
-        wireGenerator.mkConst(value.toInt())
+    private fun mkConst(value: Value): WireTerm = wireGenerator.mkConst(value.toInt())
 
     private fun Int.toValue(t: ValueType): Value {
         return when (t) {
@@ -176,26 +175,33 @@ class ZKPVerifierInterpreter(
         return ZKPObject.ZKPNullObject
     }
 
-    private fun runQuery(obj: ZKPObject, query: QueryNameNode, args: List<AtomicExpressionNode>): WireTerm =
+    private fun runQuery(
+        obj: ZKPObject,
+        query: QueryNameNode,
+        args: List<AtomicExpressionNode>,
+    ): WireTerm =
         when (obj) {
-            is ZKPObject.ZKPImmutableCell -> if (query.value is Get) {
-                obj.value
-            } else {
-                throw Exception("bad query")
-            }
+            is ZKPObject.ZKPImmutableCell ->
+                if (query.value is Get) {
+                    obj.value
+                } else {
+                    throw Exception("bad query")
+                }
 
-            is ZKPObject.ZKPMutableCell -> if (query.value is Get) {
-                obj.value
-            } else {
-                throw Exception("bad query")
-            }
+            is ZKPObject.ZKPMutableCell ->
+                if (query.value is Get) {
+                    obj.value
+                } else {
+                    throw Exception("bad query")
+                }
 
-            is ZKPObject.ZKPVectorObject -> if (query.value is Get) {
-                val index = runCleartextExpr(args[0]) as IntegerValue
-                obj.gates[index.value]
-            } else {
-                throw Exception("bad query")
-            }
+            is ZKPObject.ZKPVectorObject ->
+                if (query.value is Get) {
+                    val index = runCleartextExpr(args[0]) as IntegerValue
+                    obj.gates[index.value]
+                } else {
+                    throw Exception("bad query")
+                }
 
             ZKPObject.ZKPNullObject -> throw Exception("null query")
         }
@@ -292,16 +298,18 @@ class ZKPVerifierInterpreter(
             val wireName = wire.wireName()
             val vkFile = File("zkpkeys/$wireName.vk")
             if (!vkFile.exists()) {
-                throw Exception("Cannot find verification key for ${wire.asString()} with name $wireName.vk.  Restart after prover finishes.")
+                throw Exception(
+                    "Cannot find verification key for ${wire.asString()} with name $wireName.vk.  Restart after prover finishes.",
+                )
             } else {
                 val wireVal: Int =
                     (runtime.receive(ProtocolProjection(runtime.projection.protocol, prover)) as IntegerValue).value
                 val r1cs = wire.toR1CS(false, wireVal)
                 val pf =
                     (runtime.receive(ProtocolProjection(runtime.projection.protocol, prover)) as ByteVecValue).value
-                val in_vkFile = FileInputStream(vkFile)
-                val vk = mkByteBuf(in_vkFile.readAllBytes())
-                in_vkFile.close()
+                val inVkFile = FileInputStream(vkFile)
+                val vk = mkByteBuf(inVkFile.readAllBytes())
+                inVkFile.close()
                 logger.info {
                     "Verifying.."
                 }
@@ -329,24 +337,25 @@ class ZKPVerifierInterpreter(
         if (sendProtocol != recvProtocol) {
             val publicInputs = events.getHostReceives(runtime.projection.host, "ZKP_PUBLIC_INPUT")
 
-            val w: WireTerm = if (publicInputs.isEmpty()) {
-                mkDummyIn()
-            } else {
-                // Only kind of input is zkp public input
-                var cleartextValue: Value? = null
-                for (event in publicInputs) {
-                    val receivedValue: Value =
-                        runtime.receive(ProtocolProjection(event.send.protocol, event.send.host))
+            val w: WireTerm =
+                if (publicInputs.isEmpty()) {
+                    mkDummyIn()
+                } else {
+                    // Only kind of input is zkp public input
+                    var cleartextValue: Value? = null
+                    for (event in publicInputs) {
+                        val receivedValue: Value =
+                            runtime.receive(ProtocolProjection(event.send.protocol, event.send.host))
 
-                    if (cleartextValue == null) {
-                        cleartextValue = receivedValue
-                    } else if (cleartextValue != receivedValue) {
-                        throw ViaductInterpreterError("ZKP public input: received different values")
+                        if (cleartextValue == null) {
+                            cleartextValue = receivedValue
+                        } else if (cleartextValue != receivedValue) {
+                            throw ViaductInterpreterError("ZKP public input: received different values")
+                        }
                     }
+                    tempStore = tempStore.put(sender.name.value, cleartextValue!!)
+                    mkConst(cleartextValue)
                 }
-                tempStore = tempStore.put(sender.name.value, cleartextValue!!)
-                mkConst(cleartextValue)
-            }
             wireStore = wireStore.put(sender.name.value, w)
         }
     }

@@ -16,6 +16,5 @@ class ConstraintSolution<C : Lattice<C>, V> internal constructor(
             is Meet -> evaluate(term.lhs) meet evaluate(term.rhs)
         }
 
-    override fun invoke(variable: V): C =
-        solution.getOrDefault(variable, default)
+    override fun invoke(variable: V): C = solution.getOrDefault(variable, default)
 }

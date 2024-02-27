@@ -24,6 +24,5 @@ class Synchronization(hosts: Set<Host>) : Protocol() {
     override val arguments: Map<String, Value>
         get() = mapOf("hosts" to participants)
 
-    override fun authority(): Label =
-        throw Error("Synchronization protocol has no authority label")
+    override fun authority(): Label = throw Error("Synchronization protocol has no authority label")
 }

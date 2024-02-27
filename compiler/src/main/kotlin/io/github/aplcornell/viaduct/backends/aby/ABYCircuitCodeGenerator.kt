@@ -68,21 +68,30 @@ class ABYCircuitCodeGenerator(
         const val BIT_LENGTH: Int = 32
     }
 
-    private fun role(protocol: ABY, host: Host): Role =
+    private fun role(
+        protocol: ABY,
+        host: Host,
+    ): Role =
         if (protocol.client == host) {
             Role.CLIENT
         } else {
             Role.SERVER
         }
 
-    private fun address(protocol: ABY, host: Host) =
-        if (role(protocol, host) == Role.SERVER) {
-            CodeBlock.of("%S", "")
-        } else {
-            CodeBlock.of("%L.hostName", context.url(protocol.server))
-        }
+    private fun address(
+        protocol: ABY,
+        host: Host,
+    ) = if (role(protocol, host) == Role.SERVER) {
+        CodeBlock.of("%S", "")
+    } else {
+        CodeBlock.of("%L.hostName", context.url(protocol.server))
+    }
 
-    private fun abyParty(protocol: ABY, role: Role, port: CodeBlock): CodeBlock =
+    private fun abyParty(
+        protocol: ABY,
+        role: Role,
+        port: CodeBlock,
+    ): CodeBlock =
         CodeBlock.of(
             "ABYParty(%L, %L, %L)",
             roleToCodeBlock(role),
@@ -90,7 +99,10 @@ class ABYCircuitCodeGenerator(
             port,
         )
 
-    private fun abyPartySetup(protocol: ABY, role: Role): CodeBlock =
+    private fun abyPartySetup(
+        protocol: ABY,
+        role: Role,
+    ): CodeBlock =
         when (role) {
             Role.SERVER -> {
                 val builder = CodeBlock.builder()
@@ -195,19 +207,25 @@ class ABYCircuitCodeGenerator(
         CodeBlock.of(
             "%L.toBigInteger()",
             when (type) {
-                is BooleanType -> CodeBlock.of(
-                    "%L.compareTo(false)",
-                    this,
-                )
+                is BooleanType ->
+                    CodeBlock.of(
+                        "%L.compareTo(false)",
+                        this,
+                    )
                 is IntegerType -> this
                 else -> throw java.lang.IllegalArgumentException("Unknown value type: $type.")
             },
         )
 
-    private fun valueToShare(value: Value, protocol: Protocol): CodeBlock =
-        CodeBlock.of("%L", value).toShare(protocol as ABY, value.type)
+    private fun valueToShare(
+        value: Value,
+        protocol: Protocol,
+    ): CodeBlock = CodeBlock.of("%L", value).toShare(protocol as ABY, value.type)
 
-    private fun CodeBlock.toShare(protocol: ABY, type: ValueType): CodeBlock =
+    private fun CodeBlock.toShare(
+        protocol: ABY,
+        type: ValueType,
+    ): CodeBlock =
         CodeBlock.of(
             "%L.putCONSGate(%L, %L)",
             protocolToAbyPartyCircuit(protocol),
@@ -232,10 +250,13 @@ class ABYCircuitCodeGenerator(
         gateMethod: CodeBlock,
         arg1: CodeBlock,
         arg2: CodeBlock,
-    ): CodeBlock =
-        CodeBlock.of("%L.%L(%L, %L)", circuit, gateMethod, arg1, arg2)
+    ): CodeBlock = CodeBlock.of("%L.%L(%L, %L)", circuit, gateMethod, arg1, arg2)
 
-    override fun operatorApplication(protocol: Protocol, op: OperatorNode, arguments: List<CodeBlock>): CodeBlock {
+    override fun operatorApplication(
+        protocol: Protocol,
+        op: OperatorNode,
+        arguments: List<CodeBlock>,
+    ): CodeBlock {
         require(protocol is ABY)
         return when (op.operator) {
             Minimum ->
@@ -410,22 +431,31 @@ class ABYCircuitCodeGenerator(
                     protocolToAbyPartyCircuit(protocol),
                     arguments.last(),
                     arguments.first(),
-
                 )
 
             else -> throw UnsupportedOperationException("Unknown operator $op.")
         }
     }
 
-    override fun paramType(protocol: Protocol, sourceType: ValueType): TypeName = (Share::class).asTypeName()
+    override fun paramType(
+        protocol: Protocol,
+        sourceType: ValueType,
+    ): TypeName = (Share::class).asTypeName()
 
-    override fun storageType(protocol: Protocol, sourceType: ValueType): TypeName = INT
+    override fun storageType(
+        protocol: Protocol,
+        sourceType: ValueType,
+    ): TypeName = INT
 
-    override fun exp(protocol: Protocol, expr: ExpressionNode): CodeBlock =
+    override fun exp(
+        protocol: Protocol,
+        expr: ExpressionNode,
+    ): CodeBlock =
         when (expr) {
             is LiteralNode -> valueToShare(expr.value, protocol)
-            is ReferenceNode -> CodeBlock.of("%N", context.kotlinName(expr.name.value))
-                .toShare(protocol as ABY, IntegerType)
+            is ReferenceNode ->
+                CodeBlock.of("%N", context.kotlinName(expr.name.value))
+                    .toShare(protocol as ABY, IntegerType)
             else -> super.exp(protocol, expr)
         }
 
@@ -453,58 +483,59 @@ class ABYCircuitCodeGenerator(
         require(protocol is ABY)
         require(context.host in protocol.hosts)
         val builder = CodeBlock.builder()
-        val values = arguments.map { argument ->
-            val inputName = context.newTemporary(argument.value.toString() + "_inShare")
-            when {
-                argument.protocol is Local && argument.protocol.host in protocol.hosts -> {
-                    if (argument.protocol.host == context.host) {
+        val values =
+            arguments.map { argument ->
+                val inputName = context.newTemporary(argument.value.toString() + "_inShare")
+                when {
+                    argument.protocol is Local && argument.protocol.host in protocol.hosts -> {
+                        if (argument.protocol.host == context.host) {
+                            builder.addStatement(
+                                "val %L = %L",
+                                inputName,
+                                argument.type.shape.new(context) { indices ->
+                                    CodeBlock.of(
+                                        "%L.putINGate(%L, %L, %L)",
+                                        protocolToAbyPartyCircuit(protocol),
+                                        argument.value.lookup(indices).toInt(argument.type.elementType.value),
+                                        BIT_LENGTH,
+                                        roleToCodeBlock(role(protocol, context.host)),
+                                    )
+                                },
+                            )
+                        } else {
+                            builder.addStatement(
+                                "val %L = %L",
+                                inputName,
+                                argument.type.shape.new(context) {
+                                    CodeBlock.of(
+                                        "%L.putDummyINGate(%L)",
+                                        protocolToAbyPartyCircuit(protocol),
+                                        BIT_LENGTH,
+                                    )
+                                },
+                            )
+                        }
+                    }
+
+                    argument.protocol is Replication && argument.protocol.hosts == protocol.hosts -> {
                         builder.addStatement(
                             "val %L = %L",
                             inputName,
                             argument.type.shape.new(context) { indices ->
                                 CodeBlock.of(
-                                    "%L.putINGate(%L, %L, %L)",
+                                    "%L.putCONSGate(%L, %L)",
                                     protocolToAbyPartyCircuit(protocol),
-                                    argument.value.lookup(indices).toInt(argument.type.elementType.value),
-                                    BIT_LENGTH,
-                                    roleToCodeBlock(role(protocol, context.host)),
-                                )
-                            },
-                        )
-                    } else {
-                        builder.addStatement(
-                            "val %L = %L",
-                            inputName,
-                            argument.type.shape.new(context) {
-                                CodeBlock.of(
-                                    "%L.putDummyINGate(%L)",
-                                    protocolToAbyPartyCircuit(protocol),
+                                    argument.value.lookup(indices).toShare(protocol, argument.type.elementType.value),
                                     BIT_LENGTH,
                                 )
                             },
                         )
                     }
-                }
 
-                argument.protocol is Replication && argument.protocol.hosts == protocol.hosts -> {
-                    builder.addStatement(
-                        "val %L = %L",
-                        inputName,
-                        argument.type.shape.new(context) { indices ->
-                            CodeBlock.of(
-                                "%L.putCONSGate(%L, %L)",
-                                protocolToAbyPartyCircuit(protocol),
-                                argument.value.lookup(indices).toShare(protocol, argument.type.elementType.value),
-                                BIT_LENGTH,
-                            )
-                        },
-                    )
+                    else -> throw UnsupportedCommunicationException(argument.protocol, protocol, argument.sourceLocation)
                 }
-
-                else -> throw UnsupportedCommunicationException(argument.protocol, protocol, argument.sourceLocation)
+                CodeBlock.of("%N", inputName)
             }
-            CodeBlock.of("%N", inputName)
-        }
         return Pair(builder.build(), values)
     }
 
@@ -515,44 +546,47 @@ class ABYCircuitCodeGenerator(
         require(protocol is ABY)
         require(context.host in protocol.hosts)
         val builder = CodeBlock.builder()
-        val outShareNames = arguments.map { argument ->
-            val outShareName = context.newTemporary(argument.value.toString() + "_outShare")
-            val outRole = when (argument.protocol) {
-                Local(protocol.server) -> Role.SERVER
-                Local(protocol.client) -> Role.CLIENT
-                Replication(setOf(protocol.server, protocol.client)) -> Role.ALL
-                else -> throw IllegalStateException()
+        val outShareNames =
+            arguments.map { argument ->
+                val outShareName = context.newTemporary(argument.value.toString() + "_outShare")
+                val outRole =
+                    when (argument.protocol) {
+                        Local(protocol.server) -> Role.SERVER
+                        Local(protocol.client) -> Role.CLIENT
+                        Replication(setOf(protocol.server, protocol.client)) -> Role.ALL
+                        else -> throw IllegalStateException()
+                    }
+                builder.addStatement(
+                    "val %N = %L",
+                    outShareName,
+                    argument.type.shape.new(context) { indices ->
+                        CodeBlock.of(
+                            "%L.putOUTGate(%L, %L)",
+                            protocolToAbyPartyCircuit(protocol),
+                            argument.value.lookup(indices),
+                            roleToCodeBlock(outRole),
+                        )
+                    },
+                )
+                CodeBlock.of("%N", outShareName)
             }
-            builder.addStatement(
-                "val %N = %L",
-                outShareName,
-                argument.type.shape.new(context) { indices ->
-                    CodeBlock.of(
-                        "%L.putOUTGate(%L, %L)",
-                        protocolToAbyPartyCircuit(protocol),
-                        argument.value.lookup(indices),
-                        roleToCodeBlock(outRole),
-                    )
-                },
-            )
-            CodeBlock.of("%N", outShareName)
-        }
         builder.addStatement(
             "%L.execCircuit()",
             protocolToABYPartyMap[ABYPair(protocol.server, protocol.client)],
         )
-        val cleartextTmps = arguments.zip(outShareNames).filter { (arg, _) -> (context.host in arg.protocol.hosts) }
-            .map { (arg, outShareName) ->
-                val cleartextTmp = context.newTemporary("cleartextTmp")
-                builder.addStatement(
-                    "val %N = %L",
-                    cleartextTmp,
-                    arg.type.shape.new(context) { indices ->
-                        outShareName.lookup(indices).fromShare(arg.type.elementType.value)
-                    },
-                )
-                CodeBlock.of(cleartextTmp)
-            }
+        val cleartextTmps =
+            arguments.zip(outShareNames).filter { (arg, _) -> (context.host in arg.protocol.hosts) }
+                .map { (arg, outShareName) ->
+                    val cleartextTmp = context.newTemporary("cleartextTmp")
+                    builder.addStatement(
+                        "val %N = %L",
+                        cleartextTmp,
+                        arg.type.shape.new(context) { indices ->
+                            outShareName.lookup(indices).fromShare(arg.type.elementType.value)
+                        },
+                    )
+                    CodeBlock.of(cleartextTmp)
+                }
         builder.addStatement(
             "%L.reset()",
             protocolToABYPartyMap[ABYPair(protocol.server, protocol.client)],

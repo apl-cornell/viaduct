@@ -109,8 +109,7 @@ private class Specializer(
             },
         )
 
-    private fun LabelNode.specialize(rewrites: Rewrite): LabelNode =
-        LabelNode(rewrites.rewrite(value), sourceLocation)
+    private fun LabelNode.specialize(rewrites: Rewrite): LabelNode = LabelNode(rewrites.rewrite(value), sourceLocation)
 
     private fun ExpressionNode.specialize(rewrites: Rewrite): ExpressionNode =
         when (this) {
@@ -140,34 +139,36 @@ private class Specializer(
                 val name: FunctionName = name.value
 // label arguments of the current callsite
                 val argumentLabels = arguments.map { rewrites.rewrite(informationFlowAnalysis.label(it)) }
-                val specializedName = if (name in context) {
-                    // the case where the function is already specialized before
-                    // look for a specialized function that has the same signature
-                    val targetFunction = context[name]?.find {
-                        assert(it.first.size == argumentLabels.size) { "argument label size different from parameter size" }
-                        it.first.zip(argumentLabels).all { (x, y) ->
-                            hostTrustConfiguration.equals(x, y)
+                val specializedName =
+                    if (name in context) {
+                        // the case where the function is already specialized before
+                        // look for a specialized function that has the same signature
+                        val targetFunction =
+                            context[name]?.find {
+                                assert(it.first.size == argumentLabels.size) { "argument label size different from parameter size" }
+                                it.first.zip(argumentLabels).all { (x, y) ->
+                                    hostTrustConfiguration.equals(x, y)
+                                }
+                            }
+                        if (targetFunction != null) {
+                            // return the specialized function name right away if found
+                            targetFunction.second
+                        } else {
+                            // if none of the function has the same signature, create new name and put it in list
+                            val newFunctionName = FunctionName(nameGenerator.getFreshName(name.name))
+                            context[name]?.add((argumentLabels to newFunctionName))
+                            reverseContext[newFunctionName] = (name to argumentLabels)
+                            worklist.add(Triple(newFunctionName, this, rewrites))
+                            newFunctionName
                         }
-                    }
-                    if (targetFunction != null) {
-                        // return the specialized function name right away if found
-                        targetFunction.second
                     } else {
-                        // if none of the function has the same signature, create new name and put it in list
+                        // the case where function name have not been specialized
                         val newFunctionName = FunctionName(nameGenerator.getFreshName(name.name))
-                        context[name]?.add((argumentLabels to newFunctionName))
+                        context[name] = mutableListOf((argumentLabels to newFunctionName))
                         reverseContext[newFunctionName] = (name to argumentLabels)
                         worklist.add(Triple(newFunctionName, this, rewrites))
                         newFunctionName
                     }
-                } else {
-                    // the case where function name have not been specialized
-                    val newFunctionName = FunctionName(nameGenerator.getFreshName(name.name))
-                    context[name] = mutableListOf((argumentLabels to newFunctionName))
-                    reverseContext[newFunctionName] = (name to argumentLabels)
-                    worklist.add(Triple(newFunctionName, this, rewrites))
-                    newFunctionName
-                }
 // reconstruct callsite with new name
                 FunctionCallNode(
                     Located(specializedName, this.name.sourceLocation),
@@ -249,7 +250,6 @@ private class Specializer(
             pcLabel.specialize(rewrites),
             body.specialize(rewrites) as BlockNode,
             sourceLocation,
-
         )
 
     /** Specialize by processing call site in the worklist. */
@@ -260,37 +260,40 @@ private class Specializer(
         while (worklist.isNotEmpty()) {
 // pick an unspecialized callsite
             val (newName, oldFunctionCallNode, callsiteRewrite) = worklist.removeFirst()
-            val oldName = reverseContext.getOrElse(newName) {
-                assert(false) { "reverse context does not find newname" }
-                (" " to mutableListOf())
-            }.first
+            val oldName =
+                reverseContext.getOrElse(newName) {
+                    assert(false) { "reverse context does not find newname" }
+                    (" " to mutableListOf())
+                }.first
 // find the unspecialized function declaration
             val oldFunction = functionMap[oldName]!!
             // construct the rewrite map with labels that are already specialized
-            val rewrite = Rewrite(
-                oldFunction.labelParameters
-                    .map {
-                        (
-                            PolymorphicPrincipal(it.value)
-                                to callsiteRewrite.rewrite(
-                                    informationFlowAnalysis.label(
-                                        oldFunctionCallNode,
-                                        it.value,
-                                    ),
-                                )
+            val rewrite =
+                Rewrite(
+                    oldFunction.labelParameters
+                        .map {
+                            (
+                                PolymorphicPrincipal(it.value)
+                                    to
+                                    callsiteRewrite.rewrite(
+                                        informationFlowAnalysis.label(
+                                            oldFunctionCallNode,
+                                            it.value,
+                                        ),
+                                    )
                             )
-                    }
+                        }
 // break into components
-                    .flatMap {
-                        listOf(
-                            (ConfidentialityComponent(it.first as Principal) to it.second.confidentialityComponent),
-                            (IntegrityComponent(it.first as Principal) to it.second.integrityComponent),
-                        )
-                    }
+                        .flatMap {
+                            listOf(
+                                (ConfidentialityComponent(it.first as Principal) to it.second.confidentialityComponent),
+                                (IntegrityComponent(it.first as Principal) to it.second.integrityComponent),
+                            )
+                        }
 // make it a map
-                    .toMap(),
-                hostTrustConfiguration,
-            )
+                        .toMap(),
+                    hostTrustConfiguration,
+                )
 // then specialize
 // TODO: Want to check label parameters match rewrite keys
             newFunctions.add(oldFunction.specialize(rewrite, newName))

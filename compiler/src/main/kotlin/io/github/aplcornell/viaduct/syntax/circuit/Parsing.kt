@@ -16,9 +16,7 @@ fun String.parse(
 }
 
 /** Parses [this] source file to IR and returns the IR. */
-fun SourceFile.parse(
-    protocolParsers: Map<ProtocolName, ProtocolParser<Protocol>> = defaultProtocolParsers,
-): ProgramNode {
+fun SourceFile.parse(protocolParsers: Map<ProtocolName, ProtocolParser<Protocol>> = defaultProtocolParsers): ProgramNode {
     val symbolFactory = ComplexSymbolFactory()
     val scanner = CircuitLexer(this, symbolFactory)
     val parser = CircuitParser(scanner, symbolFactory)

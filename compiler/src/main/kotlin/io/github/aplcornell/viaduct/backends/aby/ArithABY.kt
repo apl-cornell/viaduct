@@ -18,15 +18,19 @@ class ArithABY(server: Host, client: Host) : ABY(server, client) {
     override val protocolName: ProtocolName
         get() = Companion.protocolName
 
+    @Suppress("ktlint:standard:property-naming")
     val Y2AInputPorts: Map<Host, InputPort> =
         hosts.associateWith { h -> InputPort(this, h, Y2A_INPUT) }
 
+    @Suppress("ktlint:standard:property-naming")
     val B2AInputPorts: Map<Host, InputPort> =
         hosts.associateWith { h -> InputPort(this, h, B2A_INPUT) }
 
+    @Suppress("ktlint:standard:property-naming")
     val A2YOutputPorts: Map<Host, OutputPort> =
         hosts.associateWith { h -> OutputPort(this, h, A2Y_OUTPUT) }
 
+    @Suppress("ktlint:standard:property-naming")
     val A2BOutputPorts: Map<Host, OutputPort> =
         hosts.associateWith { h -> OutputPort(this, h, A2B_OUTPUT) }
 }

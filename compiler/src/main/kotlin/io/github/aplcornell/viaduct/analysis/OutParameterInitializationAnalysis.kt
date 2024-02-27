@@ -23,10 +23,12 @@ import kotlinx.collections.immutable.persistentMapOf
 import kotlinx.collections.immutable.toPersistentMap
 
 private enum class InitializationState {
-    UNINITIALIZED, INITIALIZED, UNKNOWN;
+    UNINITIALIZED,
+    INITIALIZED,
+    UNKNOWN,
+    ;
 
-    fun meet(that: InitializationState): InitializationState =
-        if (this == that) this else UNKNOWN
+    fun meet(that: InitializationState): InitializationState = if (this == that) this else UNKNOWN
 
     fun join(that: InitializationState): InitializationState =
         when {

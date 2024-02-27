@@ -24,8 +24,7 @@ internal class NodeTest {
     }
 }
 
-private fun Node.deepCopy(): Node =
-    this.copy(this.children.toList().map { it.deepCopy() })
+private fun Node.deepCopy(): Node = this.copy(this.children.toList().map { it.deepCopy() })
 
 private fun Node.trackingDeepCopy(): Node {
     val copiedChildren = TrackingList(this.children.toList().map { it.trackingDeepCopy() })

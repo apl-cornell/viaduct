@@ -100,7 +100,6 @@ private sealed class LabelVariable {
 
         /** Label of a literal node. */
         data class Literal(val node: LiteralNode) : Data() {
-
             override fun toString(): String = node.toDocument().print()
         }
 
@@ -164,10 +163,10 @@ class InformationFlowAnalysis internal constructor(
                 else -> term(LabelVariable.PC(pathName))
             }
 
-    /** The [LabelTerm] that represents the label of the [Variable] declared by this node. */
-    // TODO: incorporate label annotations
+    /** The [LabelTerm] that represents the label of the [Variable] declared by this node.*/
     private val VariableDeclarationNode.labelTerm: LabelTerm
         get() =
+            // TODO: incorporate label annotations
             when (this) {
                 is ParameterNode -> {
                     term((objectType.labelArguments!!.first().value.interpret()))
@@ -199,22 +198,19 @@ class InformationFlowAnalysis internal constructor(
         fromLabel: LabelTerm,
         toLabel: LabelTerm,
         error: (Label, Label) -> InformationFlowError,
-    ) =
-        fromLabel.flowsTo(toLabel, LabelConstant.bounds(), error).asSequence()
+    ) = fromLabel.flowsTo(toLabel, LabelConstant.bounds(), error).asSequence()
 
     private fun integrityFlowsTo(
         fromLabel: LabelTerm,
         toLabel: LabelTerm,
         error: (Label, Label) -> InformationFlowError,
-    ) =
-        fromLabel.integrityFlowsTo(toLabel, LabelConstant.bounds(), error).asSequence()
+    ) = fromLabel.integrityFlowsTo(toLabel, LabelConstant.bounds(), error).asSequence()
 
     private fun confidentialityFlowsTo(
         fromLabel: LabelTerm,
         toLabel: LabelTerm,
         error: (Label, Label) -> InformationFlowError,
-    ) =
-        fromLabel.confidentialityFlowsTo(toLabel, LabelConstant.bounds(), error).asSequence()
+    ) = fromLabel.confidentialityFlowsTo(toLabel, LabelConstant.bounds(), error).asSequence()
 
     /** Returns constraints asserting that the pc at [this] node flows to node with label [nodeLabel]. */
     private fun Node.pcFlowsTo(nodeLabel: LabelTerm): Sequence<LabelConstraint> {
@@ -589,36 +585,39 @@ class InformationFlowAnalysis internal constructor(
     }
 
     private val Node.delegationContext: DelegationContext
-        get() = trustConfiguration.congruence +
-            FreeDistributiveLatticeCongruence(
-                nameAnalysis.enclosingFunction(this)
-                    .labelConstraints.flatMap { it.congruences() },
-            ) +
-            FreeDistributiveLatticeCongruence(
-                nameAnalysis.enclosingFunction(this).labelParameters.map {
-                    FreeDistributiveLattice.LessThanOrEqualTo(
-                        FreeDistributiveLattice(
-                            IntegrityComponent(
-                                PolymorphicPrincipal(it.value),
-                            ),
-                        ),
-                        FreeDistributiveLattice(
-                            ConfidentialityComponent(
-                                PolymorphicPrincipal(
-                                    it.value,
+        get() =
+            trustConfiguration.congruence +
+                FreeDistributiveLatticeCongruence(
+                    nameAnalysis.enclosingFunction(this)
+                        .labelConstraints.flatMap { it.congruences() },
+                ) +
+                FreeDistributiveLatticeCongruence(
+                    nameAnalysis.enclosingFunction(this).labelParameters.map {
+                        FreeDistributiveLattice.LessThanOrEqualTo(
+                            FreeDistributiveLattice(
+                                IntegrityComponent(
+                                    PolymorphicPrincipal(it.value),
                                 ),
                             ),
-                        ),
-                    )
-                },
-            )
+                            FreeDistributiveLattice(
+                                ConfidentialityComponent(
+                                    PolymorphicPrincipal(
+                                        it.value,
+                                    ),
+                                ),
+                            ),
+                        )
+                    },
+                )
 
     /** Returns the inferred security label of the [Variable] defined by [node]. */
-    fun label(node: VariableDeclarationNode): Label =
-        nameAnalysis.enclosingFunction(node as Node).solution.evaluate(node.labelTerm)
+    fun label(node: VariableDeclarationNode): Label = nameAnalysis.enclosingFunction(node as Node).solution.evaluate(node.labelTerm)
 
     /** Returns the label of a label parameter of a function being called */
-    fun label(functionCall: FunctionCallNode, labelParameter: LabelVariableName): Label =
+    fun label(
+        functionCall: FunctionCallNode,
+        labelParameter: LabelVariableName,
+    ): Label =
         nameAnalysis.enclosingFunction(functionCall)
             .solution.evaluate(term(LabelVariable.Data.PolymorphicVariable(labelParameter, functionCall)))
 

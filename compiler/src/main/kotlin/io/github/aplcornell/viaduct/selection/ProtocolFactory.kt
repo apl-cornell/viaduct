@@ -28,7 +28,10 @@ interface ProtocolFactory {
     }
 
     // TODO: this method becomes unnecessary when Viaduct handles control flow generically.
-    fun guardVisibilityConstraint(protocol: Protocol, node: IfNode): SelectionConstraint {
+    fun guardVisibilityConstraint(
+        protocol: Protocol,
+        node: IfNode,
+    ): SelectionConstraint {
         return Literal(true)
     }
 }
@@ -38,17 +41,16 @@ fun Iterable<ProtocolFactory>.unions(): ProtocolFactory =
     object : ProtocolFactory {
         private val factories = this@unions.toList()
 
-        override fun viableProtocols(node: VariableDeclarationNode): Set<Protocol> =
-            factories.map { it.viableProtocols(node) }.unions()
+        override fun viableProtocols(node: VariableDeclarationNode): Set<Protocol> = factories.map { it.viableProtocols(node) }.unions()
 
-        override fun constraint(node: VariableDeclarationNode): SelectionConstraint =
-            factories.map { it.constraint(node) }.ands()
+        override fun constraint(node: VariableDeclarationNode): SelectionConstraint = factories.map { it.constraint(node) }.ands()
 
-        override fun constraint(node: UpdateNode): SelectionConstraint =
-            factories.map { it.constraint(node) }.ands()
+        override fun constraint(node: UpdateNode): SelectionConstraint = factories.map { it.constraint(node) }.ands()
 
-        override fun guardVisibilityConstraint(protocol: Protocol, node: IfNode): SelectionConstraint =
-            factories.map { it.guardVisibilityConstraint(protocol, node) }.ands()
+        override fun guardVisibilityConstraint(
+            protocol: Protocol,
+            node: IfNode,
+        ): SelectionConstraint = factories.map { it.guardVisibilityConstraint(protocol, node) }.ands()
     }
 
 /** Restricts the given factory to protocols that satisfy [predicate]. */

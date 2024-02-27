@@ -50,8 +50,7 @@ class ParameterNode(
         assert(objectType.className.value != MutableCell)
     }
 
-    override fun toDocumentWithoutComment(): Document =
-        name + Document(":") + parameterDirection * objectType.toDocument(protocol)
+    override fun toDocumentWithoutComment(): Document = name + Document(":") + parameterDirection * objectType.toDocument(protocol)
 }
 
 /**
@@ -83,11 +82,11 @@ class FunctionDeclarationNode(
                 } else {
                     Document("where") * labelConstraints.tupled()
                 }
-                ) *
+            ) *
             (pcLabel?.let { Document(":") * listOf(it).braced() } ?: Document("")) * body
 }
 
-/* Delegation syntax */
+// Delegation syntax
 
 abstract class DelegationDeclarationNode(
     open val from: LabelNode,
@@ -128,6 +127,5 @@ class IFCDelegationDeclarationNode(
     override val sourceLocation: SourceLocation,
     override val comment: String?,
 ) : DelegationDeclarationNode(from, to, delegationProjection, sourceLocation, comment) {
-    override fun toDocumentWithoutComment(): Document =
-        from.toDocument() * "<:" * to.toDocument()
+    override fun toDocumentWithoutComment(): Document = from.toDocument() * "<:" * to.toDocument()
 }

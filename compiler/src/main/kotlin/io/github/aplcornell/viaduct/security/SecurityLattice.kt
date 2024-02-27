@@ -23,7 +23,6 @@ class SecurityLattice<T : Lattice<T>>(
      * Unlike [confidentiality], the result is not a [SecurityLattice].
      */
     val confidentialityComponent: T,
-
     /**
      * The integrity component in the underlying lattice.
      *
@@ -39,16 +38,14 @@ class SecurityLattice<T : Lattice<T>>(
      *
      * Keeps confidentiality the same while setting integrity to the weakest level.
      */
-    fun confidentiality(bounds: BoundedLattice<T>): SecurityLattice<T> =
-        SecurityLattice(confidentialityComponent, weakest(bounds))
+    fun confidentiality(bounds: BoundedLattice<T>): SecurityLattice<T> = SecurityLattice(confidentialityComponent, weakest(bounds))
 
     /**
      * Returns an element that represents the integrity component.
      *
      * Keeps integrity the same while setting confidentiality to the weakest level.
      */
-    fun integrity(bounds: BoundedLattice<T>): SecurityLattice<T> =
-        SecurityLattice(weakest(bounds), integrityComponent)
+    fun integrity(bounds: BoundedLattice<T>): SecurityLattice<T> = SecurityLattice(weakest(bounds), integrityComponent)
 
     override infix fun join(that: SecurityLattice<T>): SecurityLattice<T> {
         val confidentiality = this.confidentialityComponent meet that.confidentialityComponent
@@ -81,8 +78,7 @@ class SecurityLattice<T : Lattice<T>>(
      * a.k.a. [nonmalleable information flow control](https://dl.acm.org/doi/10.1145/3133956.3134054).
      * TODO: Swap components as well?
      */
-    fun swap(): SecurityLattice<T> =
-        SecurityLattice(integrityComponent, confidentialityComponent)
+    fun swap(): SecurityLattice<T> = SecurityLattice(integrityComponent, confidentialityComponent)
 
     // TODO: we can do better
     override fun toString(): String {

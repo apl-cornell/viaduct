@@ -15,8 +15,7 @@ import io.github.aplcornell.viaduct.syntax.values.Value
 sealed class ExpressionNode : Node() {
     abstract override val children: Iterable<AtomicExpressionNode>
 
-    final override fun toSurfaceNode(metadata: Metadata): io.github.aplcornell.viaduct.syntax.surface.ExpressionNode =
-        toSurfaceNode()
+    final override fun toSurfaceNode(metadata: Metadata): io.github.aplcornell.viaduct.syntax.surface.ExpressionNode = toSurfaceNode()
 
     abstract fun toSurfaceNode(): io.github.aplcornell.viaduct.syntax.surface.ExpressionNode
 
@@ -41,8 +40,7 @@ class LiteralNode(val value: Value, override val sourceLocation: SourceLocation)
     override fun toSurfaceNode(): io.github.aplcornell.viaduct.syntax.surface.LiteralNode =
         io.github.aplcornell.viaduct.syntax.surface.LiteralNode(value, sourceLocation)
 
-    override fun copy(children: List<Node>): LiteralNode =
-        LiteralNode(value, sourceLocation)
+    override fun copy(children: List<Node>): LiteralNode = LiteralNode(value, sourceLocation)
 }
 
 /** Reading the value stored in a temporary. */
@@ -53,8 +51,7 @@ class ReadNode(val temporary: TemporaryNode) : AtomicExpressionNode() {
     override fun toSurfaceNode(): io.github.aplcornell.viaduct.syntax.surface.ReadNode =
         io.github.aplcornell.viaduct.syntax.surface.ReadNode(temporary)
 
-    override fun copy(children: List<Node>): ReadNode =
-        ReadNode(temporary)
+    override fun copy(children: List<Node>): ReadNode = ReadNode(temporary)
 }
 
 /** An n-ary operator applied to n arguments. */
@@ -108,8 +105,11 @@ class QueryNode(
         )
 }
 
-/** Reducing the confidentiality or increasing the integrity of the result of an expression. */
-// TODO: downgrades are very much not pure.
+/**
+ * Reducing the confidentiality or increasing the integrity of the result of an expression.
+ *
+ * TODO: downgrades are very much not pure.
+ */
 sealed class DowngradeNode : PureExpressionNode() {
     /** Expression whose label is being downgraded. */
     abstract val expression: AtomicExpressionNode
@@ -182,6 +182,5 @@ class InputNode(
     override fun toSurfaceNode(): io.github.aplcornell.viaduct.syntax.surface.InputNode =
         io.github.aplcornell.viaduct.syntax.surface.InputNode(type, host, sourceLocation)
 
-    override fun copy(children: List<Node>): InputNode =
-        InputNode(type, host, sourceLocation)
+    override fun copy(children: List<Node>): InputNode = InputNode(type, host, sourceLocation)
 }

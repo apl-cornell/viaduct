@@ -9,7 +9,10 @@ import kotlin.reflect.full.memberProperties
 import kotlin.reflect.jvm.javaField
 
 /** Asserts that [actual] equals [expected], but ignores [SourceLocation]s. */
-internal fun assertStructurallyEquals(expected: HasSourceLocation, actual: HasSourceLocation) {
+internal fun assertStructurallyEquals(
+    expected: HasSourceLocation,
+    actual: HasSourceLocation,
+) {
     assertEquals(expected, actual)
 }
 
@@ -17,11 +20,17 @@ internal fun assertStructurallyEquals(expected: HasSourceLocation, actual: HasSo
  * Asserts that [actual] differs from [expected] structurally, that is, a difference in
  * [SourceLocation]s does not count.
  */
-internal fun assertStructurallyNotEquals(expected: HasSourceLocation, actual: HasSourceLocation) {
+internal fun assertStructurallyNotEquals(
+    expected: HasSourceLocation,
+    actual: HasSourceLocation,
+) {
     assertThrows<AssertionFailedError> { assertStructurallyEquals(expected, actual) }
 }
 
-private fun assertEquals(expected: Any?, actual: Any?) {
+private fun assertEquals(
+    expected: Any?,
+    actual: Any?,
+) {
     when {
         expected is SourceLocation && actual is SourceLocation ->
             return
@@ -59,7 +68,10 @@ private fun assertEquals(expected: Any?, actual: Any?) {
     }
 }
 
-private fun fail(expected: Any?, actual: Any?) {
+private fun fail(
+    expected: Any?,
+    actual: Any?,
+) {
     org.junit.jupiter.api.fail {
         "Actual AST does not match the expected one." +
             "\nExpected: ${expected.print()}" +
@@ -68,5 +80,4 @@ private fun fail(expected: Any?, actual: Any?) {
     }
 }
 
-private fun Any?.print(): String =
-    if (this is PrettyPrintable) this.toDocument().print() else this.toString()
+private fun Any?.print(): String = if (this is PrettyPrintable) this.toDocument().print() else this.toString()

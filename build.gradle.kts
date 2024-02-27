@@ -49,8 +49,8 @@ allprojects {
 }
 
 /** Kotlin Conventions */
-// TODO: move into buildSrc when this is fixed: https://youtrack.jetbrains.com/issue/KT-41142
 subprojects {
+    // TODO: move into buildSrc when this is fixed: https://youtrack.jetbrains.com/issue/KT-41142
     pluginManager.withPlugin("kotlin") {
         apply(plugin = "jacoco")
         apply(plugin = "org.jetbrains.dokka")

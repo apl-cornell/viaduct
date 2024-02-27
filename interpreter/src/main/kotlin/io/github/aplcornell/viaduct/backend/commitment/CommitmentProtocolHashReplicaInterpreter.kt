@@ -50,9 +50,9 @@ class CommitmentProtocolHashReplicaInterpreter(
     private val protocolAnalysis: ProtocolAnalysis,
     private val runtime: ViaductProcessRuntime,
 ) : SingleProtocolInterpreter<CommitmentProtocolHashReplicaInterpreter.CommitmentObject>(
-    program,
-    runtime.projection.protocol,
-) {
+        program,
+        runtime.projection.protocol,
+    ) {
     override val availableProtocols: Set<Protocol> =
         setOf(runtime.projection.protocol)
 
@@ -244,8 +244,15 @@ class CommitmentProtocolHashReplicaInterpreter(
     }
 
     abstract class CommitmentObject {
-        abstract fun query(query: QueryNameNode, arguments: List<AtomicExpressionNode>): List<Byte>
-        abstract fun update(update: UpdateNameNode, arguments: List<AtomicExpressionNode>)
+        abstract fun query(
+            query: QueryNameNode,
+            arguments: List<AtomicExpressionNode>,
+        ): List<Byte>
+
+        abstract fun update(
+            update: UpdateNameNode,
+            arguments: List<AtomicExpressionNode>,
+        )
     }
 
     inner class CommitmentCell(var bytes: List<Byte>) : CommitmentObject() {
@@ -261,7 +268,10 @@ class CommitmentProtocolHashReplicaInterpreter(
             }
         }
 
-        override fun update(update: UpdateNameNode, arguments: List<AtomicExpressionNode>) {
+        override fun update(
+            update: UpdateNameNode,
+            arguments: List<AtomicExpressionNode>,
+        ) {
             when (update.value) {
                 is io.github.aplcornell.viaduct.syntax.datatypes.Set -> {
                     bytes = runExpr(arguments[0])
@@ -282,7 +292,10 @@ class CommitmentProtocolHashReplicaInterpreter(
             }
         }
 
-        override fun query(query: QueryNameNode, arguments: List<AtomicExpressionNode>): List<Byte> {
+        override fun query(
+            query: QueryNameNode,
+            arguments: List<AtomicExpressionNode>,
+        ): List<Byte> {
             return when (query.value) {
                 is Get -> {
                     val index = (runCleartextExpr(arguments[0]) as IntegerValue).value
@@ -294,7 +307,10 @@ class CommitmentProtocolHashReplicaInterpreter(
             }
         }
 
-        override fun update(update: UpdateNameNode, arguments: List<AtomicExpressionNode>) {
+        override fun update(
+            update: UpdateNameNode,
+            arguments: List<AtomicExpressionNode>,
+        ) {
             when (update.value) {
                 is io.github.aplcornell.viaduct.syntax.datatypes.Set -> {
                     val index = (runCleartextExpr(arguments[0]) as IntegerValue).value

@@ -13,9 +13,10 @@ import java.security.SecureRandom
 class Committed<T> private constructor(val value: T, val nonce: ByteArray) {
     constructor(value: T) : this(
         value = value,
-        nonce = ByteArray(NONCE_LENGTH).apply {
-            secureRandom.nextBytes(this)
-        },
+        nonce =
+            ByteArray(NONCE_LENGTH).apply {
+                secureRandom.nextBytes(this)
+            },
     )
 
     companion object {
@@ -41,8 +42,7 @@ class Committed<T> private constructor(val value: T, val nonce: ByteArray) {
          * Can be used for code uniformity in places that require a [Committed] object,
          * but when there is no need to hide the value.
          */
-        fun <T> fake(value: T): Committed<T> =
-            Committed(value, fakeNonce)
+        fun <T> fake(value: T): Committed<T> = Committed(value, fakeNonce)
     }
 }
 

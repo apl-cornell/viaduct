@@ -15,13 +15,14 @@ internal class SourceRangeTest {
     inner class ShowInSource {
         private val program1 = "fun main() {}".parse()
         private val program2 = "fun main() {\n}".parse()
-        private val program3 = """
-                host h1
-                host h2
-                fun main() {}
-                host h3
-                host h4
-        """.trimIndent().parse()
+        private val program3 =
+            """
+            host h1
+            host h2
+            fun main() {}
+            host h3
+            host h4
+            """.trimIndent().parse()
 
         @Test
         fun `it underlines single-line ranges`() {
@@ -67,8 +68,7 @@ internal class SourceRangeTest {
  * Returns true if [line] contains only space and carrot (^) characters.
  * Carrots are considered blank since they are used for underlining portions of the previous line.
  */
-internal fun isBlankOrUnderline(line: String): Boolean =
-    line.all { it == ' ' || it == '^' }
+internal fun isBlankOrUnderline(line: String): Boolean = line.all { it == ' ' || it == '^' }
 
 /** Display an AST node in source and print what is displayed to ease debugging tests. */
 private fun HasSourceLocation.showInSource(contextLines: Int = 0): String =

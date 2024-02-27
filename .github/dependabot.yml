@@ -10,11 +10,6 @@ updates:
     schedule:
       interval: "weekly"
 
-  - package-ecosystem: "gradle"
-    directory: "/examples"
-    schedule:
-      interval: "weekly"
-
   - package-ecosystem: "pip"
     directory: "/benchmarks"
     schedule:

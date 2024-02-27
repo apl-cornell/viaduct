@@ -40,7 +40,7 @@ allprojects {
     pluginManager.withPlugin("kotlin") {
         spotless {
             kotlin {
-                val relativeBuildPath = project.buildDir.relativeTo(project.projectDir)
+                val relativeBuildPath = project.layout.buildDirectory.asFile.get().relativeTo(project.projectDir)
                 targetExclude("$relativeBuildPath/**/*.kt")
                 ktlint()
             }

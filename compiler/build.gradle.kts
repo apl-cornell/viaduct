@@ -1,6 +1,6 @@
 buildscript {
     dependencies {
-        classpath("com.github.vbmacher:java-cup:11b-20160615-2")
+        classpath(libs.java.cup)
     }
 }
 
@@ -8,7 +8,7 @@ plugins {
     kotlin("jvm")
 
     // Lexing & Parsing
-    id("org.xbib.gradle.plugin.jflex") version "1.7.0"
+    alias(libs.plugins.jflex)
 }
 
 /** Dependencies */
@@ -21,26 +21,26 @@ dependencies {
     implementation(kotlin("reflect"))
 
     // Data structures
-    implementation("org.jetbrains.kotlinx:kotlinx-collections-immutable-jvm:0.3.5")
-    implementation("com.uchuhimo:kotlinx-bimap:1.2")
+    implementation(libs.kotlinx.collections.immutable.jvm)
+    implementation(libs.kotlinx.bimap)
 
     // Graphs
-    implementation("org.jgrapht:jgrapht-core:1.5.2")
-    implementation("org.jgrapht:jgrapht-io:1.5.2")
+    implementation(libs.jgrapht.core)
+    implementation(libs.jgrapht.io)
 
     // Unicode support
-    implementation("com.ibm.icu:icu4j:73.1")
+    implementation(libs.icu4j)
 
     // Parsing
-    implementation("com.github.vbmacher:java-cup-runtime:11b-20160615-2")
+    implementation(libs.java.cup.runtime)
 
     // Code generation
-    api("com.squareup:kotlinpoet:1.13.2") {
+    api(libs.kotlinpoet) {
         exclude(module = "kotlin-reflect")
     }
 
     // SMT solving
-    implementation("tools.aqua:z3-turnkey:4.12.1")
+    implementation(libs.z3.turnkey)
 
     // Testing
     testImplementation(project(":test-utilities"))

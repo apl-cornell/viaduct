@@ -1,0 +1,41 @@
+[versions]
+graphviz-java = "0.18.1"
+java-cup = "11b-20160615-2"
+jgrapht = "1.5.2"
+kotlin = "1.8.21"
+
+[libraries]
+aby-java = { module = "io.github.apl-cornell:aby-java", version = "0.2.2" }
+clikt = { module = "com.github.ajalt.clikt:clikt", version = "3.5.2" }
+graphviz-java = { module = "guru.nidi:graphviz-java", version.ref = "graphviz-java" }
+graphviz-java-all-j2v8 = { module = "guru.nidi:graphviz-java-all-j2v8", version.ref = "graphviz-java" }
+icu4j = { module = "com.ibm.icu:icu4j", version = "73.1" }
+jansi = { module = "org.fusesource.jansi:jansi", version = "2.4.0" }
+java-cup = { module = "com.github.vbmacher:java-cup", version.ref = "java-cup" }
+java-cup-runtime = { module = "com.github.vbmacher:java-cup-runtime", version.ref = "java-cup" }
+jgrapht-core = { module = "org.jgrapht:jgrapht-core", version.ref = "jgrapht" }
+jgrapht-io = { module = "org.jgrapht:jgrapht-io", version.ref = "jgrapht" }
+junit-jupiter-api = { module = "org.junit.jupiter:junit-jupiter-api", version = "5.9.3" }
+junit-jupiter-engine = { module = "org.junit.jupiter:junit-jupiter-engine" }
+junit-jupiter-params = { module = "org.junit.jupiter:junit-jupiter-params" }
+kotlin-logging = { module = "io.github.microutils:kotlin-logging", version = "3.0.5" }
+kotlinpoet = { module = "com.squareup:kotlinpoet", version = "1.13.2" }
+kotlinx-bimap = { module = "com.uchuhimo:kotlinx-bimap", version = "1.2" }
+kotlinx-collections-immutable-jvm = { module = "org.jetbrains.kotlinx:kotlinx-collections-immutable-jvm", version = "0.3.5" }
+kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version = "1.7.1" }
+kotlinx-serialization-protobuf = { module = "org.jetbrains.kotlinx:kotlinx-serialization-protobuf", version = "1.5.1" }
+log4j-bom = { module = "org.apache.logging.log4j:log4j-bom", version = "2.20.0" }
+log4j-core = { module = "org.apache.logging.log4j:log4j-core" }
+log4j-slf4j2-impl = { module = "org.apache.logging.log4j:log4j-slf4j2-impl" }
+z3-turnkey = { module = "tools.aqua:z3-turnkey", version = "4.12.1" }
+
+[bundles]
+
+[plugins]
+dokka = { id = "org.jetbrains.dokka", version = "1.8.20" }
+git-version = { id = "com.palantir.git-version", version = "3.0.0" }
+jflex = { id = "org.xbib.gradle.plugin.jflex", version = "1.7.0" }
+kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
+kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+spotless = { id = "com.diffplug.spotless", version = "6.18.0" }

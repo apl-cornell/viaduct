@@ -9,13 +9,13 @@ dependencies {
     implementation(project(":compiler"))
 
     // Data structures
-    implementation("org.jetbrains.kotlinx:kotlinx-collections-immutable-jvm:0.3.5")
+    implementation(libs.kotlinx.collections.immutable.jvm)
 
     // Concurrency
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.1")
+    implementation(libs.kotlinx.coroutines.core)
 
     // Cryptography
-    implementation("io.github.apl-cornell:aby-java:0.2.2")
+    implementation(libs.aby.java)
 
     // Testing
     testImplementation(project(":test-utilities"))

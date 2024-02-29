@@ -23,13 +23,11 @@ jobs:
         with:
           distribution: ${{ env.JDK_DISTRIBUTION }}
           java-version: ${{ matrix.java }}
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
       - name: Build and test the compiler
-        uses: gradle/gradle-build-action@v2
-        with:
-          arguments: printVersion build jacocoTestReport
+        run: ./gradlew printVersion build jacocoTestReport
       - name: Build example programs
-        uses: gradle/gradle-build-action@v2
-        with:
-          arguments: -p examples build
+        run: ./gradlew -p examples build
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3

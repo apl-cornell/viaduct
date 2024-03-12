@@ -36,14 +36,14 @@ import io.github.aplcornell.viaduct.util.subsequences
 class ZKPProtocolFactory(val program: ProgramNode) : ProtocolFactory {
     private val nameAnalysis = program.analyses.get<NameAnalysis>()
 
-    private val protocols: Set<Protocol> = run {
-        val hostSubsets = program.hosts.sorted().subsequences().map { it.toSet() }
-        hostSubsets.filter { it.size >= 2 }.flatMap { ss -> ss.map { h -> ZKP(h, ss - h) } }.toSet()
-    }
+    private val protocols: Set<Protocol> =
+        run {
+            val hostSubsets = program.hosts.sorted().subsequences().map { it.toSet() }
+            hostSubsets.filter { it.size >= 2 }.flatMap { ss -> ss.map { h -> ZKP(h, ss - h) } }.toSet()
+        }
 
     /** If the value is an op, ensure it's compatible with r1cs generation **/
-    private fun ExpressionNode.compatibleOp(): Boolean =
-        this !is OperatorApplicationNode || this.operator.isSupported()
+    private fun ExpressionNode.compatibleOp(): Boolean = this !is OperatorApplicationNode || this.operator.isSupported()
 
     private fun Operator.isSupported(): Boolean =
         when (this) {
@@ -51,11 +51,9 @@ class ZKPProtocolFactory(val program: ProgramNode) : ProtocolFactory {
             else -> false
         }
 
-    private fun VariableDeclarationNode.isApplicable(): Boolean =
-        this !is LetNode || this.value.compatibleOp()
+    private fun VariableDeclarationNode.isApplicable(): Boolean = this !is LetNode || this.value.compatibleOp()
 
-    override fun viableProtocols(node: VariableDeclarationNode): Set<Protocol> =
-        if (node.isApplicable()) protocols else setOf()
+    override fun viableProtocols(node: VariableDeclarationNode): Set<Protocol> = if (node.isApplicable()) protocols else setOf()
 
     private val localFactory = LocalProtocolFactory(program)
     private val replicationFactory = ReplicationProtocolFactory(program)
@@ -87,7 +85,10 @@ class ZKPProtocolFactory(val program: ProgramNode) : ProtocolFactory {
             }
         }
 
-    override fun guardVisibilityConstraint(protocol: Protocol, node: IfNode): SelectionConstraint =
+    override fun guardVisibilityConstraint(
+        protocol: Protocol,
+        node: IfNode,
+    ): SelectionConstraint =
         when {
             protocol is ZKP && node.guard is ReadNode ->
                 // Turn off visibility check when the conditional can be muxed.

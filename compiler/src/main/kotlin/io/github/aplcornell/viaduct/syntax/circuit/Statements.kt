@@ -26,8 +26,7 @@ sealed class CircuitStatementNode : StatementNode()
 sealed class CommandNode : Node()
 
 /** A sequence of statements. */
-class BlockNode<Statement : StatementNode>
-private constructor(
+class BlockNode<Statement : StatementNode> private constructor(
     val statements: PersistentList<Statement>,
     val returnStatement: ReturnNode,
     override val sourceLocation: SourceLocation,
@@ -71,8 +70,7 @@ class CircuitLetNode(
     override val children: Iterable<Node>
         get() = indices + listOf(type, value)
 
-    override fun toDocument(): Document =
-        (keyword("val") * name + indices.bracketed() + ":") * type * "=" * value
+    override fun toDocument(): Document = (keyword("val") * name + indices.bracketed() + ":") * type * "=" * value
 }
 
 class LetNode(
@@ -83,8 +81,7 @@ class LetNode(
     override val children: Iterable<Node>
         get() = bindings + listOf(command)
 
-    override fun toDocument(): Document =
-        keyword("val") * bindings.joined() * "=" * command
+    override fun toDocument(): Document = keyword("val") * bindings.joined() * "=" * command
 }
 
 class VariableBindingNode(
@@ -95,8 +92,7 @@ class VariableBindingNode(
     override val children: Iterable<Nothing>
         get() = listOf()
 
-    override fun toDocument(): Document =
-        name + "@" + protocol
+    override fun toDocument(): Document = name + "@" + protocol
 }
 
 class CircuitCallNode(
@@ -109,10 +105,12 @@ class CircuitCallNode(
         get() = bounds + inputs
 
     override fun toDocument(): Document {
-        return name + bounds.joined(
-            prefix = Document("<"),
-            postfix = Document(">"),
-        ) + inputs.tupled()
+        return name +
+            bounds.joined(
+                prefix = Document("<"),
+                postfix = Document(">"),
+            ) +
+            inputs.tupled()
     }
 }
 

@@ -24,6 +24,7 @@ class UnknownDatatypeError(
 
     override val description: Document
         get() =
-            Document("This object has an unknown datatype named") * className + Document(":")
-                .withSource(objectName.sourceLocation)
+            Document("This object has an unknown datatype named") * className +
+                Document(":")
+                    .withSource(objectName.sourceLocation)
 }

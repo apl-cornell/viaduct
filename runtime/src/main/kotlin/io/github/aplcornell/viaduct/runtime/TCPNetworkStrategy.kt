@@ -121,7 +121,8 @@ class TCPNetworkStrategy(
 
                 serverSocket.close()
             }
-        } catch (e: HostConnectionException) { // if this host failed to connect, clean up opened sockets
+        } catch (e: HostConnectionException) {
+            // if this host failed to connect, clean up opened sockets
             for (connection in this@TCPNetworkStrategy.connectionMap.values) {
                 connection.close()
             }
@@ -146,7 +147,11 @@ class TCPNetworkStrategy(
         }
     }
 
-    override fun <T> send(type: KType, value: T, receiver: Host) {
+    override fun <T> send(
+        type: KType,
+        value: T,
+        receiver: Host,
+    ) {
         return connectionMap[receiver]?.output?.let { socketOut ->
             logger.trace { "Sending $value to ${receiver.name}." }
 
@@ -157,7 +162,10 @@ class TCPNetworkStrategy(
         } ?: throw HostCommunicationException(this.host, receiver)
     }
 
-    override fun <T> receive(type: KType, sender: Host): T {
+    override fun <T> receive(
+        type: KType,
+        sender: Host,
+    ): T {
         connectionMap[sender]?.input?.let { socketIn ->
             val bytesLen = socketIn.readInt()
             val bytes = socketIn.readNBytes(bytesLen)

@@ -83,8 +83,7 @@ fun Node.descendants(): Sequence<Node> =
     }
 
 /** Returns all instances of [T] contained in [this] node (which may include [this] node). */
-inline fun <reified T : Node> Node.descendantsIsInstance(): Sequence<T> =
-    this.descendants().filterIsInstance<T>()
+inline fun <reified T : Node> Node.descendantsIsInstance(): Sequence<T> = this.descendants().filterIsInstance<T>()
 
 /** Name of the "main" function. */
 val mainFunction = FunctionName("main")

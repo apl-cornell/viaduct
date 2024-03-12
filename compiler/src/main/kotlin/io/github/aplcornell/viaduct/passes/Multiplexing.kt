@@ -403,9 +403,10 @@ class MuxPostprocessor(
 
             is AssertionNode -> listOf(stmt.deepCopy() as StatementNode)
 
-            is BlockNode -> stmt.statements.flatMap { child ->
-                asStraightLine(child, nameAnalysis, nameGenerator, currentGuard)
-            }
+            is BlockNode ->
+                stmt.statements.flatMap { child ->
+                    asStraightLine(child, nameAnalysis, nameGenerator, currentGuard)
+                }
         }
 
     companion object {

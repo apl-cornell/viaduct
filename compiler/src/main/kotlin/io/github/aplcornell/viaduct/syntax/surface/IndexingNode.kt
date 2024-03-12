@@ -42,7 +42,10 @@ internal class IndexingNode(
      * Returns a statement that changes the value stored at the indexed location to the
      * result of [value].
      */
-    fun set(value: ExpressionNode, methodSourceLocation: SourceLocation): UpdateNode {
+    fun set(
+        value: ExpressionNode,
+        methodSourceLocation: SourceLocation,
+    ): UpdateNode {
         return UpdateNode(
             variable,
             UpdateNameNode(Set, methodSourceLocation),
@@ -107,10 +110,11 @@ internal class IndexingNode(
         internal fun from(updateNode: UpdateNode): IndexingNode? {
             val update = updateNode.update.value
             return if (update is Set || update is Modify) {
-                val indices = Arguments(
-                    updateNode.arguments.dropLast(1),
-                    sourceLocation = updateNode.arguments.sourceLocation,
-                )
+                val indices =
+                    Arguments(
+                        updateNode.arguments.dropLast(1),
+                        sourceLocation = updateNode.arguments.sourceLocation,
+                    )
                 IndexingNode(updateNode.variable, indices)
             } else {
                 null

@@ -26,22 +26,23 @@ class AnalysisProvider<Node : TreeNode<Node>, RootNode : Node>(rootNode: RootNod
     val KClass<Analysis<RootNode>>.instance: Analysis<RootNode> by attribute {
         logger.debug("Constructing instance for $this.")
         val constructor = this.primaryConstructor!!
-        val arguments = constructor.parameters.map {
-            when (it.type.classifier) {
-                rootNode::class -> {
-                    rootNode
-                }
+        val arguments =
+            constructor.parameters.map {
+                when (it.type.classifier) {
+                    rootNode::class -> {
+                        rootNode
+                    }
 
-                tree::class -> {
-                    tree
-                }
+                    tree::class -> {
+                        tree
+                    }
 
-                else -> {
-                    @Suppress("UNCHECKED_CAST")
-                    (it.type.classifier as KClass<Analysis<RootNode>>).instance
+                    else -> {
+                        @Suppress("UNCHECKED_CAST")
+                        (it.type.classifier as KClass<Analysis<RootNode>>).instance
+                    }
                 }
             }
-        }
         constructor.call(*arguments.toTypedArray())
     }
 
@@ -51,5 +52,6 @@ class AnalysisProvider<Node : TreeNode<Node>, RootNode : Node>(rootNode: RootNod
      */
     inline fun <reified A : Analysis<RootNode>> get(): A =
         @Suppress("UNCHECKED_CAST")
-        (A::class as KClass<Analysis<RootNode>>).instance as A
+        (A::class as KClass<Analysis<RootNode>>).instance
+            as A
 }

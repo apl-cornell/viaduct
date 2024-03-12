@@ -47,5 +47,4 @@ internal class CommandLineInterfaceTest {
 }
 
 /** Calls the command line interface with [arguments]. */
-private fun cli(vararg arguments: String) =
-    Viaduct().parse(arrayOf(*arguments))
+private fun cli(vararg arguments: String) = Viaduct().parse(arrayOf(*arguments))

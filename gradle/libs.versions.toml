@@ -27,7 +27,7 @@ kotlinx-serialization-protobuf = { module = "org.jetbrains.kotlinx:kotlinx-seria
 log4j-bom = { module = "org.apache.logging.log4j:log4j-bom", version = "2.23.1" }
 log4j-core = { module = "org.apache.logging.log4j:log4j-core" }
 log4j-slf4j2-impl = { module = "org.apache.logging.log4j:log4j-slf4j2-impl" }
-z3-turnkey = { module = "tools.aqua:z3-turnkey", version = "4.12.1" }
+z3-turnkey = { module = "tools.aqua:z3-turnkey", version = "4.12.5" }
 
 [bundles]
 

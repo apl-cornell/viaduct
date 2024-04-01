@@ -6,7 +6,7 @@ kotlin = "1.9.20"
 
 [libraries]
 aby-java = { module = "io.github.apl-cornell:aby-java", version = "0.2.2" }
-clikt = { module = "com.github.ajalt.clikt:clikt", version = "3.5.2" }
+clikt = { module = "com.github.ajalt.clikt:clikt", version = "4.3.0" }
 graphviz-java = { module = "guru.nidi:graphviz-java", version.ref = "graphviz-java" }
 graphviz-java-all-j2v8 = { module = "guru.nidi:graphviz-java-all-j2v8", version.ref = "graphviz-java" }
 icu4j = { module = "com.ibm.icu:icu4j", version = "74.2" }

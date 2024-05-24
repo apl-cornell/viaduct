@@ -41,7 +41,7 @@ class Compile : CliktCommand(help = "Compile ideal protocol to secure distribute
             File extension (EXT) determines the output format.
             Supported formats are the same as the ones in Graphviz.
             Most common ones are svg, png, dot, and json.
-        """,
+        """.trimIndent(),
     ).file(canBeDir = false)
 
     val labelOutput: File? by option(

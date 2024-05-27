@@ -15,7 +15,7 @@ java-cup = { module = "com.github.vbmacher:java-cup", version.ref = "java-cup" }
 java-cup-runtime = { module = "com.github.vbmacher:java-cup-runtime", version.ref = "java-cup" }
 jgrapht-core = { module = "org.jgrapht:jgrapht-core", version.ref = "jgrapht" }
 jgrapht-io = { module = "org.jgrapht:jgrapht-io", version.ref = "jgrapht" }
-junit-jupiter-api = { module = "org.junit.jupiter:junit-jupiter-api", version = "5.9.3" }
+junit-jupiter-api = { module = "org.junit.jupiter:junit-jupiter-api", version = "5.10.2" }
 junit-jupiter-engine = { module = "org.junit.jupiter:junit-jupiter-engine" }
 junit-jupiter-params = { module = "org.junit.jupiter:junit-jupiter-params" }
 kotlin-logging = { module = "io.github.microutils:kotlin-logging", version = "3.0.5" }

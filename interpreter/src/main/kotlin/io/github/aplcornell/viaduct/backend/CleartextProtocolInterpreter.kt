@@ -88,7 +88,10 @@ class CleartextProtocolInterpreter(
         tempStoreStack.pop()
     }
 
-    override suspend fun buildExpressionObject(protocol: Protocol, expr: AtomicExpressionNode): CleartextClassObject {
+    override suspend fun buildExpressionObject(
+        protocol: Protocol,
+        expr: AtomicExpressionNode,
+    ): CleartextClassObject {
         return ImmutableCellObject(runExpr(expr))
     }
 
@@ -142,19 +145,31 @@ class CleartextProtocolInterpreter(
         }
     }
 
-    override suspend fun runGuard(protocol: Protocol, expr: AtomicExpressionNode): Value = runExpr(expr)
+    override suspend fun runGuard(
+        protocol: Protocol,
+        expr: AtomicExpressionNode,
+    ): Value = runExpr(expr)
 
-    override suspend fun runLet(protocol: Protocol, stmt: LetNode) {
+    override suspend fun runLet(
+        protocol: Protocol,
+        stmt: LetNode,
+    ) {
         val rhsValue = runExpr(stmt.value)
         tempStore = tempStore.put(stmt.name.value, rhsValue)
     }
 
-    override suspend fun runUpdate(protocol: Protocol, stmt: UpdateNode) {
+    override suspend fun runUpdate(
+        protocol: Protocol,
+        stmt: UpdateNode,
+    ) {
         val argValues: List<Value> = stmt.arguments.map { arg -> runExpr(arg) }
         getObject(getObjectLocation(stmt.variable.value)).update(stmt.update, argValues)
     }
 
-    override suspend fun runOutput(protocol: Protocol, stmt: OutputNode) {
+    override suspend fun runOutput(
+        protocol: Protocol,
+        stmt: OutputNode,
+    ) {
         when (protocol) {
             is Local -> {
                 val outputValue = runExpr(stmt.message)

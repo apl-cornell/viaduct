@@ -53,40 +53,53 @@ class ABYCircuitBuilder(
 sealed class ABYCircuitGate(
     val children: List<ABYCircuitGate>,
     val circuitType: ABYCircuitType,
-    var variableGate: Boolean = false, // is this gate stored in a variable?
+    // Is the following gate stored in a variable?
+    var variableGate: Boolean = false,
 ) {
     /** Adds the gate represented by this object to the given circuit. */
-    abstract fun putGate(builder: ABYCircuitBuilder, childShares: List<Share>): Share
+    abstract fun putGate(
+        builder: ABYCircuitBuilder,
+        childShares: List<Share>,
+    ): Share
 }
 
 class ABYInGate(
     val value: Int,
     circuitType: ABYCircuitType,
 ) : ABYCircuitGate(listOf(), circuitType) {
-    override fun putGate(builder: ABYCircuitBuilder, childShares: List<Share>): Share =
-        builder.circuit(circuitType).putINGate(value.toBigInteger(), builder.bitlen, builder.role)
+    override fun putGate(
+        builder: ABYCircuitBuilder,
+        childShares: List<Share>,
+    ): Share = builder.circuit(circuitType).putINGate(value.toBigInteger(), builder.bitlen, builder.role)
 }
 
 class ABYDummyInGate(
     circuitType: ABYCircuitType,
 ) : ABYCircuitGate(listOf(), circuitType) {
-    override fun putGate(builder: ABYCircuitBuilder, childShares: List<Share>): Share =
-        builder.circuit(circuitType).putDummyINGate(builder.bitlen)
+    override fun putGate(
+        builder: ABYCircuitBuilder,
+        childShares: List<Share>,
+    ): Share = builder.circuit(circuitType).putDummyINGate(builder.bitlen)
 }
 
 class ABYConstantGate(
     val value: Int,
     circuitType: ABYCircuitType,
 ) : ABYCircuitGate(listOf(), circuitType) {
-    override fun putGate(builder: ABYCircuitBuilder, childShares: List<Share>): Share =
-        builder.circuit(circuitType).putCONSGate(value.toBigInteger(), builder.bitlen)
+    override fun putGate(
+        builder: ABYCircuitBuilder,
+        childShares: List<Share>,
+    ): Share = builder.circuit(circuitType).putCONSGate(value.toBigInteger(), builder.bitlen)
 }
 
 class ABYConversionGate(
     inputGate: ABYCircuitGate,
     circuitType: ABYCircuitType,
 ) : ABYCircuitGate(listOf(inputGate), circuitType) {
-    override fun putGate(builder: ABYCircuitBuilder, childShares: List<Share>): Share =
+    override fun putGate(
+        builder: ABYCircuitBuilder,
+        childShares: List<Share>,
+    ): Share =
         when (children[0].circuitType) {
             ABYCircuitType.ARITH ->
                 when (circuitType) {
@@ -131,13 +144,14 @@ class ABYOperationGate(
     operands: List<ABYCircuitGate>,
     circuitType: ABYCircuitType,
 ) : ABYCircuitGate(operands, circuitType) {
-    override fun putGate(builder: ABYCircuitBuilder, childShares: List<Share>): Share =
-        builder.circuit(circuitType).operation(childShares)
+    override fun putGate(
+        builder: ABYCircuitBuilder,
+        childShares: List<Share>,
+    ): Share = builder.circuit(circuitType).operation(childShares)
 }
 
 /** Add a conversion gate---if necessary---to match the target circuit type. */
-fun ABYCircuitGate.addConversionGates(target: ABYCircuitType) =
-    if (this.circuitType == target) this else ABYConversionGate(this, target)
+fun ABYCircuitGate.addConversionGates(target: ABYCircuitType) = if (this.circuitType == target) this else ABYConversionGate(this, target)
 
 /** Returns an ABY circuit implementing the given operator. */
 fun operatorToCircuit(
@@ -270,19 +284,22 @@ fun operatorToCircuit(
 }
 
 /** Wraps the put method of a unary gate as a generic [PutOperationGate]. */
-private fun putUnaryOperationGate(gate: Circuit.(Share) -> Share): PutOperationGate = { arguments ->
-    this.gate(arguments[0])
-}
+private fun putUnaryOperationGate(gate: Circuit.(Share) -> Share): PutOperationGate =
+    { arguments ->
+        this.gate(arguments[0])
+    }
 
 /** Wraps the put method of a binary gate as a generic [PutOperationGate]. */
-private fun putBinaryOperationGate(gate: Circuit.(Share, Share) -> Share): PutOperationGate = { arguments ->
-    this.gate(arguments[0], arguments[1])
-}
+private fun putBinaryOperationGate(gate: Circuit.(Share, Share) -> Share): PutOperationGate =
+    { arguments ->
+        this.gate(arguments[0], arguments[1])
+    }
 
 /** Wraps the put method of a ternary gate as a generic [PutOperationGate]. */
-private fun putTernaryOperationGate(gate: Circuit.(Share, Share, Share) -> Share): PutOperationGate = { arguments ->
-    this.gate(arguments[0], arguments[1], arguments[2])
-}
+private fun putTernaryOperationGate(gate: Circuit.(Share, Share, Share) -> Share): PutOperationGate =
+    { arguments ->
+        this.gate(arguments[0], arguments[1], arguments[2])
+    }
 
 /** Implements bitwise not. */
 fun Circuit.putNOTGate(input: Share): Share {

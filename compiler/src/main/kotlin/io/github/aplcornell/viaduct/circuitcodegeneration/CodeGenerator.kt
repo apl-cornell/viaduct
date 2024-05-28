@@ -19,9 +19,15 @@ class Argument(
 ) : HasSourceLocation
 
 interface CodeGenerator {
-    fun paramType(protocol: Protocol, sourceType: ValueType): TypeName
+    fun paramType(
+        protocol: Protocol,
+        sourceType: ValueType,
+    ): TypeName
 
-    fun storageType(protocol: Protocol, sourceType: ValueType): TypeName
+    fun storageType(
+        protocol: Protocol,
+        sourceType: ValueType,
+    ): TypeName
 
     /**
      * Generates code for the body of circuit [circuitDeclaration].
@@ -61,11 +67,12 @@ interface CodeGenerator {
 }
 
 /** Combines code generators for different protocols into one generator that can handle all protocols. */
-fun Iterable<Pair<Set<ProtocolName>, CodeGenerator>>.unions(): CodeGenerator = object : CodeGeneratorDispatcher() {
-    private val codeGenerators: Map<ProtocolName, CodeGenerator> =
-        this@unions.flatMap { it.first.map { name -> name to it.second } }.toMap()
+fun Iterable<Pair<Set<ProtocolName>, CodeGenerator>>.unions(): CodeGenerator =
+    object : CodeGeneratorDispatcher() {
+        private val codeGenerators: Map<ProtocolName, CodeGenerator> =
+            this@unions.flatMap { it.first.map { name -> name to it.second } }.toMap()
 
-    override fun generatorFor(protocol: Protocol): CodeGenerator =
-        // TODO: more specific error message if no code generator exists for protocol.
-        codeGenerators.getValue(protocol.protocolName)
-}
+        override fun generatorFor(protocol: Protocol): CodeGenerator =
+            // TODO: more specific error message if no code generator exists for protocol.
+            codeGenerators.getValue(protocol.protocolName)
+    }

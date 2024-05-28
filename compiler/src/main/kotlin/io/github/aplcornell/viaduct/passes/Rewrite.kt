@@ -24,7 +24,6 @@ class Rewrite(
     private val rewrites: Map<PrincipalComponent, LabelConstant>,
     private val hostTrustConfiguration: HostTrustConfiguration,
 ) {
-
     /**
      * Given a map that maps element to expressions, rewrite by substitution.
      */
@@ -45,8 +44,7 @@ class Rewrite(
     /**
      * Given a label with polymorphic label and a rewrite map, return a label without polymorphic labels
      */
-    fun rewrite(label: Label): Label =
-        Label(rewrite(label.confidentialityComponent), rewrite(label.integrityComponent))
+    fun rewrite(label: Label): Label = Label(rewrite(label.confidentialityComponent), rewrite(label.integrityComponent))
 
     fun rewrite(l: LabelExpression): LabelExpression =
         when (l) {

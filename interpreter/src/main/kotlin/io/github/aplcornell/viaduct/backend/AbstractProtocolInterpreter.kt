@@ -50,9 +50,7 @@ abstract class AbstractProtocolInterpreter<Obj>(
 
     protected abstract suspend fun pushContext(initialStore: PersistentMap<ObjectVariable, ObjectLocation>)
 
-    override suspend fun pushFunctionContext(
-        arguments: PersistentMap<ParameterNode, Pair<Protocol, FunctionArgumentNode>>,
-    ) {
+    override suspend fun pushFunctionContext(arguments: PersistentMap<ParameterNode, Pair<Protocol, FunctionArgumentNode>>) {
         functionFrameStack.push(
             objectHeap.size to
                 persistentMapOf(
@@ -138,7 +136,10 @@ abstract class AbstractProtocolInterpreter<Obj>(
             ?: throw ViaductInterpreterError("undefined variable: $obj")
     }
 
-    protected fun putObjectLocation(obj: ObjectVariable, loc: ObjectLocation) {
+    protected fun putObjectLocation(
+        obj: ObjectVariable,
+        loc: ObjectLocation,
+    ) {
         objectStore = objectStore.put(obj, loc)
     }
 
@@ -147,7 +148,10 @@ abstract class AbstractProtocolInterpreter<Obj>(
             ?: throw ViaductInterpreterError("no object at location $loc")
     }
 
-    protected fun putObject(loc: ObjectLocation, obj: Obj) {
+    protected fun putObject(
+        loc: ObjectLocation,
+        obj: Obj,
+    ) {
         objectHeap[loc] = obj
     }
 
@@ -156,7 +160,10 @@ abstract class AbstractProtocolInterpreter<Obj>(
         return objectHeap.size - 1
     }
 
-    abstract suspend fun buildExpressionObject(protocol: Protocol, expr: AtomicExpressionNode): Obj
+    abstract suspend fun buildExpressionObject(
+        protocol: Protocol,
+        expr: AtomicExpressionNode,
+    ): Obj
 
     abstract suspend fun buildObject(
         protocol: Protocol,
@@ -167,7 +174,10 @@ abstract class AbstractProtocolInterpreter<Obj>(
 
     abstract fun getNullObject(protocol: Protocol): Obj
 
-    override suspend fun runSimpleStatement(protocol: Protocol, stmt: SimpleStatementNode) {
+    override suspend fun runSimpleStatement(
+        protocol: Protocol,
+        stmt: SimpleStatementNode,
+    ) {
         when (stmt) {
             is LetNode -> runLet(protocol, stmt)
 
@@ -211,11 +221,20 @@ abstract class AbstractProtocolInterpreter<Obj>(
         }
     }
 
-    abstract suspend fun runLet(protocol: Protocol, stmt: LetNode)
+    abstract suspend fun runLet(
+        protocol: Protocol,
+        stmt: LetNode,
+    )
 
-    abstract suspend fun runUpdate(protocol: Protocol, stmt: UpdateNode)
+    abstract suspend fun runUpdate(
+        protocol: Protocol,
+        stmt: UpdateNode,
+    )
 
-    abstract suspend fun runOutput(protocol: Protocol, stmt: OutputNode)
+    abstract suspend fun runOutput(
+        protocol: Protocol,
+        stmt: OutputNode,
+    )
 }
 
 /** Interpreter for a single protocol.
@@ -230,8 +249,10 @@ abstract class SingleProtocolInterpreter<Obj>(
 
     abstract suspend fun buildExpressionObject(expr: AtomicExpressionNode): Obj
 
-    override suspend fun buildExpressionObject(protocol: Protocol, expr: AtomicExpressionNode): Obj =
-        buildExpressionObject(expr)
+    override suspend fun buildExpressionObject(
+        protocol: Protocol,
+        expr: AtomicExpressionNode,
+    ): Obj = buildExpressionObject(expr)
 
     abstract suspend fun buildObject(
         className: ClassName,
@@ -244,31 +265,37 @@ abstract class SingleProtocolInterpreter<Obj>(
         className: ClassName,
         typeArguments: List<ValueType>,
         arguments: List<AtomicExpressionNode>,
-    ): Obj =
-        buildObject(className, typeArguments, arguments)
+    ): Obj = buildObject(className, typeArguments, arguments)
 
     abstract fun getNullObject(): Obj
 
-    override fun getNullObject(protocol: Protocol): Obj =
-        getNullObject()
+    override fun getNullObject(protocol: Protocol): Obj = getNullObject()
 
     abstract suspend fun runGuard(expr: AtomicExpressionNode): Value
 
-    override suspend fun runGuard(protocol: Protocol, expr: AtomicExpressionNode): Value =
-        runGuard(expr)
+    override suspend fun runGuard(
+        protocol: Protocol,
+        expr: AtomicExpressionNode,
+    ): Value = runGuard(expr)
 
     abstract suspend fun runLet(stmt: LetNode)
 
-    override suspend fun runLet(protocol: Protocol, stmt: LetNode) =
-        runLet(stmt)
+    override suspend fun runLet(
+        protocol: Protocol,
+        stmt: LetNode,
+    ) = runLet(stmt)
 
     abstract suspend fun runUpdate(stmt: UpdateNode)
 
-    override suspend fun runUpdate(protocol: Protocol, stmt: UpdateNode) =
-        runUpdate(stmt)
+    override suspend fun runUpdate(
+        protocol: Protocol,
+        stmt: UpdateNode,
+    ) = runUpdate(stmt)
 
     abstract suspend fun runOutput(stmt: OutputNode)
 
-    override suspend fun runOutput(protocol: Protocol, stmt: OutputNode) =
-        runOutput(stmt)
+    override suspend fun runOutput(
+        protocol: Protocol,
+        stmt: OutputNode,
+    ) = runOutput(stmt)
 }

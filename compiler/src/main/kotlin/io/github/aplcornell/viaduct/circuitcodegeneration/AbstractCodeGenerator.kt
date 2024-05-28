@@ -19,15 +19,25 @@ import io.github.aplcornell.viaduct.syntax.circuit.ReduceNode
 import io.github.aplcornell.viaduct.syntax.types.ValueType
 
 abstract class AbstractCodeGenerator(val context: CodeGeneratorContext) : CodeGenerator {
-    override fun paramType(protocol: Protocol, sourceType: ValueType): TypeName = typeTranslator(sourceType)
+    override fun paramType(
+        protocol: Protocol,
+        sourceType: ValueType,
+    ): TypeName = typeTranslator(sourceType)
 
-    override fun storageType(protocol: Protocol, sourceType: ValueType): TypeName = typeTranslator(sourceType)
+    override fun storageType(
+        protocol: Protocol,
+        sourceType: ValueType,
+    ): TypeName = typeTranslator(sourceType)
 
-    fun paramType(protocol: Protocol, sourceType: ArrayTypeNode): TypeName =
-        kotlinType(sourceType.shape, paramType(protocol, sourceType.elementType.value))
+    fun paramType(
+        protocol: Protocol,
+        sourceType: ArrayTypeNode,
+    ): TypeName = kotlinType(sourceType.shape, paramType(protocol, sourceType.elementType.value))
 
-    fun storageType(protocol: Protocol, sourceType: ArrayTypeNode): TypeName =
-        kotlinType(sourceType.shape, storageType(protocol, sourceType.elementType.value))
+    fun storageType(
+        protocol: Protocol,
+        sourceType: ArrayTypeNode,
+    ): TypeName = kotlinType(sourceType.shape, storageType(protocol, sourceType.elementType.value))
 
     override fun circuitBody(
         protocol: Protocol,
@@ -48,7 +58,11 @@ abstract class AbstractCodeGenerator(val context: CodeGeneratorContext) : CodeGe
         return builder.build()
     }
 
-    private fun generate(protocol: Protocol, builder: CodeBlock.Builder, stmt: CircuitStatementNode) {
+    private fun generate(
+        protocol: Protocol,
+        builder: CodeBlock.Builder,
+        stmt: CircuitStatementNode,
+    ) {
         when (stmt) {
             is CircuitLetNode -> {
                 builder.addStatement(
@@ -60,25 +74,36 @@ abstract class AbstractCodeGenerator(val context: CodeGeneratorContext) : CodeGe
         }
     }
 
-    open fun exp(protocol: Protocol, expr: ExpressionNode): CodeBlock = when (expr) {
-        is IndexExpressionNode -> indexExpression(expr, context)
+    open fun exp(
+        protocol: Protocol,
+        expr: ExpressionNode,
+    ): CodeBlock =
+        when (expr) {
+            is IndexExpressionNode -> indexExpression(expr, context)
 
-        is LookupNode -> {
-            CodeBlock.of("%N", context.kotlinName(expr.variable.value))
-                .lookup(expr.indices.map { indexExpression(it, context) })
+            is LookupNode -> {
+                CodeBlock.of("%N", context.kotlinName(expr.variable.value))
+                    .lookup(expr.indices.map { indexExpression(it, context) })
+            }
+
+            is ReduceNode -> reduce(protocol, expr)
+            is OperatorApplicationNode ->
+                CodeBlock.of(
+                    "(%L)",
+                    operatorApplication(protocol, expr.operator, expr.arguments.map { exp(protocol, it) }),
+                )
         }
 
-        is ReduceNode -> reduce(protocol, expr)
-        is OperatorApplicationNode -> CodeBlock.of(
-            "(%L)",
-            operatorApplication(protocol, expr.operator, expr.arguments.map { exp(protocol, it) }),
-        )
-    }
+    open fun operatorApplication(
+        protocol: Protocol,
+        op: OperatorNode,
+        arguments: List<CodeBlock>,
+    ): CodeBlock = throw UnsupportedOperatorException(protocol, op)
 
-    open fun operatorApplication(protocol: Protocol, op: OperatorNode, arguments: List<CodeBlock>): CodeBlock =
-        throw UnsupportedOperatorException(protocol, op)
-
-    private fun reduce(protocol: Protocol, r: ReduceNode): CodeBlock {
+    private fun reduce(
+        protocol: Protocol,
+        r: ReduceNode,
+    ): CodeBlock {
         val builder = CodeBlock.builder()
         builder.add(Arguments(listOf(r.indices), r.indices.bound.sourceLocation).new(context, exp(protocol, r.body)))
         val left = context.newTemporary("left")

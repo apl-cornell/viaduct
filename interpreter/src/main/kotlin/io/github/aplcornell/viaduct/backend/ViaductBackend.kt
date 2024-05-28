@@ -21,7 +21,11 @@ class ViaductBackend(
         const val DEFAULT_ADDRESS = "127.0.0.1"
     }
 
-    fun run(program: ProgramNode, host: Host, strategy: Strategy) {
+    fun run(
+        program: ProgramNode,
+        host: Host,
+        strategy: Strategy,
+    ) {
         val isHostValid: Boolean =
             program.declarations
                 .filterIsInstance<HostDeclarationNode>()
@@ -43,9 +47,10 @@ class ViaductBackend(
                     Pair(hostDecl.name.value, addr)
                 }
             } else {
-                val allHostsDefined = program.hostDeclarations.all { hostDecl ->
-                    customConnectionInfo.containsKey(hostDecl.name.value)
-                }
+                val allHostsDefined =
+                    program.hostDeclarations.all { hostDecl ->
+                        customConnectionInfo.containsKey(hostDecl.name.value)
+                    }
                 if (!allHostsDefined) {
                     throw ViaductInterpreterError("Some hosts do not have connection information.")
                 }

@@ -26,14 +26,10 @@ private fun t(constant: Constant): Term<Constant, Variable> = Term.constant(cons
 private fun t(variable: Variable): Term<Constant, Variable> = Term.variable(variable)
 
 /** Shorthand for creating flows to constraints. */
-private infix fun Term<Constant, Variable>.flowsTo(
-    that: Term<Constant, Variable>,
-): Constraint<Constant, Variable, IllegalFlowException> =
+private infix fun Term<Constant, Variable>.flowsTo(that: Term<Constant, Variable>): Constraint<Constant, Variable, IllegalFlowException> =
     this.flowsTo(that, ::IllegalFlowException)
 
-private fun solve(
-    vararg constraint: Constraint<Constant, Variable, IllegalFlowException>,
-): ConstraintSolution<Constant, Variable> =
+private fun solve(vararg constraint: Constraint<Constant, Variable, IllegalFlowException>): ConstraintSolution<Constant, Variable> =
     ConstraintSystem(listOf(*constraint), ConstantBounds, FreeDistributiveLatticeCongruence(listOf())).solution()
 
 internal class ConstraintSystemTest {
@@ -57,9 +53,10 @@ internal class ConstraintSystemTest {
 
         @Test
         fun `variable flows to constant`() {
-            val solution = solve(
-                t("x") flowsTo t(c("A")),
-            )
+            val solution =
+                solve(
+                    t("x") flowsTo t(c("A")),
+                )
             assertEquals(c("A"), solution("x"))
         }
 
@@ -75,19 +72,21 @@ internal class ConstraintSystemTest {
 
         @Test
         fun `variable flows to self`() {
-            val solution = solve(
-                t("x") flowsTo t("x"),
-            )
+            val solution =
+                solve(
+                    t("x") flowsTo t("x"),
+                )
             assertEquals(ConstantBounds.top, solution("x"))
         }
 
         @Test
         fun `variable flows to variable`() {
-            val solution = solve(
-                t("x") flowsTo t(c("A")),
-                t("x") flowsTo t("y"),
-                t("y") flowsTo t(c("B")),
-            )
+            val solution =
+                solve(
+                    t("x") flowsTo t(c("A")),
+                    t("x") flowsTo t("y"),
+                    t("y") flowsTo t(c("B")),
+                )
             assertEquals(c("A") meet c("B"), solution("x"))
             assertEquals(c("B"), solution("y"))
         }
@@ -97,37 +96,41 @@ internal class ConstraintSystemTest {
     inner class Join {
         @Test
         fun left() {
-            val solution = solve(
-                (t("x") join t("y")) flowsTo t(c("A")),
-            )
+            val solution =
+                solve(
+                    (t("x") join t("y")) flowsTo t(c("A")),
+                )
             assertEquals(c("A"), solution("x"))
             assertEquals(c("A"), solution("y"))
         }
 
         @Test
         fun `right constant and constant`() {
-            val solution = solve(
-                t("x") flowsTo (t(c("A")) join t(c("B"))),
-            )
+            val solution =
+                solve(
+                    t("x") flowsTo (t(c("A")) join t(c("B"))),
+                )
             assertEquals(c("A") join c("B"), solution("x"))
         }
 
         @Test
         fun `right constant and variable`() {
-            val solution = solve(
-                t("x") flowsTo (t(c("A")) join t("y")),
-                t("y") flowsTo t(c("B")),
-            )
+            val solution =
+                solve(
+                    t("x") flowsTo (t(c("A")) join t("y")),
+                    t("y") flowsTo t(c("B")),
+                )
             assertEquals(c("A") join c("B"), solution("x"))
             assertEquals(c("B"), solution("y"))
         }
 
         @Test
         fun `right variable and variable`() {
-            val solution = solve(
-                t("x") flowsTo (t("y") join t("y")),
-                t("y") flowsTo t(c("A")),
-            )
+            val solution =
+                solve(
+                    t("x") flowsTo (t("y") join t("y")),
+                    t("y") flowsTo t(c("A")),
+                )
             assertEquals(c("A"), solution("x"))
             assertEquals(c("A"), solution("y"))
         }
@@ -137,36 +140,40 @@ internal class ConstraintSystemTest {
     inner class Meet {
         @Test
         fun `left constant and constant`() {
-            val solution = solve(
-                t(c("A")) meet t(c("B")) flowsTo t("x"),
-                t("x") flowsTo t(c("A")),
-            )
+            val solution =
+                solve(
+                    t(c("A")) meet t(c("B")) flowsTo t("x"),
+                    t("x") flowsTo t(c("A")),
+                )
             assertEquals(c("A"), solution("x"))
         }
 
         @Test
         fun `left constant and variable`() {
-            val solution = solve(
-                t(c("A")) meet t("x") flowsTo (t(c("A")) meet t(c("B"))),
-            )
+            val solution =
+                solve(
+                    t(c("A")) meet t("x") flowsTo (t(c("A")) meet t(c("B"))),
+                )
             assertEquals(c("B"), solution("x"))
         }
 
         @Test
         fun `left variable and variable`() {
-            val solution = solve(
-                t("x") meet t("x") flowsTo t(c("A")),
-            )
+            val solution =
+                solve(
+                    t("x") meet t("x") flowsTo t(c("A")),
+                )
             assertEquals(c("A"), solution("x"))
         }
 
         @Test
         fun right() {
-            val solution = solve(
-                t("x") flowsTo (t("y") meet t("z")),
-                t("y") flowsTo t(c("A")),
-                t("z") flowsTo t(c("B")),
-            )
+            val solution =
+                solve(
+                    t("x") flowsTo (t("y") meet t("z")),
+                    t("y") flowsTo t(c("A")),
+                    t("z") flowsTo t(c("B")),
+                )
             assertEquals(c("A") meet c("B"), solution("x"))
             assertEquals(c("A"), solution("y"))
             assertEquals(c("B"), solution("z"))
@@ -181,11 +188,11 @@ internal class ConstraintSystemTest {
             val aAndC = c("A") meet c("C")
             val bOrC = c("B") join c("C")
 
-            val solution = solve(
-                t(c("A")) meet t("x") flowsTo (t(aAndB) join t("y")),
-                t("y") flowsTo t(aAndC),
-
-            )
+            val solution =
+                solve(
+                    t(c("A")) meet t("x") flowsTo (t(aAndB) join t("y")),
+                    t("y") flowsTo t(aAndC),
+                )
             assertEquals(bOrC, solution("x"))
             assertEquals(aAndC, solution("y"))
         }

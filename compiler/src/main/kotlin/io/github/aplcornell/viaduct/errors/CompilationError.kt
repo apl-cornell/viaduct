@@ -48,23 +48,22 @@ abstract class CompilationError : Error(), PrettyPrintable {
         this / (Document.lineBreak + sourceLocation.showInSource(SourceHighlightingStyle))
 
     /** Displays [this] message followed by [body] with [body] on its own line. */
-    protected fun Document.withData(body: PrettyPrintable): Document =
-        this / (Document.lineBreak + body).nested() + Document.lineBreak
+    protected fun Document.withData(body: PrettyPrintable): Document = this / (Document.lineBreak + body).nested() + Document.lineBreak
 
     final override fun toDocument(): Document {
-        val header = run {
-            val title = "-- ${category.uppercase()} -"
-            val source = " " + this.source
-            val paddingLength = (DEFAULT_LINE_WIDTH - title.length - source.length).coerceAtLeast(0)
-            val padding = "-".repeat(paddingLength)
-            (Document(title) + padding + source).styled(HeaderStyle)
-        }
+        val header =
+            run {
+                val title = "-- ${category.uppercase()} -"
+                val source = " " + this.source
+                val paddingLength = (DEFAULT_LINE_WIDTH - title.length - source.length).coerceAtLeast(0)
+                val padding = "-".repeat(paddingLength)
+                (Document(title) + padding + source).styled(HeaderStyle)
+            }
 
         val hint = hint?.let { Document.lineBreak + it } ?: Document()
 
         return header + Document.lineBreak + Document.lineBreak + description + hint
     }
 
-    final override fun toString(): String =
-        this.toDocument().print()
+    final override fun toString(): String = this.toDocument().print()
 }

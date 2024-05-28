@@ -31,6 +31,5 @@ class ObjectTypeNode(
     }
 
     /** Pretty prints this object type along with protocol annotation. */
-    fun toDocument(protocol: ProtocolNode?): Document =
-        toDocument() + (protocol?.let { Document("@") + it.value } ?: Document(""))
+    fun toDocument(protocol: ProtocolNode?): Document = toDocument() + (protocol?.let { Document("@") + it.value } ?: Document(""))
 }

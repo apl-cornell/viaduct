@@ -16,13 +16,25 @@ import io.github.aplcornell.viaduct.syntax.types.ObjectType
 import io.github.aplcornell.viaduct.syntax.types.ValueType
 
 interface CodeGenerator {
-    fun kotlinType(protocol: Protocol, sourceType: ValueType): TypeName
+    fun kotlinType(
+        protocol: Protocol,
+        sourceType: ValueType,
+    ): TypeName
 
-    fun kotlinType(protocol: Protocol, sourceType: ObjectType): TypeName
+    fun kotlinType(
+        protocol: Protocol,
+        sourceType: ObjectType,
+    ): TypeName
 
-    fun guard(protocol: Protocol, expr: AtomicExpressionNode): CodeBlock
+    fun guard(
+        protocol: Protocol,
+        expr: AtomicExpressionNode,
+    ): CodeBlock
 
-    fun exp(protocol: Protocol, expr: ExpressionNode): CodeBlock
+    fun exp(
+        protocol: Protocol,
+        expr: ExpressionNode,
+    ): CodeBlock
 
     fun constructorCall(
         protocol: Protocol,
@@ -30,7 +42,10 @@ interface CodeGenerator {
         arguments: Arguments<AtomicExpressionNode>,
     ): CodeBlock
 
-    fun update(protocol: Protocol, stmt: UpdateNode): CodeBlock
+    fun update(
+        protocol: Protocol,
+        stmt: UpdateNode,
+    ): CodeBlock
 
     fun send(
         sender: LetNode,
@@ -50,11 +65,12 @@ interface CodeGenerator {
 }
 
 /** Combines code generators for different protocols into one generator that can handle all protocols. */
-fun Iterable<Pair<Set<ProtocolName>, CodeGenerator>>.unions(): CodeGenerator = object : CodeGeneratorDispatcher() {
-    private val codeGenerators: Map<ProtocolName, CodeGenerator> =
-        this@unions.flatMap { it.first.map { name -> name to it.second } }.toMap()
+fun Iterable<Pair<Set<ProtocolName>, CodeGenerator>>.unions(): CodeGenerator =
+    object : CodeGeneratorDispatcher() {
+        private val codeGenerators: Map<ProtocolName, CodeGenerator> =
+            this@unions.flatMap { it.first.map { name -> name to it.second } }.toMap()
 
-    override fun generatorFor(protocol: Protocol): CodeGenerator =
-        // TODO: more specific error message if no code generator exists for protocol.
-        codeGenerators.getValue(protocol.protocolName)
-}
+        override fun generatorFor(protocol: Protocol): CodeGenerator =
+            // TODO: more specific error message if no code generator exists for protocol.
+            codeGenerators.getValue(protocol.protocolName)
+    }

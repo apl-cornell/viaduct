@@ -21,13 +21,19 @@ private val SecurityLattice<Component>.c
 private val SecurityLattice<Component>.i
     get() = this.integrity(ComponentBounds)
 
-private fun assertActsFor(from: SecurityLattice<Component>, to: SecurityLattice<Component>) {
+private fun assertActsFor(
+    from: SecurityLattice<Component>,
+    to: SecurityLattice<Component>,
+) {
     val context = listOf<FreeDistributiveLattice.LessThanOrEqualTo<String>>()
     assertTrue(from.integrityComponent.lessThanOrEqualTo(to.integrityComponent, context))
     assertTrue(from.confidentialityComponent.lessThanOrEqualTo(to.confidentialityComponent, context))
 }
 
-private fun assertFlowsTo(from: SecurityLattice<Component>, to: SecurityLattice<Component>) {
+private fun assertFlowsTo(
+    from: SecurityLattice<Component>,
+    to: SecurityLattice<Component>,
+) {
     assertActsFor(
         to.confidentiality(FreeDistributiveLattice.bounds()),
         from.confidentiality(FreeDistributiveLattice.bounds()),

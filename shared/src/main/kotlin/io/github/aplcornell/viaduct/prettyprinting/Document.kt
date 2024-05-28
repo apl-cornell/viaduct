@@ -22,8 +22,7 @@ interface PrettyPrintable {
  * helloWorld
  * ```
  */
-operator fun PrettyPrintable.plus(other: PrettyPrintable): Document =
-    Concatenated(listOf(this.toDocument(), other.toDocument()))
+operator fun PrettyPrintable.plus(other: PrettyPrintable): Document = Concatenated(listOf(this.toDocument(), other.toDocument()))
 
 /**
  * Concatenates [this] and [other] with a space in between.
@@ -68,16 +67,13 @@ operator fun PrettyPrintable.div(other: PrettyPrintable): Document =
  *
  * @see [plus]
  */
-operator fun PrettyPrintable.plus(other: String): Document =
-    this + Document(other)
+operator fun PrettyPrintable.plus(other: String): Document = this + Document(other)
 
 /** Convenience method. See [plus]. */
-operator fun PrettyPrintable.times(other: String): Document =
-    this * Document(other)
+operator fun PrettyPrintable.times(other: String): Document = this * Document(other)
 
 /** Convenience method. See [plus]. */
-operator fun PrettyPrintable.div(other: String): Document =
-    this / Document(other)
+operator fun PrettyPrintable.div(other: String): Document = this / Document(other)
 
 /**
  * Concatenates all the elements together with [separator]s in between.
@@ -125,8 +121,7 @@ private fun <T> List<T>.joinedWith(separator: T): List<T> {
  * world
  * ```
  */
-fun PrettyPrintable.nested(indentationChange: Int = 4): Document =
-    Nested(this.toDocument(), indentationChange)
+fun PrettyPrintable.nested(indentationChange: Int = 4): Document = Nested(this.toDocument(), indentationChange)
 
 /**
  * Tries laying out [this] document into a single line by removing the contained
@@ -139,8 +134,7 @@ fun PrettyPrintable.nested(indentationChange: Int = 4): Document =
  * hello world
  * ```
  */
-fun PrettyPrintable.grouped(): Document =
-    this.toDocument().grouped()
+fun PrettyPrintable.grouped(): Document = this.toDocument().grouped()
 
 /** See [PrettyPrintable.grouped]. */
 private fun Document.grouped(): Document {
@@ -172,8 +166,7 @@ private fun Document.grouped(): Document {
  *
  * Styles can be nested.
  */
-fun PrettyPrintable.styled(style: Style): Document =
-    Styled(this.toDocument(), style)
+fun PrettyPrintable.styled(style: Style): Document = Styled(this.toDocument(), style)
 
 /**
  * Concatenates all the elements separated by [separator] and enclosed in [prefix] and [postfix].
@@ -210,20 +203,16 @@ fun List<PrettyPrintable>.joined(
 }
 
 /** Like [joined] but using commas as separators and enclosed in parentheses. */
-fun List<PrettyPrintable>.tupled(): Document =
-    this.joined(prefix = Document("("), postfix = Document(")"))
+fun List<PrettyPrintable>.tupled(): Document = this.joined(prefix = Document("("), postfix = Document(")"))
 
 /** Like [joined] but using commas as separators and enclosed in square brackets. */
-fun List<PrettyPrintable>.bracketed(): Document =
-    this.joined(prefix = Document("["), postfix = Document("]"))
+fun List<PrettyPrintable>.bracketed(): Document = this.joined(prefix = Document("["), postfix = Document("]"))
 
 /** Like [joined] but using commas as separators and enclosed in curly braces. */
-fun List<PrettyPrintable>.braced(): Document =
-    this.joined(prefix = Document("{"), postfix = Document("}"))
+fun List<PrettyPrintable>.braced(): Document = this.joined(prefix = Document("{"), postfix = Document("}"))
 
 /** Like [joined] but using commas as separators and enclosed in `/*` and `*/`. */
-fun PrettyPrintable.commented(): Document =
-    (Document("/*") * this * Document("*/")).grouped()
+fun PrettyPrintable.commented(): Document = (Document("/*") * this * Document("*/")).grouped()
 
 /**
  * Represents a pretty printed document.
@@ -249,9 +238,13 @@ sealed class Document : PrettyPrintable {
      * will be under [lineWidth] characters if possible. If [ansi] is `true`, ANSI escape codes
      * are output to style the document according to the [Style] annotations in the document.
      */
-    // TODO: respect [lineWidth]
-    fun print(output: PrintStream, lineWidth: Int = DEFAULT_LINE_WIDTH, ansi: Boolean = false) {
+    fun print(
+        output: PrintStream,
+        lineWidth: Int = DEFAULT_LINE_WIDTH,
+        ansi: Boolean = false,
+    ) {
         require(lineWidth > 0)
+        // TODO: respect [lineWidth]
 
         /**
          * Recursively prints the document. Does the bulk of the work.
@@ -259,7 +252,10 @@ sealed class Document : PrettyPrintable {
          * @param indentation current indentation level
          * @param style current style
          */
-        fun Document.traverse(indentation: Int, style: Style) {
+        fun Document.traverse(
+            indentation: Int,
+            style: Style,
+        ) {
             when (this) {
                 is Text -> {
                     if (ansi) {
@@ -398,8 +394,7 @@ private class Text private constructor(val text: String) : Document() {
     }
 
     companion object {
-        operator fun invoke(text: String): Document =
-            if (text.isEmpty()) Concatenated() else Text(text)
+        operator fun invoke(text: String): Document = if (text.isEmpty()) Concatenated() else Text(text)
     }
 }
 
@@ -407,29 +402,31 @@ private class Text private constructor(val text: String) : Document() {
 private class Concatenated private constructor(val documents: List<Document>) :
     Document(),
     Iterable<Document> by documents {
-    companion object {
-        /** The empty document. */
-        private val empty = Concatenated(listOf())
+        companion object {
+            /** The empty document. */
+            private val empty = Concatenated(listOf())
 
-        /** Returns the empty document. */
-        operator fun invoke(): Document = empty
+            /** Returns the empty document. */
+            operator fun invoke(): Document = empty
 
-        operator fun invoke(documents: Iterable<Document>): Document {
-            val nonEmpty = documents.filter { empty != it }
-            return when (nonEmpty.size) {
-                0 -> Concatenated()
-                1 -> nonEmpty.first()
-                else -> Concatenated(nonEmpty)
+            operator fun invoke(documents: Iterable<Document>): Document {
+                val nonEmpty = documents.filter { empty != it }
+                return when (nonEmpty.size) {
+                    0 -> Concatenated()
+                    1 -> nonEmpty.first()
+                    else -> Concatenated(nonEmpty)
+                }
             }
         }
     }
-}
 
 /** A forced line break. */
 private object LineBreak : Document()
 
-/** A line break that can be removed by [PrettyPrintable.grouped]. */
-// TODO  We will probably remove this in the future and add something more general.
+/** A line break that can be removed by [PrettyPrintable.grouped].
+ *
+ * TODO  We will probably remove this in the future and add something more general.
+ */
 private object SoftLineBreak : Document()
 
 /** Same as [document] but with its indentation level adjusted by [indentationChange]. */
@@ -439,7 +436,10 @@ private class Nested private constructor(val document: Document, val indentation
     }
 
     companion object {
-        operator fun invoke(document: Document, indentationChange: Int): Document =
+        operator fun invoke(
+            document: Document,
+            indentationChange: Int,
+        ): Document =
             if (indentationChange == 0) {
                 document
             } else {

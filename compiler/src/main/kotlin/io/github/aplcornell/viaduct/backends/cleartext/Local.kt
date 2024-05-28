@@ -25,8 +25,7 @@ class Local(val host: Host) : Cleartext() {
     override val arguments: Map<String, Value>
         get() = mapOf("host" to HostValue(host))
 
-    override fun authority(): Label =
-        host.label
+    override fun authority(): Label = host.label
 
     val inputPort = InputPort(this, this.host, INPUT)
 

@@ -15,16 +15,17 @@ class ViaductPlugin : Plugin<Project> {
 
         project.extensions.getByType<KotlinProjectExtension>().sourceSets.configureEach {
             val sourceSet = this.name
-            val sourceDir = project.layout.projectDirectory.dir("src/$sourceSet/$pluginName")
+            val sourceDir = project.layout.projectDirectory.dir("src/$sourceSet/$PLUGIN_NAME")
             if (sourceDir.asFile.exists()) {
-                val taskName = "compile${pluginName.capitalized()}${sourceSet.capitalized()}"
-                val compileTask = project.tasks.register<CompileViaductTask>(taskName) {
-                    sourceDirectory.set(sourceDir)
-                    outputDirectory.set(project.layout.buildDirectory.dir("generated/sources/$pluginName/$sourceSet"))
-                    debugOutputDirectory.set(project.layout.buildDirectory.dir("$pluginName/$sourceSet"))
-                    backend.set(CodeGenerationBackend)
-                    circuitBackend.set(CircuitCodeGenerationBackend)
-                }
+                val taskName = "compile${PLUGIN_NAME.capitalized()}${sourceSet.capitalized()}"
+                val compileTask =
+                    project.tasks.register<CompileViaductTask>(taskName) {
+                        sourceDirectory.set(sourceDir)
+                        outputDirectory.set(project.layout.buildDirectory.dir("generated/sources/$PLUGIN_NAME/$sourceSet"))
+                        debugOutputDirectory.set(project.layout.buildDirectory.dir("$PLUGIN_NAME/$sourceSet"))
+                        backend.set(CodeGenerationBackend)
+                        circuitBackend.set(CircuitCodeGenerationBackend)
+                    }
 
                 kotlin.srcDir(compileTask.map { it.outputDirectory })
             }
@@ -32,9 +33,8 @@ class ViaductPlugin : Plugin<Project> {
     }
 
     private companion object {
-        const val pluginName = "viaduct"
+        const val PLUGIN_NAME = "viaduct"
 
-        fun String.capitalized() =
-            this.replaceFirstChar { it.uppercase() }
+        fun String.capitalized() = this.replaceFirstChar { it.uppercase() }
     }
 }

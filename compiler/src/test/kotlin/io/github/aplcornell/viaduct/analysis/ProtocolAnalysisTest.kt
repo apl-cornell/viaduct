@@ -23,7 +23,10 @@ import java.util.stream.Stream
 internal class ProtocolAnalysisTest {
     @ParameterizedTest
     @ArgumentsSource(SelectionProblemProvider::class)
-    fun `it does not explode`(surfaceProgram: ProgramNode, solver: SelectionProblemSolver) {
+    fun `it does not explode`(
+        surfaceProgram: ProgramNode,
+        solver: SelectionProblemSolver,
+    ) {
         val program = surfaceProgram.elaborated().also { it.check() }.specialize()
 
         val protocolComposer = DefaultCombinedBackend.protocolComposer

@@ -130,7 +130,10 @@ class SourceFile private constructor(val path: String, private val contents: Str
          * @param contents File contents.
          */
         @JvmStatic
-        fun from(path: String, contents: String): SourceFile {
+        fun from(
+            path: String,
+            contents: String,
+        ): SourceFile {
             return SourceFile(path, contents)
         }
 
@@ -141,7 +144,10 @@ class SourceFile private constructor(val path: String, private val contents: Str
          * @param reader Object to read file contents from
          */
         @JvmStatic
-        fun from(path: String, reader: Reader): SourceFile {
+        fun from(
+            path: String,
+            reader: Reader,
+        ): SourceFile {
             return SourceFile(path, reader.readText())
         }
     }

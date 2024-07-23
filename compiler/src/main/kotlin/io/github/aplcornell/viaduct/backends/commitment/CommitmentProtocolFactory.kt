@@ -17,18 +17,20 @@ import io.github.aplcornell.viaduct.util.subsequences
 class CommitmentProtocolFactory(val program: ProgramNode) : ProtocolFactory {
     private val nameAnalysis = program.analyses.get<NameAnalysis>()
 
-    private val protocols: Set<Protocol> = run {
-        val hostSubsets = program.hosts.sorted().subsequences().map { it.toSet() }
-        hostSubsets.filter { it.size >= 2 }.flatMap { ss -> ss.map { h -> Commitment(h, ss - h) } }.toSet()
-    }
+    private val protocols: Set<Protocol> =
+        run {
+            val hostSubsets = program.hosts.sorted().subsequences().map { it.toSet() }
+            hostSubsets.filter { it.size >= 2 }.flatMap { ss -> ss.map { h -> Commitment(h, ss - h) } }.toSet()
+        }
 
     private fun VariableDeclarationNode.isApplicable(): Boolean =
         when (this) {
-            is LetNode -> nameAnalysis.readers(this).all { reader ->
-                reader.immediateRHS().all {
-                    it is AtomicExpressionNode || it is DowngradeNode
-                }
-            } && (this.value is AtomicExpressionNode || this.value is DowngradeNode || this.value is QueryNode)
+            is LetNode ->
+                nameAnalysis.readers(this).all { reader ->
+                    reader.immediateRHS().all {
+                        it is AtomicExpressionNode || it is DowngradeNode
+                    }
+                } && (this.value is AtomicExpressionNode || this.value is DowngradeNode || this.value is QueryNode)
 
             is DeclarationNode -> {
                 nameAnalysis.updaters(this).all { updateNode ->
@@ -42,6 +44,5 @@ class CommitmentProtocolFactory(val program: ProgramNode) : ProtocolFactory {
             else -> false
         }
 
-    override fun viableProtocols(node: VariableDeclarationNode): Set<Protocol> =
-        if (node.isApplicable()) protocols else setOf()
+    override fun viableProtocols(node: VariableDeclarationNode): Set<Protocol> = if (node.isApplicable()) protocols else setOf()
 }

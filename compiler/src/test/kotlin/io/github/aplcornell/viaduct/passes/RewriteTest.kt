@@ -24,20 +24,31 @@ import org.junit.jupiter.api.assertThrows
 
 internal class RewriteTest {
     private fun h(s: String) = Host(s)
+
     private fun p(s: String) = LabelVariable(s)
+
     private fun hp(s: String) = HostPrincipal(h(s))
+
     private fun pp(s: String) = PolymorphicPrincipal(p(s))
+
     private fun hpi(s: String) = IntegrityComponent(hp(s) as Principal) as PrincipalComponent
+
     private fun hpc(s: String) = ConfidentialityComponent(hp(s) as Principal) as PrincipalComponent
+
     private fun ppi(s: String) = IntegrityComponent(pp(s) as Principal) as PrincipalComponent
+
     private fun ppc(s: String) = ConfidentialityComponent(pp(s) as Principal) as PrincipalComponent
 
     private fun fhpi(s: String) = FreeDistributiveLattice(hpi(s))
+
     private fun fhpc(s: String) = FreeDistributiveLattice(hpc(s))
+
     private fun fppi(s: String) = FreeDistributiveLattice(ppi(s))
+
     private fun fppc(s: String) = FreeDistributiveLattice(ppc(s))
 
     private fun hl(s: String) = LabelLiteral(h(s))
+
     private fun pl(s: String) = LabelParameter(p(s))
 
     private val emptyTrustConfiguration =
@@ -46,30 +57,32 @@ internal class RewriteTest {
     private val top = FreeDistributiveLattice.bounds<PrincipalComponent>().top
     private val bottom = FreeDistributiveLattice.bounds<PrincipalComponent>().bottom
     private val emptyRewrite = Rewrite(mapOf(), emptyTrustConfiguration)
-    private val easyRewrite = Rewrite(
-        mapOf(
-            (ppc("A") to fhpc("alice")),
-            (ppi("A") to fhpi("alice")),
-            (ppc("B") to fhpc("bob")),
-            (ppi("B") to fhpi("bob")),
-            (ppc("C") to fhpc("chuck")),
-            (ppi("C") to fhpi("chuck")),
-        ),
-        emptyTrustConfiguration,
-    )
-    private val hardRewrite = Rewrite(
-        mapOf(
-            (ppc("A") to top),
-            (ppi("A") to bottom),
-            (ppc("B") to fhpc("alice").join(fhpc("bob"))),
-            (ppi("B") to fhpi("alice").meet(fhpi("bob"))),
-            (ppc("C") to fhpc("chuck")),
-            (ppi("C") to fhpi("chuck")),
-        ),
-        emptyTrustConfiguration,
-    )
+    private val easyRewrite =
+        Rewrite(
+            mapOf(
+                (ppc("A") to fhpc("alice")),
+                (ppi("A") to fhpi("alice")),
+                (ppc("B") to fhpc("bob")),
+                (ppi("B") to fhpi("bob")),
+                (ppc("C") to fhpc("chuck")),
+                (ppi("C") to fhpi("chuck")),
+            ),
+            emptyTrustConfiguration,
+        )
+    private val hardRewrite =
+        Rewrite(
+            mapOf(
+                (ppc("A") to top),
+                (ppi("A") to bottom),
+                (ppc("B") to fhpc("alice").join(fhpc("bob"))),
+                (ppi("B") to fhpi("alice").meet(fhpi("bob"))),
+                (ppc("C") to fhpc("chuck")),
+                (ppi("C") to fhpi("chuck")),
+            ),
+            emptyTrustConfiguration,
+        )
 
-    /* test on Label LabelConstants (FDL<PrincipalComponent>) */
+    // test on Label LabelConstants (FDL<PrincipalComponent>)
     @Test
     fun testLabelConstant() {
         assertEquals(top, emptyRewrite.rewrite(top))
@@ -111,7 +124,7 @@ internal class RewriteTest {
         )
     }
 
-    /* test on Label LabelConstants (FDL<PrincipalComponent>) */
+    // test on Label LabelConstants (FDL<PrincipalComponent>)
     @Test
     fun testLabelExpression() {
         assertEquals(top, emptyRewrite.rewrite(LabelTop).interpret().confidentialityComponent)

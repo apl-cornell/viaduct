@@ -27,17 +27,17 @@ class ProgramNode(
     /** A lazily constructed [Tree] instance for the program. */
     val tree: Tree<Node, ProgramNode> by lazy { Tree(this) }
 
-    private val functionCache: Attribute<(ProgramNode) -> Any?, Any?> = attribute {
-        this.invoke(this@ProgramNode)
-    }
+    private val functionCache: Attribute<(ProgramNode) -> Any?, Any?> =
+        attribute {
+            this.invoke(this@ProgramNode)
+        }
 
     /**
      * Applies [function] to this program and returns the results.
      * The result is cached, so future calls with the same function do not evaluate [function].
      */
     @Suppress("UNCHECKED_CAST")
-    fun <T> cached(function: (ProgramNode) -> T): T =
-        functionCache(function) as T
+    fun <T> cached(function: (ProgramNode) -> T): T = functionCache(function) as T
 
     val hostDeclarations: Iterable<HostDeclarationNode> =
         declarations.filterIsInstance<HostDeclarationNode>()
@@ -50,6 +50,5 @@ class ProgramNode(
     val functions: Iterable<FunctionDeclarationNode> =
         declarations.filterIsInstance<FunctionDeclarationNode>()
 
-    override fun toDocument(): Document =
-        declarations.concatenated(Document.forcedLineBreak + Document.forcedLineBreak)
+    override fun toDocument(): Document = declarations.concatenated(Document.forcedLineBreak + Document.forcedLineBreak)
 }

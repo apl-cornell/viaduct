@@ -9,5 +9,5 @@ class HostConnectionException(
     otherHost: Host,
     address: InetSocketAddress,
 ) : ViaductRuntimeException(
-    "Runtime for host ${host.name} cannot connect to host ${otherHost.name} at $address.",
-)
+        "Runtime for host ${host.name} cannot connect to host ${otherHost.name} at $address.",
+    )

@@ -35,6 +35,8 @@ class FreshNameGenerator(initialNames: Set<String>) {
         return proposedName
     }
 
-    private fun makeName(base: String, suffix: Int): String =
-        if (suffix == 0) base else "${base}_$suffix"
+    private fun makeName(
+        base: String,
+        suffix: Int,
+    ): String = if (suffix == 0) base else "${base}_$suffix"
 }

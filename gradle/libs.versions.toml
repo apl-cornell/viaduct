@@ -2,7 +2,7 @@
 graphviz-java = "0.18.1"
 java-cup = "11b-20160615-3"
 jgrapht = "1.5.2"
-kotlin = "1.9.20"
+kotlin = "2.0.0"
 
 [libraries]
 aby-java = { module = "io.github.apl-cornell:aby-java", version = "0.2.2" }

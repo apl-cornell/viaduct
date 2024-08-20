@@ -26,5 +26,5 @@ object CommitmentBackend : Backend {
 
     override fun codeGenerator(context: CodeGeneratorContext): CodeGenerator = CommitmentDispatchCodeGenerator(context)
 
-    override fun circuitCodeGenerator(context: CircuitCodeGeneratorContext): CircuitCodeGenerator = TODO()
+    override fun circuitCodeGenerator(context: CircuitCodeGeneratorContext): CircuitCodeGenerator = CommitmentCircuitCodeGenerator(context)
 }

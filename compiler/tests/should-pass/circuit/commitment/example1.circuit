@@ -1,0 +1,14 @@
+host alice
+host bob
+host chuck
+
+circuit fun <> handleCommitment@Commitment(alice, {bob, chuck})(a: int[]) -> b:int[] {
+  return a
+}
+
+fun <> main() -> {
+  val a@Local(host = alice)  = alice.input<int[]>()
+  val c@Commitment(alice, {bob, chuck}) = handleCommitment(a) /* createCommitment(a) */
+  val d@Replication({bob, chuck}) = handleCommitment(c) /* openCommitment(a) */
+}
+

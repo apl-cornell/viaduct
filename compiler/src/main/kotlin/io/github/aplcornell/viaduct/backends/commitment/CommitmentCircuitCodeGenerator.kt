@@ -13,6 +13,7 @@ import io.github.aplcornell.viaduct.circuitcodegeneration.AbstractCodeGenerator
 import io.github.aplcornell.viaduct.circuitcodegeneration.Argument
 import io.github.aplcornell.viaduct.circuitcodegeneration.CodeGeneratorContext
 import io.github.aplcornell.viaduct.circuitcodegeneration.UnsupportedCommunicationException
+import io.github.aplcornell.viaduct.circuitcodegeneration.receiveExpected
 import io.github.aplcornell.viaduct.circuitcodegeneration.typeTranslator
 import io.github.aplcornell.viaduct.runtime.commitment.Committed
 import io.github.aplcornell.viaduct.syntax.Protocol
@@ -95,6 +96,7 @@ class CommitmentCircuitCodeGenerator(context: CodeGeneratorContext) : AbstractCo
         if (source.hashHosts != target.hosts) {
             throw UnsupportedCommunicationException(source, target, argument.sourceLocation)
         }
+        val argType = storageType(argument.protocol, argument.type)
         val receivingHosts = target.hosts
         return when (context.host) {
             source.cleartextHost -> {
@@ -108,7 +110,7 @@ class CommitmentCircuitCodeGenerator(context: CodeGeneratorContext) : AbstractCo
                 builder.addStatement(
                     "val %N = %L",
                     tempName1,
-                    context.receive((Committed::class).asTypeName().parameterizedBy(storageType(argument.protocol, argument.type)), source.cleartextHost),
+                    context.receive((Committed::class).asTypeName().parameterizedBy(argType), source.cleartextHost),
                     // TODO: Doubt: Don't really understand how this type parameter worked. Need to check
                 )
                 val tempName2 = context.newTemporary("CommitTemp")
@@ -125,8 +127,22 @@ class CommitmentCircuitCodeGenerator(context: CodeGeneratorContext) : AbstractCo
                     "open",
                     tempName1,
                 )
-                CodeBlock.of("%N", tempName3)
 //                TODO: Need to do check that all receivers got the same value
+                val peers = receivingHosts.filter { it != context.host }
+                if (peers.isNotEmpty()) {
+                    for (host in peers) builder.addStatement("%L", context.send(CodeBlock.of(tempName3), host))
+                    builder.addStatement(
+                        "%L",
+                        receiveExpected(
+                            CodeBlock.of(tempName3),
+                            context.host,
+                            argType,
+                            peers,
+                            context,
+                        ),
+                    )
+                }
+                CodeBlock.of("%N", tempName3)
             }
             else -> throw IllegalStateException()
         }

@@ -2,13 +2,15 @@ host alice
 host bob
 host chuck
 
-circuit fun <> handleCommitment@Commitment(alice, {bob, chuck})(a: int[]) -> b:int[] {
-  return a
+circuit fun <> move@Commitment(sender = alice, receivers = {bob, chuck})(a: int[]) -> b: int[] {
+    return a
 }
 
 fun <> main() -> {
-  val a@Local(host = alice)  = alice.input<int[]>()
-  val c@Commitment(alice, {bob, chuck}) = handleCommitment(a) /* createCommitment(a) */
-  val d@Replication({bob, chuck}) = handleCommitment(c) /* openCommitment(a) */
+    val a@Local(host = alice) = alice.input<int[]>()
+    val c@Commitment(sender = alice, receivers = {bob, chuck}) = move<>(a)
+    val d@Replication(hosts = {bob, chuck}) = move<>(c)
+    val = bob.output<int[]>(d)
+    val = chuck.output<int[]>(d)
+    return
 }
-

@@ -1,8 +1,10 @@
 package io.github.aplcornell.viaduct.backends.commitment
 
 import com.squareup.kotlinpoet.CodeBlock
+import com.squareup.kotlinpoet.INT
 import com.squareup.kotlinpoet.MemberName
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
+import com.squareup.kotlinpoet.TypeName
 import com.squareup.kotlinpoet.asClassName
 import com.squareup.kotlinpoet.asTypeName
 import io.github.aplcornell.viaduct.backends.cleartext.Local
@@ -11,11 +13,24 @@ import io.github.aplcornell.viaduct.circuitcodegeneration.AbstractCodeGenerator
 import io.github.aplcornell.viaduct.circuitcodegeneration.Argument
 import io.github.aplcornell.viaduct.circuitcodegeneration.CodeGeneratorContext
 import io.github.aplcornell.viaduct.circuitcodegeneration.UnsupportedCommunicationException
+import io.github.aplcornell.viaduct.circuitcodegeneration.typeTranslator
 import io.github.aplcornell.viaduct.runtime.commitment.Committed
 import io.github.aplcornell.viaduct.syntax.Protocol
+import io.github.aplcornell.viaduct.syntax.types.ValueType
 import io.github.aplcornell.viaduct.runtime.commitment.Commitment as CommittmentValue
 
 class CommitmentCircuitCodeGenerator(context: CodeGeneratorContext) : AbstractCodeGenerator(context) {
+    override fun paramType(protocol: Protocol, sourceType: ValueType): TypeName {
+        require(protocol is Commitment)
+        return when (context.host) {
+            protocol.cleartextHost -> (Committed::class).asTypeName().parameterizedBy(typeTranslator(sourceType))
+            in protocol.hashHosts -> (CommittmentValue::class).asTypeName().parameterizedBy(typeTranslator(sourceType))
+            else -> throw IllegalStateException()
+        }
+    }
+    override fun storageType(protocol: Protocol, sourceType: ValueType): TypeName = typeTranslator(sourceType)
+//    (CommittmentValue::class).asTypeName().parameterizedBy(typeTranslator(sourceType))
+
     private fun createCommitment(
         source: Protocol,
         target: Protocol,
@@ -84,17 +99,17 @@ class CommitmentCircuitCodeGenerator(context: CodeGeneratorContext) : AbstractCo
         return when (context.host) {
             source.cleartextHost -> {
                 receivingHosts.forEach {
-                    builder.addStatement("%L", context.send(CodeBlock.of("%N", argument.value), it))
+                    builder.addStatement("%L", context.send(argument.value, it))
                 }
                 CodeBlock.of("")
             }
             in receivingHosts -> {
-//                TODO("Receive the committed object and open the argument Commitment object")
                 val tempName1 = context.newTemporary("CommitTemp")
                 builder.addStatement(
                     "val %N = %L",
                     tempName1,
-                    context.receive((Committed::class).asTypeName(), source.cleartextHost),
+                    context.receive((Committed::class).asTypeName().parameterizedBy(storageType(argument.protocol, argument.type)), source.cleartextHost),
+                    // TODO: Doubt: Don't really understand how this type parameter worked. Need to check
                 )
                 val tempName2 = context.newTemporary("CommitTemp")
                 builder.addStatement(
@@ -104,13 +119,14 @@ class CommitmentCircuitCodeGenerator(context: CodeGeneratorContext) : AbstractCo
                 )
                 val tempName3 = context.newTemporary("CommitTemp")
                 builder.addStatement(
-                    "val %N = %N.%M(%N)",
+                    "val %N = %N.%N(%N)",
                     tempName3,
                     tempName2,
-                    MemberName(CommittmentValue::class.asClassName(), "open"),
+                    "open",
                     tempName1,
                 )
                 CodeBlock.of("%N", tempName3)
+//                TODO: Need to do check that all receivers got the same value
             }
             else -> throw IllegalStateException()
         }

@@ -132,11 +132,15 @@ class CleartextCircuitCodeGenerator(context: CodeGeneratorContext) : AbstractCod
         builder: CodeBlock.Builder,
     ): CodeBlock {
         require(context.host in source.hosts + target.hosts)
-        require(source is Local && source.hosts.size == 1 && source.host in source.hosts)
+        if (source !is Local) {
+            throw UnsupportedCommunicationException(source, target, argument.sourceLocation)
+        }
+        require(source.hosts.size == 1 && source.host in source.hosts)
         require(target is CommitmentProtocol)
         if (target.cleartextHost != source.host || target.cleartextHost in target.hashHosts) {
             throw UnsupportedCommunicationException(source, target, argument.sourceLocation)
         }
+
         val argType = kotlinType(argument.type.shape, typeTranslator(argument.type.elementType.value))
         val sendingHost = target.cleartextHost
         val receivingHosts = target.hashHosts
@@ -183,11 +187,14 @@ class CleartextCircuitCodeGenerator(context: CodeGeneratorContext) : AbstractCod
         builder: CodeBlock.Builder,
     ): CodeBlock {
         require(source is CommitmentProtocol)
-        require(target is Replication)
+        if (target !is Cleartext) {
+            throw UnsupportedCommunicationException(source, target, argument.sourceLocation)
+        }
         require(context.host in source.hosts + target.hosts)
         if (source.hashHosts != target.hosts || source.cleartextHost in source.hashHosts) {
             throw UnsupportedCommunicationException(source, target, argument.sourceLocation)
         }
+
         val argType = kotlinType(argument.type.shape, typeTranslator(argument.type.elementType.value))
         val sendingHost = source.cleartextHost
         val receivingHosts = target.hosts

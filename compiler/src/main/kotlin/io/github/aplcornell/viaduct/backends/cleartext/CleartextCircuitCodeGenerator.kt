@@ -3,8 +3,6 @@ package io.github.aplcornell.viaduct.backends.cleartext
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.MemberName
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
-import com.squareup.kotlinpoet.STRING
-import com.squareup.kotlinpoet.TypeName
 import com.squareup.kotlinpoet.asClassName
 import com.squareup.kotlinpoet.asTypeName
 import io.github.aplcornell.viaduct.circuitcodegeneration.AbstractCodeGenerator
@@ -14,6 +12,7 @@ import io.github.aplcornell.viaduct.circuitcodegeneration.UnsupportedCommunicati
 import io.github.aplcornell.viaduct.circuitcodegeneration.kotlinType
 import io.github.aplcornell.viaduct.circuitcodegeneration.receiveExpected
 import io.github.aplcornell.viaduct.circuitcodegeneration.receiveReplicated
+import io.github.aplcornell.viaduct.circuitcodegeneration.typeTranslator
 import io.github.aplcornell.viaduct.runtime.commitment.Commitment
 import io.github.aplcornell.viaduct.runtime.commitment.Committed
 import io.github.aplcornell.viaduct.syntax.BinaryOperator
@@ -23,10 +22,7 @@ import io.github.aplcornell.viaduct.syntax.UnaryOperator
 import io.github.aplcornell.viaduct.syntax.circuit.OperatorNode
 import io.github.aplcornell.viaduct.syntax.operators.Maximum
 import io.github.aplcornell.viaduct.syntax.operators.Minimum
-import io.github.aplcornell.viaduct.syntax.types.ValueType
 import io.github.aplcornell.viaduct.backends.commitment.Commitment as CommitmentProtocol
-import io.github.aplcornell.viaduct.circuitcodegeneration.typeTranslator
-
 
 class CleartextCircuitCodeGenerator(context: CodeGeneratorContext) : AbstractCodeGenerator(context) {
 

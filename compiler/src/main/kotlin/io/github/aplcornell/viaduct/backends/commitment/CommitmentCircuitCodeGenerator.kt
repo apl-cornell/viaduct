@@ -34,7 +34,7 @@ class CommitmentCircuitCodeGenerator(context: CodeGeneratorContext) : AbstractCo
         return super.storageType(protocol, sourceType)
     }
 
-    override fun import(protocol: Protocol, arguments: List<Argument>, ): Pair<CodeBlock, List<CodeBlock>> {
+    override fun import(protocol: Protocol, arguments: List<Argument>): Pair<CodeBlock, List<CodeBlock>> {
         throw UnsupportedCommunicationException(arguments.first().protocol, protocol, arguments.first().sourceLocation)
     }
 

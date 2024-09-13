@@ -22,7 +22,7 @@ kotlin-logging = { module = "io.github.microutils:kotlin-logging", version = "3.
 kotlinpoet = { module = "com.squareup:kotlinpoet", version = "1.17.0" }
 kotlinx-bimap = { module = "com.uchuhimo:kotlinx-bimap", version = "1.2" }
 kotlinx-collections-immutable-jvm = { module = "org.jetbrains.kotlinx:kotlinx-collections-immutable-jvm", version = "0.3.7" }
-kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version = "1.7.1" }
+kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version = "1.8.1" }
 kotlinx-serialization-protobuf = { module = "org.jetbrains.kotlinx:kotlinx-serialization-protobuf", version = "1.5.1" }
 log4j-bom = { module = "org.apache.logging.log4j:log4j-bom", version = "2.23.1" }
 log4j-core = { module = "org.apache.logging.log4j:log4j-core" }

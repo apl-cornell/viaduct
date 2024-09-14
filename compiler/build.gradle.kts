@@ -49,7 +49,7 @@ dependencies {
 /** Compilation */
 
 jflex {
-    encoding.set(Charsets.UTF_8.name())
+    encoding = Charsets.UTF_8.name()
 }
 
 val compileCup by tasks.registering(CompileCupTask::class)
@@ -61,7 +61,7 @@ sourceSets {
 }
 
 tasks.compileKotlin.configure {
-    dependsOn(tasks.withType<org.xbib.gradle.plugin.JFlexTask>())
+    dependsOn(tasks.withType<org.xbib.gradle.plugin.jflex.JFlexTask>())
     dependsOn(tasks.withType<CompileCupTask>())
 }
 
@@ -76,7 +76,7 @@ tasks.withType<Test>().configureEach {
 //   remove if/when Dokka fixes this issue.
 tasks.withType<org.jetbrains.dokka.gradle.DokkaTaskPartial>().configureEach {
     dependsOn(compileCup)
-    dependsOn(tasks.withType<org.xbib.gradle.plugin.JFlexTask>())
+    dependsOn(tasks.withType<org.xbib.gradle.plugin.jflex.JFlexTask>())
 }
 
 abstract class CompileCupTask : DefaultTask() {

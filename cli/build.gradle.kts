@@ -9,7 +9,7 @@ val rootPackage: String by ext
 val mainPackage = "$rootPackage.${project.name}"
 
 application {
-    mainClass.set("$mainPackage.MainKt")
+    mainClass = "$mainPackage.MainKt"
 }
 
 /** Dependencies */

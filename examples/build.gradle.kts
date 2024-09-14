@@ -13,7 +13,7 @@ val mainPackage = "${(project.group as String).replace("-", "")}.${project.name}
 
 java {
     toolchain {
-        languageVersion.set(JavaLanguageVersion.of(11))
+        languageVersion.set(JavaLanguageVersion.of(17))
     }
 }
 

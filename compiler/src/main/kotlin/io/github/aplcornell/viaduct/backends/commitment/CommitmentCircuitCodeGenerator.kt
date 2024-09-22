@@ -35,10 +35,16 @@ class CommitmentCircuitCodeGenerator(context: CodeGeneratorContext) : AbstractCo
     }
 
     override fun import(protocol: Protocol, arguments: List<Argument>): Pair<CodeBlock, List<CodeBlock>> {
+        if (arguments.isEmpty()) {
+            return Pair(CodeBlock.of(""), emptyList())
+        }
         throw UnsupportedCommunicationException(arguments.first().protocol, protocol, arguments.first().sourceLocation)
     }
 
     override fun export(protocol: Protocol, arguments: List<Argument>): Pair<CodeBlock, List<CodeBlock>> {
+        if (arguments.isEmpty()) {
+            return Pair(CodeBlock.of(""), emptyList())
+        }
         throw UnsupportedCommunicationException(arguments.first().protocol, protocol, arguments.first().sourceLocation)
     }
 }

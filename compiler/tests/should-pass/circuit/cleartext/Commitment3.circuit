@@ -1,0 +1,20 @@
+host alice
+host bob
+host chuck
+host david
+
+circuit fun <> move@Local(host = alice)(a: int[]) -> b: int[] {
+    return a
+}
+
+circuit fun <> move2@Replication(hosts = {bob, david})(a: int[]) -> b: int[] {
+    return a
+}
+
+fun <> main() -> {
+    val a@Local(host = alice) = alice.input<int[]>()
+    val c@Commitment(sender = alice, receivers = {bob, chuck}) = move<>(a)
+    val d@Replication(hosts = {bob, david}) = move2<>(c)
+    val = david.output<int[]>(d)
+    return
+}

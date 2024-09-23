@@ -4,9 +4,9 @@ import com.squareup.kotlinpoet.BYTE_ARRAY
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.MemberName
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
+import com.squareup.kotlinpoet.TypeName
 import com.squareup.kotlinpoet.asClassName
 import com.squareup.kotlinpoet.asTypeName
-import com.squareup.kotlinpoet.TypeName
 import io.github.aplcornell.viaduct.circuitcodegeneration.AbstractCodeGenerator
 import io.github.aplcornell.viaduct.circuitcodegeneration.Argument
 import io.github.aplcornell.viaduct.circuitcodegeneration.CodeGeneratorContext
@@ -24,7 +24,6 @@ import io.github.aplcornell.viaduct.syntax.UnaryOperator
 import io.github.aplcornell.viaduct.syntax.circuit.OperatorNode
 import io.github.aplcornell.viaduct.syntax.operators.Maximum
 import io.github.aplcornell.viaduct.syntax.operators.Minimum
-import io.github.aplcornell.viaduct.syntax.types.ByteVecType
 import io.github.aplcornell.viaduct.syntax.values.HostSetValue
 import io.github.aplcornell.viaduct.backends.commitment.Commitment as CommitmentProtocol
 

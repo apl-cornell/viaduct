@@ -1,0 +1,10 @@
+host alice
+host bob
+host chuck
+
+circuit fun <> move@Commitment(sender = alice, receivers = {bob, chuck})() -> {return}
+
+fun <> main() -> {
+    val = move<>()
+    return
+}

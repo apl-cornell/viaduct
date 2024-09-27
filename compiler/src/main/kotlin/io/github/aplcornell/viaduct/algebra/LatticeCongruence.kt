@@ -1,16 +1,24 @@
 package io.github.aplcornell.viaduct.algebra
 
 interface LatticeCongruence<A : Lattice<A>> {
-    fun equals(first: A, second: A): Boolean
-    fun lessThanOrEqualTo(first: A, second: A): Boolean
+    fun equals(
+        first: A,
+        second: A,
+    ): Boolean
+
+    fun lessThanOrEqualTo(
+        first: A,
+        second: A,
+    ): Boolean
 }
 
 class FreeDistributiveLatticeCongruence<A>(
     private val congruence: List<FreeDistributiveLattice.LessThanOrEqualTo<A>>,
 ) : LatticeCongruence<FreeDistributiveLattice<A>> {
-
-    override fun equals(first: FreeDistributiveLattice<A>, second: FreeDistributiveLattice<A>) =
-        lessThanOrEqualTo(first, second) && lessThanOrEqualTo(second, first)
+    override fun equals(
+        first: FreeDistributiveLattice<A>,
+        second: FreeDistributiveLattice<A>,
+    ) = lessThanOrEqualTo(first, second) && lessThanOrEqualTo(second, first)
 
     override fun lessThanOrEqualTo(
         first: FreeDistributiveLattice<A>,

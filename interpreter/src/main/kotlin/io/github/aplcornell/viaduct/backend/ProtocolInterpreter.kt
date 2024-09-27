@@ -16,9 +16,15 @@ import kotlinx.collections.immutable.PersistentMap
 interface ProtocolInterpreter {
     val availableProtocols: Set<Protocol>
 
-    suspend fun runGuard(protocol: Protocol, expr: AtomicExpressionNode): Value
+    suspend fun runGuard(
+        protocol: Protocol,
+        expr: AtomicExpressionNode,
+    ): Value
 
-    suspend fun runSimpleStatement(protocol: Protocol, stmt: SimpleStatementNode)
+    suspend fun runSimpleStatement(
+        protocol: Protocol,
+        stmt: SimpleStatementNode,
+    )
 
     suspend fun runSend(
         sender: LetNode,

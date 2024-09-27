@@ -34,9 +34,15 @@ abstract class AbstractCodeGenerator(val context: CodeGeneratorContext) : CodeGe
     private val nameAnalysis = context.program.analyses.get<NameAnalysis>()
     private val typeAnalysis = context.program.analyses.get<TypeAnalysis>()
 
-    override fun kotlinType(protocol: Protocol, sourceType: ValueType): TypeName = typeTranslator(sourceType)
+    override fun kotlinType(
+        protocol: Protocol,
+        sourceType: ValueType,
+    ): TypeName = typeTranslator(sourceType)
 
-    override fun kotlinType(protocol: Protocol, sourceType: ObjectType): TypeName {
+    override fun kotlinType(
+        protocol: Protocol,
+        sourceType: ObjectType,
+    ): TypeName {
         return when (sourceType) {
             is ImmutableCellType -> {
                 kotlinType(protocol, sourceType.elementType)
@@ -60,13 +66,17 @@ abstract class AbstractCodeGenerator(val context: CodeGeneratorContext) : CodeGe
         }
     }
 
-    override fun guard(protocol: Protocol, expr: AtomicExpressionNode): CodeBlock =
-        throw UnsupportedOperatorException(protocol, expr)
+    override fun guard(
+        protocol: Protocol,
+        expr: AtomicExpressionNode,
+    ): CodeBlock = throw UnsupportedOperatorException(protocol, expr)
 
-    fun value(value: Value): CodeBlock =
-        CodeBlock.of("%L", value)
+    fun value(value: Value): CodeBlock = CodeBlock.of("%L", value)
 
-    fun cleartextExp(protocol: Protocol, expr: AtomicExpressionNode): CodeBlock =
+    fun cleartextExp(
+        protocol: Protocol,
+        expr: AtomicExpressionNode,
+    ): CodeBlock =
         when (expr) {
             is LiteralNode ->
                 value(expr.value)
@@ -75,7 +85,10 @@ abstract class AbstractCodeGenerator(val context: CodeGeneratorContext) : CodeGe
                 CodeBlock.of("%N", context.kotlinName(expr.temporary.value, protocol))
         }
 
-    override fun exp(protocol: Protocol, expr: ExpressionNode): CodeBlock =
+    override fun exp(
+        protocol: Protocol,
+        expr: ExpressionNode,
+    ): CodeBlock =
         when (expr) {
             is ReadNode ->
                 CodeBlock.of("%N", context.kotlinName(expr.temporary.value, protocol))
@@ -121,29 +134,32 @@ abstract class AbstractCodeGenerator(val context: CodeGeneratorContext) : CodeGe
         arguments: Arguments<AtomicExpressionNode>,
     ): CodeBlock =
         when (objectType.className.value) {
-            ImmutableCell -> exp(
-                protocol,
-                arguments.first(),
-            )
-
-            MutableCell -> CodeBlock.of(
-                "%T(%L)",
-                Boxed::class,
-                exp(protocol, arguments.first()),
-            )
-
-            Vector -> CodeBlock.of(
-                "%T(%L){ %L }",
-                Array::class,
-                cleartextExp(protocol, arguments.first()),
+            ImmutableCell ->
                 exp(
                     protocol,
-                    LiteralNode(
-                        objectType.typeArguments[0].value.defaultValue,
-                        objectType.typeArguments[0].sourceLocation,
+                    arguments.first(),
+                )
+
+            MutableCell ->
+                CodeBlock.of(
+                    "%T(%L)",
+                    Boxed::class,
+                    exp(protocol, arguments.first()),
+                )
+
+            Vector ->
+                CodeBlock.of(
+                    "%T(%L){ %L }",
+                    Array::class,
+                    cleartextExp(protocol, arguments.first()),
+                    exp(
+                        protocol,
+                        LiteralNode(
+                            objectType.typeArguments[0].value.defaultValue,
+                            objectType.typeArguments[0].sourceLocation,
+                        ),
                     ),
-                ),
-            )
+                )
 
             else -> throw IllegalArgumentException(
                 "Protocol ${protocol.name} does not support object ${
@@ -152,7 +168,10 @@ abstract class AbstractCodeGenerator(val context: CodeGeneratorContext) : CodeGe
             )
         }
 
-    override fun update(protocol: Protocol, stmt: UpdateNode): CodeBlock =
+    override fun update(
+        protocol: Protocol,
+        stmt: UpdateNode,
+    ): CodeBlock =
         when (typeAnalysis.type(nameAnalysis.declaration(stmt))) {
             is MutableCellType ->
                 when (stmt.update.value) {
@@ -182,6 +201,5 @@ abstract class AbstractCodeGenerator(val context: CodeGeneratorContext) : CodeGe
             else -> throw UnsupportedOperatorException(protocol, stmt)
         }
 
-    override fun setup(protocol: Protocol): Iterable<PropertySpec> =
-        listOf()
+    override fun setup(protocol: Protocol): Iterable<PropertySpec> = listOf()
 }

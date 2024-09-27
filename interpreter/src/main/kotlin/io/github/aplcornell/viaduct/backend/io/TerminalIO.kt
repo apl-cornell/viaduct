@@ -10,7 +10,6 @@ import java.util.Scanner
 private var logger = KotlinLogging.logger("TerminalIO")
 
 class TerminalIO : Strategy {
-
     private val stdinScanner: Scanner = Scanner(System.`in`)
 
     override suspend fun getInput(): Value {

@@ -16,7 +16,9 @@ import io.github.aplcornell.viaduct.syntax.values.Value
  * - Non-associative: syntax error.
  */
 enum class Associativity {
-    LEFT, RIGHT, NON
+    LEFT,
+    RIGHT,
+    NON,
 }
 
 /**
@@ -68,7 +70,9 @@ object LowestPrecedence : Precedence {
 
 /** The result of comparing two [Precedence]s. */
 enum class Order {
-    LOWER, HIGHER, UNDETERMINED
+    LOWER,
+    HIGHER,
+    UNDETERMINED,
 }
 
 /** A pure function from values to a value. */
@@ -201,10 +205,16 @@ interface BinaryOperator : Operator {
     }
 
     /** Computes the result of applying this operator to [argument1] and [argument2]. */
-    fun apply(argument1: Value, argument2: Value): Value
+    fun apply(
+        argument1: Value,
+        argument2: Value,
+    ): Value
 
     /** Shows this operator applied to [argument1] and [argument2]. */
-    fun toDocument(argument1: PrettyPrintable, argument2: PrettyPrintable): Document
+    fun toDocument(
+        argument1: PrettyPrintable,
+        argument2: PrettyPrintable,
+    ): Document
 }
 
 /** The number of arguments this operator takes. */

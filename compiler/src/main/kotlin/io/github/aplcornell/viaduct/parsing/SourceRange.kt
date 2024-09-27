@@ -52,12 +52,13 @@ data class SourceRange(val start: SourcePosition, val end: SourcePosition) {
         contextLines: Int = if (start.line == end.line) 0 else 1,
     ): Document {
         // List of lines to be printed
-        val relevantLines: IntRange = run {
-            val firstLine = (start.line - contextLines).coerceAtLeast(1)
-            val lastLine = (end.line + contextLines).coerceAtMost(sourceFile.numberOfLines)
-            // TODO: trim blank lines?
-            firstLine..lastLine
-        }
+        val relevantLines: IntRange =
+            run {
+                val firstLine = (start.line - contextLines).coerceAtLeast(1)
+                val lastLine = (end.line + contextLines).coerceAtMost(sourceFile.numberOfLines)
+                // TODO: trim blank lines?
+                firstLine..lastLine
+            }
 
         // Number of characters it takes to represent the largest line number.
         val lineNumberWidth = relevantLines.last.toString().length
@@ -66,36 +67,37 @@ data class SourceRange(val start: SourcePosition, val end: SourcePosition) {
         val highlightingMultipleLines = start.line != end.line
 
         // Print relevant lines
-        val outputLines: List<Document> = relevantLines.map { line ->
-            val thisLineShouldBeHighlighted = line in start.line..end.line
+        val outputLines: List<Document> =
+            relevantLines.map { line ->
+                val thisLineShouldBeHighlighted = line in start.line..end.line
 
-            val lineNumber = String.format("%${lineNumberWidth}d|", line)
+                val lineNumber = String.format("%${lineNumberWidth}d|", line)
 
-            // In multiline mode, we put a marker next to the line number to indicate the entire line is relevant.
-            val multilineMarker =
-                when {
-                    highlightingMultipleLines && thisLineShouldBeHighlighted ->
-                        Document(">").styled(highlightStyle)
-                    highlightingMultipleLines ->
-                        Document(" ")
-                    else ->
+                // In multiline mode, we put a marker next to the line number to indicate the entire line is relevant.
+                val multilineMarker =
+                    when {
+                        highlightingMultipleLines && thisLineShouldBeHighlighted ->
+                            Document(">").styled(highlightStyle)
+                        highlightingMultipleLines ->
+                            Document(" ")
+                        else ->
+                            Document()
+                    }
+
+                // In single-line mode, we underline the relevant portion.
+                val underline =
+                    if (!highlightingMultipleLines && thisLineShouldBeHighlighted) {
+                        val highlightStartColumn = lineNumber.length + 1 + start.column
+                        val highlightLength = end.column - start.column
+                        Document.forcedLineBreak +
+                            " ".repeat(highlightStartColumn - 1) +
+                            Document("^".repeat(highlightLength)).styled(highlightStyle)
+                    } else {
                         Document()
-                }
+                    }
 
-            // In single-line mode, we underline the relevant portion.
-            val underline =
-                if (!highlightingMultipleLines && thisLineShouldBeHighlighted) {
-                    val highlightStartColumn = lineNumber.length + 1 + start.column
-                    val highlightLength = end.column - start.column
-                    Document.forcedLineBreak +
-                        " ".repeat(highlightStartColumn - 1) +
-                        Document("^".repeat(highlightLength)).styled(highlightStyle)
-                } else {
-                    Document()
-                }
-
-            Document(lineNumber) + multilineMarker * Document(sourceFile.getLine(line)) + underline
-        }
+                Document(lineNumber) + multilineMarker * Document(sourceFile.getLine(line)) + underline
+            }
 
         // Make sure there is uniform vertical spacing after the displayed source code.
         // Note that we consider a line blank if it only contains characters used to underline.

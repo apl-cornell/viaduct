@@ -28,20 +28,28 @@ internal class CommitmentCreatorGenerator(
 ) : AbstractCodeGenerator(context) {
     private val typeAnalysis = context.program.analyses.get<TypeAnalysis>()
 
-    override fun kotlinType(protocol: Protocol, sourceType: ValueType): TypeName =
-        (Committed::class).asTypeName().parameterizedBy(typeTranslator(sourceType))
+    override fun kotlinType(
+        protocol: Protocol,
+        sourceType: ValueType,
+    ): TypeName = (Committed::class).asTypeName().parameterizedBy(typeTranslator(sourceType))
 
-    override fun guard(protocol: Protocol, expr: AtomicExpressionNode): CodeBlock =
-        cleartextExp(protocol, expr)
+    override fun guard(
+        protocol: Protocol,
+        expr: AtomicExpressionNode,
+    ): CodeBlock = cleartextExp(protocol, expr)
 
-    override fun exp(protocol: Protocol, expr: ExpressionNode): CodeBlock =
+    override fun exp(
+        protocol: Protocol,
+        expr: ExpressionNode,
+    ): CodeBlock =
         when (expr) {
-            is LiteralNode -> CodeBlock.of(
-                "%T.%N(%L)",
-                Committed::class,
-                "fake",
-                value(expr.value),
-            )
+            is LiteralNode ->
+                CodeBlock.of(
+                    "%T.%N(%L)",
+                    Committed::class,
+                    "fake",
+                    value(expr.value),
+                )
 
             else -> super.exp(protocol, expr)
         }

@@ -17,7 +17,11 @@ import io.github.aplcornell.viaduct.syntax.operators.Maximum
 import io.github.aplcornell.viaduct.syntax.operators.Minimum
 
 class CleartextCircuitCodeGenerator(context: CodeGeneratorContext) : AbstractCodeGenerator(context) {
-    override fun operatorApplication(protocol: Protocol, op: OperatorNode, arguments: List<CodeBlock>): CodeBlock =
+    override fun operatorApplication(
+        protocol: Protocol,
+        op: OperatorNode,
+        arguments: List<CodeBlock>,
+    ): CodeBlock =
         when (op.operator) {
             Minimum ->
                 CodeBlock.of(
@@ -118,19 +122,20 @@ class CleartextCircuitCodeGenerator(context: CodeGeneratorContext) : AbstractCod
     ): Pair<CodeBlock, List<CodeBlock>> {
         require(protocol is Cleartext)
         val builder = CodeBlock.builder()
-        val values = arguments.map { arg ->
-            when (arg.protocol) {
-                is Cleartext -> {
-                    if (context.host in protocol.hosts + arg.protocol.hosts) {
-                        move(arg.protocol, protocol, arg, builder)
-                    } else {
-                        CodeBlock.of("")
+        val values =
+            arguments.map { arg ->
+                when (arg.protocol) {
+                    is Cleartext -> {
+                        if (context.host in protocol.hosts + arg.protocol.hosts) {
+                            move(arg.protocol, protocol, arg, builder)
+                        } else {
+                            CodeBlock.of("")
+                        }
                     }
-                }
 
-                else -> throw UnsupportedCommunicationException(arg.protocol, protocol, arg.sourceLocation)
+                    else -> throw UnsupportedCommunicationException(arg.protocol, protocol, arg.sourceLocation)
+                }
             }
-        }
         return Pair(builder.build(), values)
     }
 
@@ -140,19 +145,20 @@ class CleartextCircuitCodeGenerator(context: CodeGeneratorContext) : AbstractCod
     ): Pair<CodeBlock, List<CodeBlock>> {
         require(protocol is Cleartext)
         val builder = CodeBlock.builder()
-        val values = arguments.map { arg ->
-            when (arg.protocol) {
-                is Cleartext -> {
-                    if (context.host in protocol.hosts + arg.protocol.hosts) {
-                        move(protocol, arg.protocol, arg, builder)
-                    } else {
-                        CodeBlock.of("")
+        val values =
+            arguments.map { arg ->
+                when (arg.protocol) {
+                    is Cleartext -> {
+                        if (context.host in protocol.hosts + arg.protocol.hosts) {
+                            move(protocol, arg.protocol, arg, builder)
+                        } else {
+                            CodeBlock.of("")
+                        }
                     }
-                }
 
-                else -> throw UnsupportedCommunicationException(protocol, arg.protocol, arg.sourceLocation)
+                    else -> throw UnsupportedCommunicationException(protocol, arg.protocol, arg.sourceLocation)
+                }
             }
-        }
         return Pair(builder.build(), values)
     }
 }

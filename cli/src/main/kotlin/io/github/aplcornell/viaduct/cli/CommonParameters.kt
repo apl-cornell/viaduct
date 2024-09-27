@@ -51,13 +51,14 @@ internal fun ParameterHolder.verbosity(): OptionDelegate<Int> =
         // Set the global logging level.
         // Note: this is not how `.validate` is meant to be used, but it's the closest feature Clikt provides.
 
-        val level = when (it) {
-            0 -> null
-            1 -> Level.INFO
-            2 -> Level.DEBUG
-            3 -> Level.TRACE
-            else -> Level.ALL
-        }
+        val level =
+            when (it) {
+                0 -> null
+                1 -> Level.INFO
+                2 -> Level.DEBUG
+                3 -> Level.TRACE
+                else -> Level.ALL
+            }
 
         if (level != null) Configurator.setRootLevel(level)
     }

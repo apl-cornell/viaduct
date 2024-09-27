@@ -24,8 +24,7 @@ object Z3SelectionProblemSolver : SelectionProblemSolver {
         Global.setParameter("smt.arith.solver", "2")
     }
 
-    override fun solve(problem: SelectionProblem): ProtocolAssignment? =
-        Worker().solve(problem)
+    override fun solve(problem: SelectionProblem): ProtocolAssignment? = Worker().solve(problem)
 
     private class Worker {
         private val nameGenerator = FreshNameGenerator()
@@ -105,13 +104,14 @@ object Z3SelectionProblemSolver : SelectionProblemSolver {
                         ctx.mkAnd(
                             *symCost.choices.map { choice ->
                                 val guardExpr = boolExpr(choice.first, ctx, fvMap, boolVarMap, protocolMap)
-                                val (costExpr, costConstrs) = arithExpr(
-                                    choice.second,
-                                    ctx,
-                                    fvMap,
-                                    boolVarMap,
-                                    protocolMap,
-                                )
+                                val (costExpr, costConstrs) =
+                                    arithExpr(
+                                        choice.second,
+                                        ctx,
+                                        fvMap,
+                                        boolVarMap,
+                                        protocolMap,
+                                    )
                                 ctx.mkImplies(guardExpr, ctx.mkAnd(ctx.mkEq(costVar, costExpr), costConstrs))
                             }.toTypedArray(),
                         ),

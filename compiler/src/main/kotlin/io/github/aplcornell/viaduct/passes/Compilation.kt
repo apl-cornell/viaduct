@@ -43,29 +43,33 @@ fun SourceFile.compile(
     saveEstimatedCost: File? = null,
     saveProtocolAssignment: File? = null,
 ): ProgramNode {
-    val program = run {
-        val parsed = logger.duration("parsing") {
-            this.parse(backend.protocolParsers)
+    val program =
+        run {
+            val parsed =
+                logger.duration("parsing") {
+                    this.parse(backend.protocolParsers)
+                }
+            val elaborated =
+                logger.duration("elaboration") {
+                    parsed.elaborated()
+                }
+
+            // Dump label constraint graph.
+            saveLabelConstraintGraph?.invoke(elaborated.analyses.get<InformationFlowAnalysis>()::exportConstraintGraph)
+
+            // Perform static checks.
+            elaborated.check()
+
+            val specialized =
+                logger.duration("function specialization") {
+                    elaborated.specialize()
+                }
+
+            // Check that function specialization is sensible.
+            specialized.check()
+
+            specialized
         }
-        val elaborated = logger.duration("elaboration") {
-            parsed.elaborated()
-        }
-
-        // Dump label constraint graph.
-        saveLabelConstraintGraph?.invoke(elaborated.analyses.get<InformationFlowAnalysis>()::exportConstraintGraph)
-
-        // Perform static checks.
-        elaborated.check()
-
-        val specialized = logger.duration("function specialization") {
-            elaborated.specialize()
-        }
-
-        // Check that function specialization is sensible.
-        specialized.check()
-
-        specialized
-    }
 
     // Dump program annotated with inferred labels.
     if (saveInferredLabels != null) {
@@ -76,7 +80,7 @@ fun SourceFile.compile(
                     .map { it to ifcAnalysis.label(it) } +
                     program.descendantsIsInstance<DeclarationNode>()
                         .map { it to ifcAnalysis.label(it) }
-                ).toMap()
+            ).toMap()
         saveInferredLabels.dumpProgramMetadata(program, labelMetadata)
     }
 
@@ -84,14 +88,15 @@ fun SourceFile.compile(
     val protocolFactory = backend.protocolFactory(program)
     val protocolComposer = backend.protocolComposer
     val costEstimator = SimpleCostEstimator(protocolComposer, costRegime)
-    val protocolAssignment = logger.duration("protocol selection") {
-        ProtocolSelection(
-            selectionSolver,
-            protocolFactory,
-            protocolComposer,
-            costEstimator,
-        ).selectAssignment(program)
-    }
+    val protocolAssignment =
+        logger.duration("protocol selection") {
+            ProtocolSelection(
+                selectionSolver,
+                protocolFactory,
+                protocolComposer,
+                costEstimator,
+            ).selectAssignment(program)
+        }
 
     // Dump program annotated with cost information.
     if (saveEstimatedCost != null) {
@@ -118,13 +123,15 @@ fun SourceFile.compile(
     saveProtocolAssignment?.println(annotatedProgram)
 
     // Post-process program
-    val postProcessedProgram = logger.duration("post processing") {
-        val postprocessor = ProgramPostprocessorRegistry(
-            abyMuxPostprocessor(protocolAssignment),
-            zkpMuxPostprocessor(protocolAssignment),
-        )
-        postprocessor.postprocess(annotatedProgram)
-    }
+    val postProcessedProgram =
+        logger.duration("post processing") {
+            val postprocessor =
+                ProgramPostprocessorRegistry(
+                    abyMuxPostprocessor(protocolAssignment),
+                    zkpMuxPostprocessor(protocolAssignment),
+                )
+            postprocessor.postprocess(annotatedProgram)
+        }
 
     return postProcessedProgram
 }
@@ -182,17 +189,19 @@ fun SourceFile.compileCircuitToKotlin(
     packageName: String,
     backend: Backend,
 ): FileSpec {
-    val program = run {
-        val parsed = logger.duration("parsing") {
-            this.parseCircuit(backend.protocolParsers)
+    val program =
+        run {
+            val parsed =
+                logger.duration("parsing") {
+                    this.parseCircuit(backend.protocolParsers)
+                }
+
+            // Perform static checks.
+            // TODO: this causes errors.
+            // parsed.check()
+
+            parsed
         }
-
-        // Perform static checks.
-        // TODO: this causes errors.
-        // parsed.check()
-
-        parsed
-    }
 
     return program.compileToKotlin(
         fileName,
@@ -201,7 +210,10 @@ fun SourceFile.compileCircuitToKotlin(
     )
 }
 
-private fun File.dumpProgramMetadata(program: ProgramNode, metadata: Metadata) {
+private fun File.dumpProgramMetadata(
+    program: ProgramNode,
+    metadata: Metadata,
+) {
     logger.info { "Writing program metadata to $this." }
     this.println(program.toDocumentWithMetadata(metadata))
 }

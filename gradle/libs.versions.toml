@@ -9,7 +9,7 @@ aby-java = { module = "io.github.apl-cornell:aby-java", version = "0.2.2" }
 clikt = { module = "com.github.ajalt.clikt:clikt", version = "4.4.0" }
 graphviz-java = { module = "guru.nidi:graphviz-java", version.ref = "graphviz-java" }
 graphviz-java-all-j2v8 = { module = "guru.nidi:graphviz-java-all-j2v8", version.ref = "graphviz-java" }
-icu4j = { module = "com.ibm.icu:icu4j", version = "74.2" }
+icu4j = { module = "com.ibm.icu:icu4j", version = "76.1" }
 jansi = { module = "org.fusesource.jansi:jansi", version = "2.4.1" }
 java-cup = { module = "com.github.vbmacher:java-cup", version.ref = "java-cup" }
 java-cup-runtime = { module = "com.github.vbmacher:java-cup-runtime", version.ref = "java-cup" }

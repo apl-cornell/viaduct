@@ -14,5 +14,4 @@ object KeywordStyle : Style {
 }
 
 /** Converts [keyword] into a [Document] and applies [KeywordStyle] to it. */
-internal fun keyword(keyword: String): Document =
-    Document(keyword).styled(KeywordStyle)
+internal fun keyword(keyword: String): Document = Document(keyword).styled(KeywordStyle)

@@ -15,9 +15,13 @@ import io.github.aplcornell.viaduct.syntax.operators.Not
 import io.github.aplcornell.viaduct.syntax.operators.Or
 
 sealed class WireTerm
+
 data class WireOp(val op: Operator, val inputs: List<WireTerm>) : WireTerm()
+
 data class WireIn(val v: Int, val index: Int, val hash: List<Byte>, val nonce: List<Byte>) : WireTerm()
+
 data class WireDummyIn(val index: Int, val hash: List<Byte>, val nonce: List<Byte>) : WireTerm()
+
 data class WireConst(val index: Int, val v: Int) : WireTerm()
 
 fun String.asPrettyPrintable(): PrettyPrintable = Document(this)
@@ -33,11 +37,12 @@ fun WireTerm.eval(): Int =
                 is And -> inputs[0].eval() * inputs[1].eval()
                 is Not -> 1 - inputs[0].eval()
                 is Or -> 1 - (1 - inputs[0].eval()) * (1 - inputs[1].eval())
-                is EqualTo -> if (inputs[0].eval() == inputs[1].eval()) {
-                    1
-                } else {
-                    0
-                }
+                is EqualTo ->
+                    if (inputs[0].eval() == inputs[1].eval()) {
+                        1
+                    } else {
+                        0
+                    }
                 is Mux -> if (inputs[0].eval() == 1) (inputs[1].eval()) else (inputs[2].eval())
                 is LessThan -> if (inputs[0].eval() < inputs[1].eval()) (1) else (0)
                 is LessThanOrEqualTo -> if (inputs[0].eval() <= inputs[1].eval()) (1) else (0)
@@ -51,14 +56,26 @@ fun WireTerm.eval(): Int =
 class WireGenerator {
     private var inIndex = 0
     private var constIndex = 0
-    fun mkOp(op: Operator, inputs: List<WireTerm>) = WireOp(op, inputs)
-    fun mkDummyIn(hash: List<Byte>, nonce: List<Byte>): WireTerm {
+
+    fun mkOp(
+        op: Operator,
+        inputs: List<WireTerm>,
+    ) = WireOp(op, inputs)
+
+    fun mkDummyIn(
+        hash: List<Byte>,
+        nonce: List<Byte>,
+    ): WireTerm {
         val r = WireDummyIn(inIndex, hash, nonce)
         inIndex++
         return r
     }
 
-    fun mkIn(v: Int, hash: List<Byte>, nonce: List<Byte>): WireTerm {
+    fun mkIn(
+        v: Int,
+        hash: List<Byte>,
+        nonce: List<Byte>,
+    ): WireTerm {
         val r = WireIn(v, inIndex, hash, nonce)
         inIndex++
         return r
@@ -130,5 +147,4 @@ fun WireTerm.normalize(counter: NormalizeCounter): WireTerm =
         }
     }
 
-fun WireTerm.wireName(): String =
-    this.normalize(NormalizeCounter(0, mutableMapOf(), 0, mutableMapOf())).hash()
+fun WireTerm.wireName(): String = this.normalize(NormalizeCounter(0, mutableMapOf(), 0, mutableMapOf())).hash()

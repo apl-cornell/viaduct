@@ -24,8 +24,7 @@ class HostSetValue private constructor(val hosts: PersistentSet<Host>) : Value()
         return hosts.hashCode()
     }
 
-    override fun toString(): String =
-        hosts.map(Name::name).joinToString(separator = ", ", prefix = "{", postfix = "}")
+    override fun toString(): String = hosts.map(Name::name).joinToString(separator = ", ", prefix = "{", postfix = "}")
 
     companion object {
         @JvmStatic

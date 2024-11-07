@@ -9,6 +9,7 @@ import java.util.Scanner
 
 class FileStrategy(inFile: File) : Strategy {
     private val scanner = Scanner(inFile)
+
     override suspend fun getInput(): Value {
         return IntegerValue(scanner.nextInt())
     }

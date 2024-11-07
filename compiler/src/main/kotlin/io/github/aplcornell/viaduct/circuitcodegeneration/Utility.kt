@@ -33,8 +33,9 @@ typealias Shape = List<IndexExpressionNode>
 private val arrayType: ClassName = LIST
 
 /** Top level package name for the `runtime` module. */
-// TODO: is there a better way of doing this?
-val runtimePackage = "${group.replace("-", "")}.runtime"
+val runtimePackage =
+    // TODO: is there a better way of computing this?
+    "${group.replace("-", "")}.runtime"
 
 /** Returns code for finding an available TCP port. */
 val findAvailableTcpPort: CodeBlock =
@@ -53,7 +54,10 @@ fun typeTranslator(viaductType: ValueType): TypeName =
         else -> throw IllegalArgumentException("Cannot convert ${viaductType.toDocument().print()} to Kotlin type.")
     }
 
-fun kotlinType(shape: Shape, elementType: TypeName): TypeName =
+fun kotlinType(
+    shape: Shape,
+    elementType: TypeName,
+): TypeName =
     if (shape.isEmpty()) {
         elementType
     } else {
@@ -61,7 +65,10 @@ fun kotlinType(shape: Shape, elementType: TypeName): TypeName =
     }
 
 /** Translates [expression] to Kotlin code. */
-fun indexExpression(expression: IndexExpressionNode, context: CodeGeneratorContext): CodeBlock =
+fun indexExpression(
+    expression: IndexExpressionNode,
+    context: CodeGeneratorContext,
+): CodeBlock =
     when (expression) {
         is LiteralNode -> {
             CodeBlock.of("%L", expression.value)
@@ -115,7 +122,11 @@ fun Shape.new(
  * @param indices names of index variables for each dimension of the array.
  * @param init gives the value of each element in the array based on [indices].
  */
-fun Shape.new(context: CodeGeneratorContext, indices: List<CodeBlock>, init: CodeBlock): CodeBlock {
+fun Shape.new(
+    context: CodeGeneratorContext,
+    indices: List<CodeBlock>,
+    init: CodeBlock,
+): CodeBlock {
     require(this.size == indices.size)
     val builder = CodeBlock.builder()
     this.zip(indices) { size, index ->
@@ -147,19 +158,23 @@ fun CodeBlock.forEachIndexed(
     action: (indices: List<CodeBlock>, value: CodeBlock) -> CodeBlock,
 ): CodeBlock {
     val builder = CodeBlock.builder()
-    val indexVariables: List<CodeBlock> = shape.map { size ->
-        val indexVar = CodeBlock.of("%N", context.newTemporary("i"))
-        builder.beginControlFlow("for (%L in 0 until %L)", indexVar, indexExpression(size, context))
-        indexVar
-    }
+    val indexVariables: List<CodeBlock> =
+        shape.map { size ->
+            val indexVar = CodeBlock.of("%N", context.newTemporary("i"))
+            builder.beginControlFlow("for (%L in 0 until %L)", indexVar, indexExpression(size, context))
+            indexVar
+        }
     builder.addStatement("%L", action(indexVariables, this.lookup(indexVariables)))
     repeat(shape.size) { builder.endControlFlow() }
     return builder.build()
 }
 
 /** Code for the replicated value being received from [senders], along with associated equivocation checks. */
-fun receiveReplicated(type: TypeName, senders: List<Host>, context: CodeGeneratorContext) =
-    receiveExpected(context.receive(type, senders.first()), senders.first(), type, senders.drop(1), context)
+fun receiveReplicated(
+    type: TypeName,
+    senders: List<Host>,
+    context: CodeGeneratorContext,
+) = receiveExpected(context.receive(type, senders.first()), senders.first(), type, senders.drop(1), context)
 
 /** Code for receiving values from [senders] expected to match [expectedValue]. */
 fun receiveExpected(

@@ -38,7 +38,8 @@ class IncorrectNumberOfArgumentsError(
             val argumentsPlural = Document(if (expected == 1) "argument" else "arguments")
             return Document("Call to") * method *
                 "expects" * Document("$expected") * argumentsPlural +
-                Document(", but it got") * Document("${actual.size}") * Document("instead.")
+                Document(", but it got") * Document("${actual.size}") *
+                Document("instead.")
                     .withSource(method.sourceLocation)
         }
 }

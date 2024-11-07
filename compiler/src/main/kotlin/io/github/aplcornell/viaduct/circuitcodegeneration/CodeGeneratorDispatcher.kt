@@ -12,18 +12,21 @@ abstract class CodeGeneratorDispatcher : CodeGenerator {
     /** Returns the [CodeGenerator] to use for [protocol]. */
     protected abstract fun generatorFor(protocol: Protocol): CodeGenerator
 
-    final override fun paramType(protocol: Protocol, sourceType: ValueType): TypeName =
-        generatorFor(protocol).paramType(protocol, sourceType)
+    final override fun paramType(
+        protocol: Protocol,
+        sourceType: ValueType,
+    ): TypeName = generatorFor(protocol).paramType(protocol, sourceType)
 
-    final override fun storageType(protocol: Protocol, sourceType: ValueType): TypeName =
-        generatorFor(protocol).paramType(protocol, sourceType)
+    final override fun storageType(
+        protocol: Protocol,
+        sourceType: ValueType,
+    ): TypeName = generatorFor(protocol).paramType(protocol, sourceType)
 
     final override fun circuitBody(
         protocol: Protocol,
         circuitDeclaration: CircuitDeclarationNode,
         outParams: List<CodeBlock>,
-    ): CodeBlock =
-        generatorFor(protocol).circuitBody(protocol, circuitDeclaration, outParams)
+    ): CodeBlock = generatorFor(protocol).circuitBody(protocol, circuitDeclaration, outParams)
 
     final override fun import(
         protocol: Protocol,
@@ -35,6 +38,5 @@ abstract class CodeGeneratorDispatcher : CodeGenerator {
         arguments: List<Argument>,
     ) = generatorFor(protocol).export(protocol, arguments)
 
-    final override fun setup(protocol: Protocol): Iterable<PropertySpec> =
-        generatorFor(protocol).setup(protocol)
+    final override fun setup(protocol: Protocol): Iterable<PropertySpec> = generatorFor(protocol).setup(protocol)
 }

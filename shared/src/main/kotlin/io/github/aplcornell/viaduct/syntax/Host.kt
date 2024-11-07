@@ -11,12 +11,10 @@ import io.github.aplcornell.viaduct.prettyprinting.styled
  * it has inputs and outputs.
  */
 data class Host(override val name: String) : Name, Comparable<Host> {
-
     override val nameCategory: String
         get() = "host"
 
-    override fun compareTo(other: Host): Int =
-        this.name.compareTo(other.name)
+    override fun compareTo(other: Host): Int = this.name.compareTo(other.name)
 
     override fun toDocument(): Document = Document(name).styled(HostStyle)
 }

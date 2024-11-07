@@ -82,16 +82,20 @@ class BackendInterpreter(
 
         logger.info { "starting interpretation" }
 
-        val duration = measureTimeMillis {
-            run(nameAnalysis.enclosingFunctionName(mainBody), mainBody)
-            // synchronize(allHosts, allHosts)
-        }
+        val duration =
+            measureTimeMillis {
+                run(nameAnalysis.enclosingFunctionName(mainBody), mainBody)
+                // synchronize(allHosts, allHosts)
+            }
 
         logger.info { "finished interpretation, total running time: ${duration}ms" }
     }
 
     /** Synchronize hosts. */
-    suspend fun synchronize(senders: Set<Host>, receivers: Set<Host>) {
+    suspend fun synchronize(
+        senders: Set<Host>,
+        receivers: Set<Host>,
+    ) {
         if (receivers.isNotEmpty()) {
             logger.info {
                 "synchronizing hosts ${senders.joinToString(", ") { it.name }} " +
@@ -116,7 +120,10 @@ class BackendInterpreter(
         }
     }
 
-    suspend fun run(function: FunctionName, stmt: StatementNode) {
+    suspend fun run(
+        function: FunctionName,
+        stmt: StatementNode,
+    ) {
         when (stmt) {
             is LetNode -> {
                 val protocol = protocolAnalysis.primaryProtocol(stmt)
@@ -134,8 +141,9 @@ class BackendInterpreter(
 
                 if (protocolAnalysis.participatingHosts(stmt).contains(this.host)) {
                     // execute statement, if host is participating
-                    val protocolBackend = protocolInterpreterMap[protocol]
-                        ?: throw ViaductInterpreterError("no backend for protocol ${protocol.toDocument().print()}")
+                    val protocolBackend =
+                        protocolInterpreterMap[protocol]
+                            ?: throw ViaductInterpreterError("no backend for protocol ${protocol.toDocument().print()}")
                     protocolBackend.runSimpleStatement(protocol, stmt)
 
                     // send data

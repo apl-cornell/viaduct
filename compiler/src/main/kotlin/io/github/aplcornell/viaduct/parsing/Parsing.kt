@@ -15,9 +15,7 @@ fun String.parse(
 }
 
 /** Parses [this] source file and returns the AST. */
-fun SourceFile.parse(
-    protocolParsers: Map<ProtocolName, ProtocolParser<Protocol>> = defaultProtocolParsers,
-): ProgramNode {
+fun SourceFile.parse(protocolParsers: Map<ProtocolName, ProtocolParser<Protocol>> = defaultProtocolParsers): ProgramNode {
     val symbolFactory = ComplexSymbolFactory()
     val scanner = Lexer(this, symbolFactory)
     val parser = Parser(scanner, symbolFactory)

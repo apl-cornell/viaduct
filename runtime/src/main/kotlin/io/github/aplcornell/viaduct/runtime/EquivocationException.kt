@@ -9,12 +9,17 @@ class EquivocationException private constructor(
     actualValue: Any?,
     actualValueProvider: Host,
 ) : ViaductRuntimeException(
-    "Equivocation detected: expected $expectedValue ($expectedValueProvider) " +
-        "but got $actualValue ($actualValueProvider).",
-) {
+        "Equivocation detected: expected $expectedValue ($expectedValueProvider) " +
+            "but got $actualValue ($actualValueProvider).",
+    ) {
     companion object {
         /** Throws [EquivocationException] if [expectedValue] does not match [actualValue]. */
-        fun <T> assertEquals(expectedValue: T, expectedValueProvider: Host, actualValue: T, actualValueProvider: Host) {
+        fun <T> assertEquals(
+            expectedValue: T,
+            expectedValueProvider: Host,
+            actualValue: T,
+            actualValueProvider: Host,
+        ) {
             if (expectedValue != actualValue) {
                 throw EquivocationException(expectedValue, expectedValueProvider, actualValue, actualValueProvider)
             }

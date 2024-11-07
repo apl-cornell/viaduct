@@ -15,6 +15,5 @@ class ConstraintSolution<C : Lattice<C>, V> internal constructor(
             componentSolution.evaluate(term.integrityComponent),
         )
 
-    override fun invoke(variable: V): SecurityLattice<C> =
-        evaluate(term(variable))
+    override fun invoke(variable: V): SecurityLattice<C> = evaluate(term(variable))
 }

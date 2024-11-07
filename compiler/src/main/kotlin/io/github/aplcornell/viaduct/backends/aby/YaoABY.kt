@@ -18,15 +18,19 @@ class YaoABY(server: Host, client: Host) : ABY(server, client) {
     override val protocolName: ProtocolName
         get() = Companion.protocolName
 
+    @Suppress("ktlint:standard:property-naming")
     val B2YInputPorts: Map<Host, InputPort> =
         hosts.associateWith { h -> InputPort(this, h, B2Y_INPUT) }
 
+    @Suppress("ktlint:standard:property-naming")
     val A2YInputPorts: Map<Host, InputPort> =
         hosts.associateWith { h -> InputPort(this, h, A2Y_INPUT) }
 
+    @Suppress("ktlint:standard:property-naming")
     val Y2BOutputPorts: Map<Host, OutputPort> =
         hosts.associateWith { h -> OutputPort(this, h, Y2B_OUTPUT) }
 
+    @Suppress("ktlint:standard:property-naming")
     val Y2AOutputPorts: Map<Host, OutputPort> =
         hosts.associateWith { h -> OutputPort(this, h, Y2A_OUTPUT) }
 }

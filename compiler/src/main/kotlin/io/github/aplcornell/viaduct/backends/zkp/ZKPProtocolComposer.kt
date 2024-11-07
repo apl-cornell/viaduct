@@ -9,7 +9,10 @@ import io.github.aplcornell.viaduct.syntax.Protocol
 import io.github.aplcornell.viaduct.syntax.intermediate.LetNode
 
 object ZKPProtocolComposer : AbstractProtocolComposer() {
-    override fun communicationEvents(source: Protocol, destination: Protocol): Iterable<CommunicationEvent>? =
+    override fun communicationEvents(
+        source: Protocol,
+        destination: Protocol,
+    ): Iterable<CommunicationEvent>? =
         when {
             source is Local && destination is ZKP && source.host == destination.prover -> {
                 setOf(CommunicationEvent(source.outputPort, destination.secretInputPort))
@@ -34,9 +37,10 @@ object ZKPProtocolComposer : AbstractProtocolComposer() {
             else -> super.communicationEvents(source, destination)
         }
 
-    override fun mandatoryParticipatingHosts(protocol: Protocol, statement: LetNode): Set<Host> =
-        protocol.hosts
+    override fun mandatoryParticipatingHosts(
+        protocol: Protocol,
+        statement: LetNode,
+    ): Set<Host> = protocol.hosts
 
-    override fun visibleGuardHosts(protocol: Protocol): Set<Host> =
-        setOf((protocol as ZKP).prover)
+    override fun visibleGuardHosts(protocol: Protocol): Set<Host> = setOf((protocol as ZKP).prover)
 }

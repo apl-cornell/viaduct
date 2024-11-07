@@ -66,7 +66,6 @@ class ZKPProverInterpreter(
     val runtime: ViaductProcessRuntime,
 ) :
     SingleProtocolInterpreter<ZKPObject>(program, runtime.projection.protocol) {
-
     private val typeAnalysis = program.analyses.get<TypeAnalysis>()
     private val ensureInit = ZKPInit
 
@@ -129,30 +128,34 @@ class ZKPProverInterpreter(
     }
 
     private fun injectConst(value: Value): WireTerm {
-        val i = when (value) {
-            is IntegerValue -> value.value
-            is BooleanValue -> if (value.value) {
-                1
-            } else {
-                0
-            }
+        val i =
+            when (value) {
+                is IntegerValue -> value.value
+                is BooleanValue ->
+                    if (value.value) {
+                        1
+                    } else {
+                        0
+                    }
 
-            else -> throw Exception("runtime error: unexpected value $value")
-        }
+                else -> throw Exception("runtime error: unexpected value $value")
+            }
         return wireGenerator.mkConst(i)
     }
 
     private suspend fun mkInput(value: Value): WireTerm {
-        val i = when (value) {
-            is IntegerValue -> value.value
-            is BooleanValue -> if (value.value) {
-                1
-            } else {
-                0
-            }
+        val i =
+            when (value) {
+                is IntegerValue -> value.value
+                is BooleanValue ->
+                    if (value.value) {
+                        1
+                    } else {
+                        0
+                    }
 
-            else -> throw Exception("runtime error: unexpected value $value")
-        }
+                else -> throw Exception("runtime error: unexpected value $value")
+            }
         val nonce = genNonce(32) // 256 / 8 = 32
 
         val hash = libsnarkwrapper.get_sha_nonce_val(mkByteBuf(nonce.toByteArray()), i.toLong())
@@ -204,26 +207,33 @@ class ZKPProverInterpreter(
         return ZKPObject.ZKPNullObject
     }
 
-    private fun runQuery(obj: ZKPObject, query: QueryNameNode, args: List<AtomicExpressionNode>): WireTerm =
+    private fun runQuery(
+        obj: ZKPObject,
+        query: QueryNameNode,
+        args: List<AtomicExpressionNode>,
+    ): WireTerm =
         when (obj) {
-            is ZKPObject.ZKPImmutableCell -> if (query.value is Get) {
-                obj.value
-            } else {
-                throw Exception("bad query")
-            }
+            is ZKPObject.ZKPImmutableCell ->
+                if (query.value is Get) {
+                    obj.value
+                } else {
+                    throw Exception("bad query")
+                }
 
-            is ZKPObject.ZKPMutableCell -> if (query.value is Get) {
-                obj.value
-            } else {
-                throw Exception("bad query")
-            }
+            is ZKPObject.ZKPMutableCell ->
+                if (query.value is Get) {
+                    obj.value
+                } else {
+                    throw Exception("bad query")
+                }
 
-            is ZKPObject.ZKPVectorObject -> if (query.value is Get) {
-                val index = runCleartextExpr(args[0]) as IntegerValue
-                obj.gates[index.value]
-            } else {
-                throw Exception("bad query")
-            }
+            is ZKPObject.ZKPVectorObject ->
+                if (query.value is Get) {
+                    val index = runCleartextExpr(args[0]) as IntegerValue
+                    obj.gates[index.value]
+                } else {
+                    throw Exception("bad query")
+                }
 
             ZKPObject.ZKPNullObject -> throw Exception("null query")
         }
@@ -340,19 +350,21 @@ class ZKPProverInterpreter(
                     val vkFile = File("zkpkeys/$wireName.vk")
                     vkFile.createNewFile()
                     val kp = r1cs.genKeypair()
-                    val out_pkFile = FileOutputStream(pkFile, false)
+                    val outPkFile = FileOutputStream(pkFile, false)
                     logger.info { "kp : writing ${kp.proving_key._data.size} bytes" }
-                    out_pkFile.write(kp.proving_key._data)
+                    outPkFile.write(kp.proving_key._data)
                     logger.info { "vk : writing ${kp.verification_key._data.size} bytes" }
-                    val out_vkFile = FileOutputStream(vkFile, false)
-                    out_vkFile.write(kp.verification_key._data)
-                    out_pkFile.close()
-                    out_vkFile.close()
-                    throw Exception("Created new proving key and verification key for wire ${wire.asString()} with name $wireName. Rerun to use.")
+                    val outVkFile = FileOutputStream(vkFile, false)
+                    outVkFile.write(kp.verification_key._data)
+                    outPkFile.close()
+                    outVkFile.close()
+                    throw Exception(
+                        "Created new proving key and verification key for wire ${wire.asString()} with name $wireName. Rerun to use.",
+                    )
                 } else { // Read proving key, make proof, send to all the verifiers
-                    val in_pkFile = FileInputStream(pkFile)
-                    val pk = mkByteBuf(in_pkFile.readAllBytes())
-                    in_pkFile.close()
+                    val inPkFile = FileInputStream(pkFile)
+                    val pk = mkByteBuf(inPkFile.readAllBytes())
+                    inPkFile.close()
                     logger.info { "Proving.." }
                     val pf = r1cs.makeProof(pk)
                     logger.info { "Proof done!" }
@@ -387,7 +399,9 @@ class ZKPProverInterpreter(
     ) {
         if (sendProtocol != recvProtocol) {
             logger.info {
-                "Wire for ${sender.name.value} does not exist; sendProtocol = $sendProtocol, runtimeProtocol = ${runtime.projection.protocol}"
+                val senderName = sender.name.value
+                val runtimeProtocol = runtime.projection.protocol
+                "Wire for $senderName does not exist; sendProtocol = $sendProtocol, runtimeProtocol = $runtimeProtocol"
             }
             val secretInputs = events.getHostReceives(runtime.projection.host, "ZKP_SECRET_INPUT")
             val publicInputs = events.getHostReceives(runtime.projection.host, "ZKP_PUBLIC_INPUT")

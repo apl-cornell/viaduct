@@ -59,27 +59,27 @@ fun Iterable<Backend>.unions(): Backend {
         override val protocols: Set<ProtocolName>
             get() = backends.map { it.protocols }.unions()
 
-        override val protocolParsers: Map<ProtocolName, ProtocolParser<Protocol>> = run {
-            // Ensure there are no missing or extra parsers
-            backends.forEach { backend ->
-                val protocols = backend.protocols
-                val parsers = backend.protocolParsers
-                val missingParsers = protocols - parsers.keys
-                val extraParsers = parsers.keys - protocols
-                if (missingParsers.isNotEmpty()) {
-                    val missing = missingParsers.joinToString(", ") { it.name }
-                    throw IllegalArgumentException("Missing parsers for $missing in ${backend.name}")
+        override val protocolParsers: Map<ProtocolName, ProtocolParser<Protocol>> =
+            run {
+                // Ensure there are no missing or extra parsers
+                backends.forEach { backend ->
+                    val protocols = backend.protocols
+                    val parsers = backend.protocolParsers
+                    val missingParsers = protocols - parsers.keys
+                    val extraParsers = parsers.keys - protocols
+                    if (missingParsers.isNotEmpty()) {
+                        val missing = missingParsers.joinToString(", ") { it.name }
+                        throw IllegalArgumentException("Missing parsers for $missing in ${backend.name}")
+                    }
+                    if (extraParsers.isNotEmpty()) {
+                        val extra = extraParsers.joinToString(", ") { it.name }
+                        throw IllegalArgumentException("Extraneous parsers for $extra in ${backend.name}")
+                    }
                 }
-                if (extraParsers.isNotEmpty()) {
-                    val extra = extraParsers.joinToString(", ") { it.name }
-                    throw IllegalArgumentException("Extraneous parsers for $extra in ${backend.name}")
-                }
+                backends.map { it.protocolParsers }.unions()
             }
-            backends.map { it.protocolParsers }.unions()
-        }
 
-        override fun protocolFactory(program: ProgramNode): ProtocolFactory =
-            backends.map { it.protocolFactory(program) }.unions()
+        override fun protocolFactory(program: ProgramNode): ProtocolFactory = backends.map { it.protocolFactory(program) }.unions()
 
         override val protocolComposer: ProtocolComposer =
             backends.map { it.protocols to it.protocolComposer }.unions().cached()

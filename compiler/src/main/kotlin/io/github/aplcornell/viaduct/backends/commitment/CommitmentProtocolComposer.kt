@@ -9,7 +9,10 @@ import io.github.aplcornell.viaduct.syntax.Protocol
 import io.github.aplcornell.viaduct.syntax.intermediate.LetNode
 
 object CommitmentProtocolComposer : AbstractProtocolComposer() {
-    override fun communicationEvents(source: Protocol, destination: Protocol): Iterable<CommunicationEvent>? =
+    override fun communicationEvents(
+        source: Protocol,
+        destination: Protocol,
+    ): Iterable<CommunicationEvent>? =
         when {
             source is Local && destination is Commitment && source.host == destination.cleartextHost -> {
                 setOf(CommunicationEvent(source.outputPort, destination.inputPort))
@@ -49,9 +52,10 @@ object CommitmentProtocolComposer : AbstractProtocolComposer() {
             else -> super.communicationEvents(source, destination)
         }
 
-    override fun mandatoryParticipatingHosts(protocol: Protocol, statement: LetNode): Set<Host> =
-        protocol.hosts
+    override fun mandatoryParticipatingHosts(
+        protocol: Protocol,
+        statement: LetNode,
+    ): Set<Host> = protocol.hosts
 
-    override fun visibleGuardHosts(protocol: Protocol): Set<Host> =
-        setOf((protocol as Commitment).cleartextHost)
+    override fun visibleGuardHosts(protocol: Protocol): Set<Host> = setOf((protocol as Commitment).cleartextHost)
 }

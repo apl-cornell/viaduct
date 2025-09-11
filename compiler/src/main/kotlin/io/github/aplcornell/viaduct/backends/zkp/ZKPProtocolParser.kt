@@ -9,14 +9,15 @@ import io.github.aplcornell.viaduct.syntax.values.HostValue
 object ZKPProtocolParser : ProtocolParser<ZKP> {
     override fun parse(arguments: ProtocolArguments): ZKP {
         val sender = arguments.get<HostValue>("prover")
-        val receivers = arguments.getAndAlso<HostSetValue>("verifiers") {
-            if (it.isEmpty()) {
-                throw IllegalArgumentException("verifiers cannot be empty")
+        val receivers =
+            arguments.getAndAlso<HostSetValue>("verifiers") {
+                if (it.isEmpty()) {
+                    throw IllegalArgumentException("verifiers cannot be empty")
+                }
+                if (sender.value in it) {
+                    throw IllegalArgumentException("verifiers cannot contain prover")
+                }
             }
-            if (sender.value in it) {
-                throw IllegalArgumentException("verifiers cannot contain prover")
-            }
-        }
         return ZKP(sender.value, receivers)
     }
 }

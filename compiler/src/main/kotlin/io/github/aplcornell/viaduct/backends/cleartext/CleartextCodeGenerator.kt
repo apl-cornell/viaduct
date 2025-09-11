@@ -39,10 +39,15 @@ class CleartextCodeGenerator(context: CodeGeneratorContext) : AbstractCodeGenera
     private val nameAnalysis = context.program.analyses.get<NameAnalysis>()
     private val typeAnalysis = context.program.analyses.get<TypeAnalysis>()
 
-    override fun guard(protocol: Protocol, expr: AtomicExpressionNode): CodeBlock =
-        cleartextExp(protocol, expr)
+    override fun guard(
+        protocol: Protocol,
+        expr: AtomicExpressionNode,
+    ): CodeBlock = cleartextExp(protocol, expr)
 
-    override fun exp(protocol: Protocol, expr: ExpressionNode): CodeBlock =
+    override fun exp(
+        protocol: Protocol,
+        expr: ExpressionNode,
+    ): CodeBlock =
         when (expr) {
             is LiteralNode -> value(expr.value)
 
@@ -93,7 +98,10 @@ class CleartextCodeGenerator(context: CodeGeneratorContext) : AbstractCodeGenera
             else -> super.exp(protocol, expr)
         }
 
-    override fun update(protocol: Protocol, stmt: UpdateNode): CodeBlock =
+    override fun update(
+        protocol: Protocol,
+        stmt: UpdateNode,
+    ): CodeBlock =
         when (typeAnalysis.type(nameAnalysis.declaration(stmt))) {
             is MutableCellType ->
                 when (stmt.update.value) {
@@ -163,10 +171,11 @@ class CleartextCodeGenerator(context: CodeGeneratorContext) : AbstractCodeGenera
         val clearTextCommittedTemp = context.newTemporary("cleartextCommittedTemp")
         if (sendProtocol != receiveProtocol) {
             val projection = ProtocolProjection(receiveProtocol, context.host)
-            val cleartextInputs = events.getProjectionReceives(
-                projection,
-                Cleartext.INPUT,
-            )
+            val cleartextInputs =
+                events.getProjectionReceives(
+                    projection,
+                    Cleartext.INPUT,
+                )
 
             val cleartextCommitmentInputs =
                 events.getProjectionReceives(projection, Cleartext.CLEARTEXT_COMMITMENT_INPUT)

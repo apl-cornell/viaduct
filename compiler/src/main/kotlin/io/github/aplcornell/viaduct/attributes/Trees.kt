@@ -22,7 +22,11 @@ class Tree<Node : TreeNode<Node>, out RootNode : Node>(val root: RootNode) {
     private val relations: MutableMap<Node, NodeRelations<Node>> = IdentityHashMap()
 
     init {
-        fun addNode(parent: Node?, node: Node, nodeIndex: Int) {
+        fun addNode(
+            parent: Node?,
+            node: Node,
+            nodeIndex: Int,
+        ) {
             val children = node.children.toPersistentList()
             if (relations.put(node, NodeRelations(parent, children, nodeIndex)) != null) {
                 // TODO: custom exception class
@@ -65,8 +69,11 @@ class Tree<Node : TreeNode<Node>, out RootNode : Node>(val root: RootNode) {
 
 /** A node in a [Tree]. */
 interface TreeNode<out Node> {
-    /** The list of all children nodes. This is empty for leaf nodes. */
-    // TODO: this should be a list
+    /**
+     * The list of all children nodes. This is empty for leaf nodes.
+     *
+     * TODO: this should be a list
+     * */
     val children: Iterable<Node>
 }
 

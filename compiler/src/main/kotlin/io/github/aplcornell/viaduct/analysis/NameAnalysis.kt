@@ -177,29 +177,26 @@ class NameAnalysis internal constructor(private val tree: Tree<Node, ProgramNode
             defines(this).fold(contextIn) { acc, pair -> acc.put(pair.first, pair.second) }
         }
 
-        override fun getValue(thisRef: Node, property: KProperty<*>): NameMap<N, Data> =
-            thisRef.contextIn
+        override fun getValue(
+            thisRef: Node,
+            property: KProperty<*>,
+        ): NameMap<N, Data> = thisRef.contextIn
     }
 
     /** Returns the statement that defines the [Temporary] in [node]. */
-    fun declaration(node: ReadNode): LetNode =
-        node.temporaryDefinitions[node.temporary]
+    fun declaration(node: ReadNode): LetNode = node.temporaryDefinitions[node.temporary]
 
     /** Returns the statement that declares the [ObjectVariable] in [node]. */
-    fun declaration(node: QueryNode): ObjectVariableDeclarationNode =
-        node.objectDeclarations[node.variable]
+    fun declaration(node: QueryNode): ObjectVariableDeclarationNode = node.objectDeclarations[node.variable]
 
     /** Returns the statement that declares the [ObjectVariable] in [node]. */
-    fun declaration(node: UpdateNode): ObjectVariableDeclarationNode =
-        node.objectDeclarations[node.variable]
+    fun declaration(node: UpdateNode): ObjectVariableDeclarationNode = node.objectDeclarations[node.variable]
 
     /** Returns the loop that [node] is breaking out of. */
-    fun correspondingLoop(node: BreakNode): InfiniteLoopNode =
-        node.jumpTargets[node.jumpLabel]
+    fun correspondingLoop(node: BreakNode): InfiniteLoopNode = node.jumpTargets[node.jumpLabel]
 
     /** Returns the declaration of the [Host] in [node]. */
-    fun declaration(node: CommunicationNode): HostDeclarationNode =
-        (node as Node).hostDeclarations[node.host]
+    fun declaration(node: CommunicationNode): HostDeclarationNode = (node as Node).hostDeclarations[node.host]
 
     /** Returns the declaration of the out parameter in [node]. */
     fun declaration(node: OutParameterInitializationNode): ParameterNode {
@@ -210,12 +207,10 @@ class NameAnalysis internal constructor(private val tree: Tree<Node, ProgramNode
     }
 
     /** Returns the declaration of the function being called in [node]. */
-    fun declaration(node: FunctionCallNode): FunctionDeclarationNode =
-        (node as Node).functionDeclarations[node.name]
+    fun declaration(node: FunctionCallNode): FunctionDeclarationNode = (node as Node).functionDeclarations[node.name]
 
     /** Returns the object referenced by the [node] function argument. */
-    fun declaration(node: ObjectReferenceArgumentNode): ObjectVariableDeclarationNode =
-        node.objectDeclarations[node.variable]
+    fun declaration(node: ObjectReferenceArgumentNode): ObjectVariableDeclarationNode = node.objectDeclarations[node.variable]
 
     /** Returns the object referenced by the [node] function argument. */
     fun declaration(node: OutParameterArgumentNode): ParameterNode {
@@ -243,12 +238,10 @@ class NameAnalysis internal constructor(private val tree: Tree<Node, ProgramNode
         }
 
     /** Returns the function call that contains [argument]. */
-    fun functionCall(argument: FunctionArgumentNode): FunctionCallNode =
-        tree.parent(argument) as FunctionCallNode
+    fun functionCall(argument: FunctionArgumentNode): FunctionCallNode = tree.parent(argument) as FunctionCallNode
 
     /** Returns the function declaration that contains [parameter]. */
-    fun functionDeclaration(parameter: ParameterNode): FunctionDeclarationNode =
-        tree.parent(parameter) as FunctionDeclarationNode
+    fun functionDeclaration(parameter: ParameterNode): FunctionDeclarationNode = tree.parent(parameter) as FunctionDeclarationNode
 
     /** Returns the parameter for which [node] is the argument. */
     fun parameter(node: FunctionArgumentNode): ParameterNode {
@@ -275,17 +268,16 @@ class NameAnalysis internal constructor(private val tree: Tree<Node, ProgramNode
     }
 
     /** Returns the function declaration enclosing [node]. */
-    fun enclosingFunction(node: Node): FunctionDeclarationNode =
-        node.enclosingFunction!!
+    fun enclosingFunction(node: Node): FunctionDeclarationNode = node.enclosingFunction!!
 
     /** Returns label variable declarations in scope of [node]. */
-    private fun Node.labelVariables(): Set<LabelVariable> =
-        enclosingFunction(this).labelParameters.map { it.value }.toSet()
+    private fun Node.labelVariables(): Set<LabelVariable> = enclosingFunction(this).labelParameters.map { it.value }.toSet()
 
-    /** Returns the function declaration enclosing [node]. */
-    // TODO: this should just return the FunctionNode
-    fun enclosingFunctionName(node: Node): FunctionName =
-        node.enclosingFunction!!.name.value
+    /** Returns the function declaration enclosing [node].
+     *
+     * TODO: this should just return the FunctionNode
+     */
+    fun enclosingFunctionName(node: Node): FunctionName = node.enclosingFunction!!.name.value
 
     /** The set of [Temporary] variables directly read by this node. */
     private val Node.reads: PersistentSet<ReadNode> by attribute {
@@ -325,8 +317,10 @@ class NameAnalysis internal constructor(private val tree: Tree<Node, ProgramNode
      */
     fun readers(node: LetNode): Set<StatementNode> = node.readers
 
-    /** Returns all [ReadNode]s in this node. */
-    // TODO: [Node.descendantsIsInstance] will give the same thing.
+    /** Returns all [ReadNode]s in this node.
+     *
+     * TODO: [Node.descendantsIsInstance] will give the same thing.
+     */
     fun reads(node: Node): Set<ReadNode> = node.reads
 
     private val ReadNode.enclosingStatement: StatementNode by attribute {
@@ -358,12 +352,10 @@ class NameAnalysis internal constructor(private val tree: Tree<Node, ProgramNode
     }
 
     /** Returns the set of [QueryNode]s that reference the [ObjectVariable] declared by [node]. **/
-    fun queriers(node: ObjectVariableDeclarationNode): Set<QueryNode> =
-        (node as Node).queries
+    fun queriers(node: ObjectVariableDeclarationNode): Set<QueryNode> = (node as Node).queries
 
     /** Returns the set of [UpdateNode]s that reference the [ObjectVariable] declared by [node]. **/
-    fun updaters(node: ObjectVariableDeclarationNode): Set<UpdateNode> =
-        (node as Node).updates
+    fun updaters(node: ObjectVariableDeclarationNode): Set<UpdateNode> = (node as Node).updates
 
     /** Returns the set of arguments where [Node] is used. */
     private val Node.argumentUses: Set<FunctionArgumentNode> by collectedAttribute(tree) { node ->
@@ -380,8 +372,7 @@ class NameAnalysis internal constructor(private val tree: Tree<Node, ProgramNode
     }
 
     /** Returns the set of arguments where [node] is used. */
-    fun argumentUses(node: ObjectVariableDeclarationNode): Set<FunctionArgumentNode> =
-        (node as Node).argumentUses
+    fun argumentUses(node: ObjectVariableDeclarationNode): Set<FunctionArgumentNode> = (node as Node).argumentUses
 
     /** Returns the set of parameters for which [node] is used as an argument. */
     fun parameterUses(node: ObjectVariableDeclarationNode): Set<ParameterNode> =
@@ -401,8 +392,7 @@ class NameAnalysis internal constructor(private val tree: Tree<Node, ProgramNode
     /** Returns the set of arguments for [ParameterNode]. */
     fun parameterUsers(parameter: ParameterNode): Set<FunctionArgumentNode> = parameter.parameterUsers
 
-    fun correspondingLet(query: QueryNode): LetNode =
-        (tree.parent(query) as LetNode)
+    fun correspondingLet(query: QueryNode): LetNode = (tree.parent(query) as LetNode)
 
     /** Returns the set of [BreakNode]s that reference [node]. **/
     fun correspondingBreaks(node: InfiniteLoopNode): Set<BreakNode> = node.correspondingBreaks

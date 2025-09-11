@@ -24,15 +24,18 @@ internal fun <E> List<E>.subsequences(): Iterable<List<E>> {
 }
 
 /** Returns all subsequences of this list of length [length]. */
-// TODO: this can be sped up with dynamic programming.
 private fun <E> List<E>.subsequences(length: Int): Iterable<List<E>> =
+    // TODO: this can be sped up with dynamic programming.
     when {
         length == 0 ->
             listOf(listOf())
+
         length == this.size ->
             listOf(this)
+
         length > this.size ->
             listOf()
+
         else ->
             this.drop(1).let {
                 it.subsequences(length - 1).map { s -> listOf(this.first()) + s } +

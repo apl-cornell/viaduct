@@ -38,12 +38,10 @@ abstract class CompileViaductTask : DefaultTask() {
     abstract val circuitBackend: Property<Backend>
 
     @Internal
-    override fun getGroup(): String =
-        LifecycleBasePlugin.BUILD_TASK_NAME
+    override fun getGroup(): String = LifecycleBasePlugin.BUILD_TASK_NAME
 
     @Internal
-    override fun getDescription(): String =
-        "Compiles Viaduct sources to Kotlin."
+    override fun getDescription(): String = "Compiles Viaduct sources to Kotlin."
 
     @TaskAction
     fun compileAll(sourceChanges: InputChanges) {
@@ -81,7 +79,12 @@ abstract class CompileViaductTask : DefaultTask() {
         }
     }
 
-    private fun compileFile(sourceFile: File, packageName: String, outputFile: File, debugDirectory: File) {
+    private fun compileFile(
+        sourceFile: File,
+        packageName: String,
+        outputFile: File,
+        debugDirectory: File,
+    ) {
         logger.debug("Compiling from $sourceFile to $outputFile in package $packageName.")
 
         project.mkdir(debugDirectory)

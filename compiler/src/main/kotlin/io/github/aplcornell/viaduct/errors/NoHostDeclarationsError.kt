@@ -24,18 +24,23 @@ class NoHostDeclarationsError(override val source: String) : CompilationError() 
             ) + Document.lineBreak
 
     override val hint: Document
-        get() = Document("Declare hosts and their authority labels like so:")
-            .withData(exampleHostDeclarations)
+        get() =
+            Document("Declare hosts and their authority labels like so:")
+                .withData(exampleHostDeclarations)
 
     private companion object {
         val exampleHostDeclarations: ProgramNode
-            get() = """
-               host alice
-               host trusted
-            """.trimIndent().parse()
+            get() =
+                """
+                host alice
+                host trusted
+                """.trimIndent().parse()
 
-        /** Wrap words the given string. All new lines and indentation are removed. */
-        // TODO: this should be implemented in [Document] since line width is determined only when printing.
+        /**
+         * Wrap words the given string. All new lines and indentation are removed.
+         *
+         * TODO: this should be implemented in [Document] since line width is determined only when printing.
+         */
         fun String.reflow(): String {
             val flattened =
                 this.replace(unicodeLineBreak, " ")

@@ -17,8 +17,7 @@ import io.github.aplcornell.viaduct.syntax.intermediate.LetNode
 import io.github.aplcornell.viaduct.syntax.intermediate.Node
 
 data class FunctionVariable(val function: FunctionName, val variable: Variable) : PrettyPrintable {
-    override fun toDocument(): Document =
-        Document("(") + function + "," + variable.toDocument() + Document(")")
+    override fun toDocument(): Document = Document("(") + function + "," + variable.toDocument() + Document(")")
 }
 
 /** Symbolic cost that will be minimized by a solver. */
@@ -27,8 +26,7 @@ sealed class SymbolicCost : CostMonoid<SymbolicCost> {
         fun zero(): SymbolicCost = CostLiteral(0)
     }
 
-    override fun concat(other: SymbolicCost): SymbolicCost =
-        CostAdd(this, other)
+    override fun concat(other: SymbolicCost): SymbolicCost = CostAdd(this, other)
 
     override fun zero(): SymbolicCost = SymbolicCost.zero()
 }
@@ -121,8 +119,7 @@ data class Not(val rhs: SelectionConstraint) : SelectionConstraint() {
 
 /** VariableIn(v, P) holds when v is selected to be a protocol in P **/
 data class VariableIn(val variable: FunctionVariable, val protocol: Protocol) : SelectionConstraint() {
-    override fun toDocument(): Document =
-        variable * Document("=") * protocol.toDocument()
+    override fun toDocument(): Document = variable * Document("=") * protocol.toDocument()
 }
 
 /** Protocols for v1 and v2 are equal. */
@@ -135,29 +132,29 @@ data class VariableEquals(val var1: FunctionVariable, val var2: FunctionVariable
 data class SelectionProblem(
     /** Set of constraints that must hold true for any valid protocol assignment. */
     val constraints: Set<SelectionConstraint>,
-
     /** Cost for the whole program. */
     val cost: SymbolicCost,
-
     /** Extra metadata that lets us associate cost with different parts of a program. */
     val costMap: Map<Node, SymbolicCost> = mapOf(),
 )
 
-internal fun SelectionConstraint.or(other: SelectionConstraint): SelectionConstraint =
-    Or(listOf(this, other))
+internal fun SelectionConstraint.or(other: SelectionConstraint): SelectionConstraint = Or(listOf(this, other))
 
-internal fun SelectionConstraint.implies(other: SelectionConstraint): SelectionConstraint =
-    Implies(this, other)
+internal fun SelectionConstraint.implies(other: SelectionConstraint): SelectionConstraint = Implies(this, other)
 
-internal fun variableInSet(fv: FunctionVariable, protocols: Set<Protocol>): SelectionConstraint =
-    protocols.map { protocol -> VariableIn(fv, protocol) }.ors()
+internal fun variableInSet(
+    fv: FunctionVariable,
+    protocols: Set<Protocol>,
+): SelectionConstraint = protocols.map { protocol -> VariableIn(fv, protocol) }.ors()
 
 internal fun List<SelectionConstraint>.ors(): SelectionConstraint = Or(this)
 
 internal fun List<SelectionConstraint>.ands(): SelectionConstraint = And(this)
 
-internal fun iff(lhs: SelectionConstraint, rhs: SelectionConstraint): SelectionConstraint =
-    And(Implies(lhs, rhs), Implies(rhs, lhs))
+internal fun iff(
+    lhs: SelectionConstraint,
+    rhs: SelectionConstraint,
+): SelectionConstraint = And(Implies(lhs, rhs), Implies(rhs, lhs))
 
 /** Some convenience functions. **/
 
@@ -227,26 +224,41 @@ fun SelectionConstraint.variableNames(): Set<String> =
     )
 
 /** States whether an expression reads only from the protocols in [protocols]. **/
-fun ExpressionNode.readsFrom(nameAnalysis: NameAnalysis, protocols: Set<Protocol>): SelectionConstraint =
+fun ExpressionNode.readsFrom(
+    nameAnalysis: NameAnalysis,
+    protocols: Set<Protocol>,
+): SelectionConstraint =
     this.involvedVariables().map {
         variableInSet(FunctionVariable(nameAnalysis.enclosingFunctionName(this), it), protocols)
     }.ands()
 
 /** States that if the let node is stored at any protocol in [to], it reads from only the protocols in [from]. **/
-fun LetNode.readsFrom(nameAnalysis: NameAnalysis, to: Set<Protocol>, from: Set<Protocol>): SelectionConstraint =
+fun LetNode.readsFrom(
+    nameAnalysis: NameAnalysis,
+    to: Set<Protocol>,
+    from: Set<Protocol>,
+): SelectionConstraint =
     Implies(
         variableInSet(FunctionVariable(nameAnalysis.enclosingFunctionName(this), this.name.value), to),
         this.value.readsFrom(nameAnalysis, from),
     )
 
-fun DeclarationNode.readsFrom(nameAnalysis: NameAnalysis, to: Set<Protocol>, from: Set<Protocol>): SelectionConstraint =
+fun DeclarationNode.readsFrom(
+    nameAnalysis: NameAnalysis,
+    to: Set<Protocol>,
+    from: Set<Protocol>,
+): SelectionConstraint =
     Implies(
         variableInSet(FunctionVariable(nameAnalysis.enclosingFunctionName(this), this.name.value), to),
         this.arguments.map { it.readsFrom(nameAnalysis, from) }.ands(),
     )
 
 /** States that if the let node is stored at any protocol in [from], it sends to only the protocols in [to]. **/
-fun LetNode.sendsTo(nameAnalysis: NameAnalysis, from: Set<Protocol>, to: Set<Protocol>): SelectionConstraint =
+fun LetNode.sendsTo(
+    nameAnalysis: NameAnalysis,
+    from: Set<Protocol>,
+    to: Set<Protocol>,
+): SelectionConstraint =
     Implies(
         variableInSet(FunctionVariable(nameAnalysis.enclosingFunctionName(this), this.name.value), from),
         nameAnalysis.readers(this).map { stmt ->
@@ -256,7 +268,11 @@ fun LetNode.sendsTo(nameAnalysis: NameAnalysis, from: Set<Protocol>, to: Set<Pro
         }.ands(),
     )
 
-fun DeclarationNode.sendsTo(nameAnalysis: NameAnalysis, from: Set<Protocol>, to: Set<Protocol>): SelectionConstraint =
+fun DeclarationNode.sendsTo(
+    nameAnalysis: NameAnalysis,
+    from: Set<Protocol>,
+    to: Set<Protocol>,
+): SelectionConstraint =
     Implies(
         variableInSet(
             FunctionVariable(nameAnalysis.enclosingFunctionName(this), this.name.value),

@@ -10,8 +10,7 @@ import kotlinx.collections.immutable.toPersistentList
 import kotlinx.collections.immutable.toPersistentMap
 
 /** A list of labelled arguments. */
-class NamedArguments<out T>
-private constructor(
+class NamedArguments<out T> private constructor(
     private val argumentLabels: PersistentList<ArgumentLabelNode>,
     private val arguments: PersistentMap<ArgumentLabel, T>,
     override val sourceLocation: SourceLocation,

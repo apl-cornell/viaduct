@@ -94,14 +94,16 @@ class ProtocolArguments internal constructor(private val arguments: NamedArgumen
      * @throws TypeMismatchError if the argument does not have type [V].
      * @throws MalformedProtocolAnnotationError if [check] throws an [IllegalArgumentException].
      */
-    inline fun <reified V : Value> getAndAlso(label: String, check: (argument: V) -> Unit) =
-        try {
-            val argument = this.get<V>(label)
-            check(argument)
-            argument
-        } catch (e: IllegalArgumentException) {
-            throw MalformedProtocolAnnotationError(this.getArgument(label), e.message!!)
-        }
+    inline fun <reified V : Value> getAndAlso(
+        label: String,
+        check: (argument: V) -> Unit,
+    ) = try {
+        val argument = this.get<V>(label)
+        check(argument)
+        argument
+    } catch (e: IllegalArgumentException) {
+        throw MalformedProtocolAnnotationError(this.getArgument(label), e.message!!)
+    }
 
     /**
      * Returns the argument associated with [label].

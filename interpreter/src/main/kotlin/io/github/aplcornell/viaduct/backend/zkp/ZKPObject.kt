@@ -8,7 +8,9 @@ import io.github.aplcornell.viaduct.syntax.values.Value
 
 sealed class ZKPObject {
     data class ZKPImmutableCell(val value: WireTerm) : ZKPObject()
+
     data class ZKPMutableCell(var value: WireTerm) : ZKPObject()
+
     class ZKPVectorObject(val size: Int, val defaultValue: Value, val wireGenerator: WireGenerator) : ZKPObject() {
         val gates: ArrayList<WireTerm> = ArrayList(size)
 
@@ -17,13 +19,14 @@ sealed class ZKPObject {
             val v: IntegerValue =
                 when (defaultValue) {
                     is IntegerValue -> defaultValue
-                    is BooleanValue -> IntegerValue(
-                        if (defaultValue.value) {
-                            1
-                        } else {
-                            0
-                        },
-                    )
+                    is BooleanValue ->
+                        IntegerValue(
+                            if (defaultValue.value) {
+                                1
+                            } else {
+                                0
+                            },
+                        )
                     else -> throw Exception("Bad default value")
                 }
 

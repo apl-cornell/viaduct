@@ -5,8 +5,7 @@ import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toPersistentList
 
 /** A list of arguments. */
-class Arguments<out T>
-private constructor(
+class Arguments<out T> private constructor(
     private val arguments: PersistentList<T>,
     override val sourceLocation: SourceLocation,
 ) : HasSourceLocation, List<T> by arguments {
@@ -25,9 +24,9 @@ private constructor(
          *
          * [arguments] must be non-empty.
          */
-        // TODO: what about parentheses around arguments?
         @JvmStatic
         fun <T : HasSourceLocation> from(vararg arguments: T): Arguments<T> {
+            // TODO: what about parentheses around arguments?
             require(arguments.isNotEmpty()) { "Cannot infer source location without arguments." }
             val sourceLocation =
                 arguments.first().sourceLocation.merge(arguments.last().sourceLocation)

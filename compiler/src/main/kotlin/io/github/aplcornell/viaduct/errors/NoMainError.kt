@@ -17,8 +17,9 @@ class NoMainError(override val source: String) : CompilationError() {
             Document("This program has no") * mainPhrase + "." + Document.lineBreak
 
     override val hint: Document
-        get() = (Document("Add a") * mainPhrase * "like so:")
-            .withData(exampleMain)
+        get() =
+            (Document("Add a") * mainPhrase * "like so:")
+                .withData(exampleMain)
 
     private val exampleMain: ProgramNode
         get() = "fun ${mainFunction.name}() {}".parse()

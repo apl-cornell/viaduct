@@ -44,13 +44,14 @@ class ABYProtocolFactory(program: ProgramNode) : ProtocolFactory {
     var parentFactory: ProtocolFactory? = null
     var protocolComposer: ProtocolComposer? = null
 
-    private val protocols: Set<Protocol> = run {
-        val hosts = program.hosts.sorted()
-        val hostPairs = hosts.pairedWith(hosts).filter { it.first < it.second }
-        hostPairs.flatMap {
-            listOf(ArithABY(it.first, it.second), BoolABY(it.first, it.second), YaoABY(it.first, it.second))
-        }.toSet()
-    }
+    private val protocols: Set<Protocol> =
+        run {
+            val hosts = program.hosts.sorted()
+            val hostPairs = hosts.pairedWith(hosts).filter { it.first < it.second }
+            hostPairs.flatMap {
+                listOf(ArithABY(it.first, it.second), BoolABY(it.first, it.second), YaoABY(it.first, it.second))
+            }.toSet()
+        }
 
     private fun LetNode.isApplicable(protocol: Protocol): Boolean {
         val operationCheck =
@@ -150,7 +151,10 @@ class ABYProtocolFactory(program: ProgramNode) : ProtocolFactory {
         }
     }
 
-    override fun guardVisibilityConstraint(protocol: Protocol, node: IfNode): SelectionConstraint =
+    override fun guardVisibilityConstraint(
+        protocol: Protocol,
+        node: IfNode,
+    ): SelectionConstraint =
         when {
             protocol is ArithABY ->
                 // Arithmetic circuits cannot mux, so keep the check.

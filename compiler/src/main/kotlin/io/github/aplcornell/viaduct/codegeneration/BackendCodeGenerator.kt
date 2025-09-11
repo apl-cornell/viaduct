@@ -73,18 +73,19 @@ private class BackendCodeGenerator(
         outBoxNames.getOrPut(outVariable) { context.newTemporary(context.kotlinName(outVariable) + "_box") }
 
     fun generateClass(): TypeSpec {
-        val classBuilder = TypeSpec.classBuilder(
-            host.name.replaceFirstChar { it.uppercase() },
-        ).primaryConstructor(
-            FunSpec.constructorBuilder()
-                .addParameter("runtime", ViaductRuntime::class)
-                .build(),
-        ).addProperty(
-            PropertySpec.builder("runtime", ViaductRuntime::class)
-                .initializer("runtime")
-                .addModifiers(KModifier.PRIVATE)
-                .build(),
-        )
+        val classBuilder =
+            TypeSpec.classBuilder(
+                host.name.replaceFirstChar { it.uppercase() },
+            ).primaryConstructor(
+                FunSpec.constructorBuilder()
+                    .addParameter("runtime", ViaductRuntime::class)
+                    .build(),
+            ).addProperty(
+                PropertySpec.builder("runtime", ViaductRuntime::class)
+                    .initializer("runtime")
+                    .addModifiers(KModifier.PRIVATE)
+                    .build(),
+            )
 
         for (protocol in protocolAnalysis.participatingProtocols(program)) {
             for (property in codeGenerator.setup(protocol)) {
@@ -126,7 +127,11 @@ private class BackendCodeGenerator(
         return hostFunctionBuilder.build()
     }
 
-    private fun generate(hostFunctionBuilder: FunSpec.Builder, stmt: StatementNode, host: Host) {
+    private fun generate(
+        hostFunctionBuilder: FunSpec.Builder,
+        stmt: StatementNode,
+        host: Host,
+    ) {
         when (stmt) {
             is LetNode -> {
                 val protocol = protocolAnalysis.primaryProtocol(stmt)
@@ -184,20 +189,21 @@ private class BackendCodeGenerator(
                 val outObjectDeclarations = arguments.filterIsInstance<ObjectDeclarationArgumentNode>()
 
                 // Declare boxed variables
-                val newNames = outObjectDeclarations.associateWith { outDeclaration ->
-                    val newName = context.newTemporary(context.kotlinName(outDeclaration.name.value) + "_boxed")
-                    hostFunctionBuilder.addStatement(
-                        "val %L = %T()",
-                        newName,
-                        Out::class.asClassName().parameterizedBy(
-                            codeGenerator.kotlinType(
-                                protocolAnalysis.primaryProtocol(outDeclaration),
-                                typeAnalysis.type(outDeclaration),
+                val newNames =
+                    outObjectDeclarations.associateWith { outDeclaration ->
+                        val newName = context.newTemporary(context.kotlinName(outDeclaration.name.value) + "_boxed")
+                        hostFunctionBuilder.addStatement(
+                            "val %L = %T()",
+                            newName,
+                            Out::class.asClassName().parameterizedBy(
+                                codeGenerator.kotlinType(
+                                    protocolAnalysis.primaryProtocol(outDeclaration),
+                                    typeAnalysis.type(outDeclaration),
+                                ),
                             ),
-                        ),
-                    )
-                    newName
-                }
+                        )
+                        newName
+                    }
 
                 // Call function
                 hostFunctionBuilder.addStatement(
@@ -276,7 +282,10 @@ private class BackendCodeGenerator(
         }
     }
 
-    private fun argument(protocol: Protocol, argument: FunctionArgumentNode): CodeBlock {
+    private fun argument(
+        protocol: Protocol,
+        argument: FunctionArgumentNode,
+    ): CodeBlock {
         return when (argument) {
             // Input arguments
             is ObjectReferenceArgumentNode -> {
@@ -297,44 +306,52 @@ private class BackendCodeGenerator(
         }
     }
 
-    private fun simpleStatement(protocol: Protocol, stmt: SimpleStatementNode): CodeBlock =
+    private fun simpleStatement(
+        protocol: Protocol,
+        stmt: SimpleStatementNode,
+    ): CodeBlock =
         when (stmt) {
-            is LetNode -> CodeBlock.of(
-                "val %N = %L",
-                context.kotlinName(stmt.name.value, protocol),
-                codeGenerator.exp(protocol, stmt.value),
-            )
+            is LetNode ->
+                CodeBlock.of(
+                    "val %N = %L",
+                    context.kotlinName(stmt.name.value, protocol),
+                    codeGenerator.exp(protocol, stmt.value),
+                )
 
-            is DeclarationNode -> CodeBlock.of(
-                "val %N = %L",
-                context.kotlinName(stmt.name.value),
-                codeGenerator.constructorCall(protocol, stmt.objectType, stmt.arguments),
-            )
+            is DeclarationNode ->
+                CodeBlock.of(
+                    "val %N = %L",
+                    context.kotlinName(stmt.name.value),
+                    codeGenerator.constructorCall(protocol, stmt.objectType, stmt.arguments),
+                )
 
             is UpdateNode -> codeGenerator.update(protocol, stmt)
 
             is OutParameterInitializationNode -> outParameterInitialization(protocol, stmt)
 
-            is OutputNode -> CodeBlock.of(
-                "runtime.output(%T(%L))",
-                typeAnalysis.type(stmt.message).valueClass,
-                codeGenerator.exp(protocol, stmt.message),
-            )
+            is OutputNode ->
+                CodeBlock.of(
+                    "runtime.output(%T(%L))",
+                    typeAnalysis.type(stmt.message).valueClass,
+                    codeGenerator.exp(protocol, stmt.message),
+                )
         }
 
     private fun outParameterInitialization(
         protocol: Protocol,
         stmt: OutParameterInitializationNode,
     ): CodeBlock {
-        val rhs = when (val init = stmt.initializer) {
-            is OutParameterConstructorInitializerNode -> codeGenerator.constructorCall(
-                protocol,
-                init.objectType,
-                init.arguments,
-            )
+        val rhs =
+            when (val init = stmt.initializer) {
+                is OutParameterConstructorInitializerNode ->
+                    codeGenerator.constructorCall(
+                        protocol,
+                        init.objectType,
+                        init.arguments,
+                    )
 
-            is OutParameterExpressionInitializerNode -> codeGenerator.exp(protocol, init.expression)
-        }
+                is OutParameterExpressionInitializerNode -> codeGenerator.exp(protocol, init.expression)
+            }
         val parameterName = context.kotlinName(stmt.name.value)
 
         return CodeBlock.of(
@@ -355,9 +372,10 @@ private class BackendCodeGenerator(
         private val receiveMember = MemberName(ViaductRuntime::class.java.packageName, "receive")
         private val sendMember = MemberName(ViaductRuntime::class.java.packageName, "send")
 
-        private val freshNameGenerator: FreshNameGenerator = FreshNameGenerator().apply {
-            this.getFreshName("runtime")
-        }
+        private val freshNameGenerator: FreshNameGenerator =
+            FreshNameGenerator().apply {
+                this.getFreshName("runtime")
+            }
 
         override val program: ProgramNode
             get() = this@BackendCodeGenerator.program
@@ -368,26 +386,32 @@ private class BackendCodeGenerator(
         override val protocolComposer: ProtocolComposer
             get() = this@BackendCodeGenerator.protocolComposer
 
-        override fun kotlinName(sourceName: Temporary, protocol: Protocol): String =
-            tempMap.getOrPut(Pair(sourceName, protocol)) { freshNameGenerator.getFreshName(sourceName.name.drop(1)) }
+        override fun kotlinName(
+            sourceName: Temporary,
+            protocol: Protocol,
+        ): String = tempMap.getOrPut(Pair(sourceName, protocol)) { freshNameGenerator.getFreshName(sourceName.name.drop(1)) }
 
         override fun kotlinName(sourceName: ObjectVariable): String =
             varMap.getOrPut(sourceName) { freshNameGenerator.getFreshName(sourceName.name) }
 
-        override fun newTemporary(baseName: String): String =
-            freshNameGenerator.getFreshName(baseName)
+        override fun newTemporary(baseName: String): String = freshNameGenerator.getFreshName(baseName)
 
-        override fun codeOf(host: Host) =
-            hostDeclarations.reference(host)
+        override fun codeOf(host: Host) = hostDeclarations.reference(host)
 
-        override fun receive(type: TypeName, sender: Host): CodeBlock =
+        override fun receive(
+            type: TypeName,
+            sender: Host,
+        ): CodeBlock =
             if (sender == context.host) {
                 CodeBlock.of("%L", selfSends.remove())
             } else {
                 CodeBlock.of("%N.%M<%T>(%L)", "runtime", receiveMember, type, codeOf(sender))
             }
 
-        override fun send(value: CodeBlock, receiver: Host): CodeBlock =
+        override fun send(
+            value: CodeBlock,
+            receiver: Host,
+        ): CodeBlock =
             if (receiver == context.host) {
                 val sendTemp = newTemporary("sendTemp")
                 selfSends.add(sendTemp)
@@ -396,8 +420,7 @@ private class BackendCodeGenerator(
                 CodeBlock.of("%N.%M(%L, %L)", "runtime", sendMember, value, codeOf(receiver))
             }
 
-        override fun url(host: Host): CodeBlock =
-            CodeBlock.of("%N.url(%L)", "runtime", codeOf(host))
+        override fun url(host: Host): CodeBlock = CodeBlock.of("%N.url(%L)", "runtime", codeOf(host))
     }
 }
 
@@ -418,8 +441,7 @@ private fun hostDeclarations(program: ProgramNode): TypeSpec {
 }
 
 /** Returns a reference to the declaration of [host]. */
-private fun TypeSpec.reference(host: Host): CodeBlock =
-    CodeBlock.of("%N.%N", this, host.name)
+private fun TypeSpec.reference(host: Host): CodeBlock = CodeBlock.of("%N.%N", this, host.name)
 
 fun ProgramNode.compileToKotlin(
     fileName: String,
@@ -467,24 +489,26 @@ fun ProgramNode.compileToKotlin(
     )
 
     // Generate code for each host.
-    val hostSpecs = hosts.map { host ->
-        BackendCodeGenerator(this, host, codeGenerator, protocolComposer, hostDeclarations).generateClass()
-    }
+    val hostSpecs =
+        hosts.map { host ->
+            BackendCodeGenerator(this, host, codeGenerator, protocolComposer, hostDeclarations).generateClass()
+        }
     objectBuilder.addTypes(hostSpecs)
 
     // Add a main function that handles dispatch.
-    val main = with(FunSpec.builder("main")) {
-        addModifiers(KModifier.OVERRIDE)
-        addParameter("host", Host::class)
-        addParameter("runtime", ViaductRuntime::class)
+    val main =
+        with(FunSpec.builder("main")) {
+            addModifiers(KModifier.OVERRIDE)
+            addParameter("host", Host::class)
+            addParameter("runtime", ViaductRuntime::class)
 
-        // Dispatch to correct class based on host.
-        beginControlFlow("when (host)")
-        this@compileToKotlin.hosts.zip(hostSpecs) { host, spec ->
-            addStatement("%L -> %N(%L).main()", hostDeclarations.reference(host), spec, "runtime")
+            // Dispatch to correct class based on host.
+            beginControlFlow("when (host)")
+            this@compileToKotlin.hosts.zip(hostSpecs) { host, spec ->
+                addStatement("%L -> %N(%L).main()", hostDeclarations.reference(host), spec, "runtime")
+            }
+            endControlFlow()
         }
-        endControlFlow()
-    }
     objectBuilder.addFunction(main.build())
 
     fileBuilder.addType(objectBuilder.build())

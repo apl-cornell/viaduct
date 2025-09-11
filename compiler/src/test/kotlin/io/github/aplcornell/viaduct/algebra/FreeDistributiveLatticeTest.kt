@@ -12,10 +12,10 @@ internal class FreeDistributiveLatticeTest {
 
     @Test
     fun testImply() {
-        /* For all y, the greatest x s.t. bottom & x <= y is top. */
+        // For all y, the greatest x s.t. bottom & x <= y is top.
         Assertions.assertEquals(top, bottom.imply(elemA))
 
-        /* For all y, the greatest x s.t. y & x <= y is top. */
+        // For all y, the greatest x s.t. y & x <= y is top.
         Assertions.assertEquals(top, elemA.imply(elemA))
         Assertions.assertEquals(elemB, elemA.imply(elemB))
         Assertions.assertEquals(elemB, elemA.imply(elemB.meet(elemA)))
@@ -36,10 +36,11 @@ internal class FreeDistributiveLatticeTest {
         val context1 = listOf(FreeDistributiveLattice.LessThanOrEqualTo(elemA, elemB))
         val context2 = listOf(FreeDistributiveLattice.LessThanOrEqualTo(elemA, top))
         val context3 = listOf(FreeDistributiveLattice.LessThanOrEqualTo(elemA, bottom))
-        val context4 = listOf(
-            FreeDistributiveLattice.LessThanOrEqualTo(elemA, elemA.meet(elemB.join(elemC))),
-            FreeDistributiveLattice.LessThanOrEqualTo(elemC.meet(elemA.join(elemB)), elemB.meet(elemC)),
-        )
+        val context4 =
+            listOf(
+                FreeDistributiveLattice.LessThanOrEqualTo(elemA, elemA.meet(elemB.join(elemC))),
+                FreeDistributiveLattice.LessThanOrEqualTo(elemC.meet(elemA.join(elemB)), elemB.meet(elemC)),
+            )
 
         assert(elemA.lessThanOrEqualTo(elemA, context0))
         assert(top.lessThanOrEqualTo(top, context0))

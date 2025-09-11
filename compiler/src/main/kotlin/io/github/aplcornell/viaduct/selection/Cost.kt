@@ -12,6 +12,7 @@ typealias CostFeature = String
 /** A commutative monoid that represents a notion of cost for a feature. */
 interface CostMonoid<C : CostMonoid<C>> : PrettyPrintable {
     fun concat(other: C): C
+
     fun zero(): C
 }
 
@@ -20,8 +21,7 @@ class IntegerCost(val cost: Int) : CostMonoid<IntegerCost> {
         fun zero(): IntegerCost = IntegerCost(0)
     }
 
-    override fun concat(other: IntegerCost): IntegerCost =
-        IntegerCost(this.cost + other.cost)
+    override fun concat(other: IntegerCost): IntegerCost = IntegerCost(this.cost + other.cost)
 
     override fun zero(): IntegerCost = IntegerCost.zero()
 
@@ -62,9 +62,10 @@ data class Cost<C : CostMonoid<C>>(
             this.features.map { kv -> kv.key to f(kv.key, kv.value) }.toMap().toPersistentMap(),
         )
 
-    fun update(feature: CostFeature, cost: C): Cost<C> =
-        Cost(features.put(feature, cost))
+    fun update(
+        feature: CostFeature,
+        cost: C,
+    ): Cost<C> = Cost(features.put(feature, cost))
 
-    override fun toDocument(): Document =
-        features.map { kv -> Document(kv.key) * ":" * kv.value }.braced()
+    override fun toDocument(): Document = features.map { kv -> Document(kv.key) * ":" * kv.value }.braced()
 }

@@ -20,10 +20,16 @@ interface CodeGeneratorContext {
     fun codeOf(host: Host): CodeBlock
 
     /** Returns code that will receive a value of type [type] from [sender]. */
-    fun receive(type: TypeName, sender: Host): CodeBlock
+    fun receive(
+        type: TypeName,
+        sender: Host,
+    ): CodeBlock
 
     /** Returns code that will send [value] to [receiver]. */
-    fun send(value: CodeBlock, receiver: Host): CodeBlock
+    fun send(
+        value: CodeBlock,
+        receiver: Host,
+    ): CodeBlock
 
     /** Returns code that will evaluate to the address of [host]. */
     fun url(host: Host): CodeBlock

@@ -102,14 +102,12 @@ class ProtocolAnalysis(
     /**
      * Returns the protocol that coordinates the execution of [parameter].
      */
-    fun primaryProtocol(parameter: ParameterNode): Protocol =
-        parameter.protocol?.value ?: throw NoProtocolAnnotationError(parameter)
+    fun primaryProtocol(parameter: ParameterNode): Protocol = parameter.protocol?.value ?: throw NoProtocolAnnotationError(parameter)
 
     /**
      * Returns the protocol that coordinates the execution of [argument].
      */
-    fun primaryProtocol(argument: FunctionArgumentNode): Protocol =
-        primaryProtocol(nameAnalysis.parameter(argument))
+    fun primaryProtocol(argument: FunctionArgumentNode): Protocol = primaryProtocol(nameAnalysis.parameter(argument))
 
     /**
      * The [primaryProtocol]s of [SimpleStatementNode]s that read the temporary defined by this
@@ -233,7 +231,10 @@ class ProtocolAnalysis(
     }
 
     /** Return the relevant communication events for [reader] reading from [letNode]. */
-    fun relevantCommunicationEvents(letNode: LetNode, reader: SimpleStatementNode): ProtocolCommunication {
+    fun relevantCommunicationEvents(
+        letNode: LetNode,
+        reader: SimpleStatementNode,
+    ): ProtocolCommunication {
         return ProtocolCommunication(letNode.relevantCommunicationEventsMap[reader]!!)
     }
 
@@ -403,5 +404,4 @@ class ProtocolAnalysis(
 }
 
 /** Returns the union of all sets in this collection. */
-private fun <E> Iterable<PersistentSet<E>>.unions(): PersistentSet<E> =
-    this.fold(persistentHashSetOf()) { acc, set -> acc.addAll(set) }
+private fun <E> Iterable<PersistentSet<E>>.unions(): PersistentSet<E> = this.fold(persistentHashSetOf()) { acc, set -> acc.addAll(set) }

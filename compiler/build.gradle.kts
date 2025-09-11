@@ -100,12 +100,10 @@ abstract class CompileCupTask : DefaultTask() {
         }
 
     @Internal
-    override fun getGroup(): String =
-        LifecycleBasePlugin.BUILD_TASK_NAME
+    override fun getGroup(): String = LifecycleBasePlugin.BUILD_TASK_NAME
 
     @Internal
-    override fun getDescription(): String =
-        "Generates Java sources from CUP grammar files."
+    override fun getDescription(): String = "Generates Java sources from CUP grammar files."
 
     @TaskAction
     fun compileAll() {
@@ -128,15 +126,17 @@ abstract class CompileCupTask : DefaultTask() {
         val className: String = cupFile.nameWithoutExtension
 
         project.mkdir(targetDirectory)
-        val args: List<String> = cupArguments.get() + listOf(
-            "-destdir",
-            targetDirectory.get().asFile.path,
-            "-package",
-            packageName,
-            "-parser",
-            className,
-            cupFile.path,
-        )
+        val args: List<String> =
+            cupArguments.get() +
+                listOf(
+                    "-destdir",
+                    targetDirectory.get().asFile.path,
+                    "-package",
+                    packageName,
+                    "-parser",
+                    className,
+                    cupFile.path,
+                )
         logger.info("java_cup ${args.joinToString(" ")}}")
         java_cup.Main.main(args.toTypedArray())
     }

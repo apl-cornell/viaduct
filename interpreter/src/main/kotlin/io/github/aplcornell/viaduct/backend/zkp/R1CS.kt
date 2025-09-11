@@ -36,7 +36,6 @@ class ZKPInit {
 
 // Assumes libsnarkwrapper has been initialized, and initZKP has been called already
 class R1CS(val isProver: Boolean, val wire: WireTerm, val is_eq_to: Long) {
-
     val primaryInputs: MutableMap<Int, Var> = mutableMapOf()
     val auxInputs: MutableMap<Int, Var> = mutableMapOf()
     val auxInputHashes: MutableMap<Int, VarArray> = mutableMapOf()
@@ -88,20 +87,22 @@ class R1CS(val isProver: Boolean, val wire: WireTerm, val is_eq_to: Long) {
             is WireIn -> {
                 assert(isProver)
                 if (!auxInputs.containsKey(this.index)) {
-                    auxInputs[this.index] = r1cs.mkPrivateValProver(
-                        this.v.toLong(),
-                        auxInputHashes[this.index]!!,
-                        auxInputNonces[this.index]!!,
-                    )
+                    auxInputs[this.index] =
+                        r1cs.mkPrivateValProver(
+                            this.v.toLong(),
+                            auxInputHashes[this.index]!!,
+                            auxInputNonces[this.index]!!,
+                        )
                 }
             }
             is WireDummyIn -> {
                 assert(!isProver)
                 if (!auxInputs.containsKey(this.index)) {
-                    auxInputs[this.index] = r1cs.mkPrivateValVerifier(
-                        auxInputHashes[this.index]!!,
-                        auxInputNonces[this.index]!!,
-                    )
+                    auxInputs[this.index] =
+                        r1cs.mkPrivateValVerifier(
+                            auxInputHashes[this.index]!!,
+                            auxInputNonces[this.index]!!,
+                        )
                 }
             }
             is WireConst -> {
@@ -136,7 +137,10 @@ class R1CS(val isProver: Boolean, val wire: WireTerm, val is_eq_to: Long) {
         return r1cs.generateProof(pk)
     }
 
-    fun verifyProof(vk: ByteBuf, pf: ByteBuf): Boolean {
+    fun verifyProof(
+        vk: ByteBuf,
+        pf: ByteBuf,
+    ): Boolean {
         assert(output != null)
         return r1cs.verifyProof(vk, pf)
     }
@@ -147,5 +151,7 @@ class R1CS(val isProver: Boolean, val wire: WireTerm, val is_eq_to: Long) {
     }
 }
 
-fun WireTerm.toR1CS(isProver: Boolean, is_eq_to: Int): R1CS =
-    R1CS(isProver, this, is_eq_to.toLong())
+fun WireTerm.toR1CS(
+    isProver: Boolean,
+    is_eq_to: Int,
+): R1CS = R1CS(isProver, this, is_eq_to.toLong())

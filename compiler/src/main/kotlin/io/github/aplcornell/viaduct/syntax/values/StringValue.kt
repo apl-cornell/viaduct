@@ -8,6 +8,5 @@ data class StringValue(val value: String) : Value() {
     override val type: ValueType
         get() = StringType
 
-    override fun toString(): String =
-        "\"$value\""
+    override fun toString(): String = "\"$value\""
 }

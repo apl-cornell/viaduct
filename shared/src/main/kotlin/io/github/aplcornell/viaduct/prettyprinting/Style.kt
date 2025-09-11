@@ -4,11 +4,18 @@ import org.fusesource.jansi.Ansi
 
 /** One of the 8 basic colors supported by the ANSI standard. */
 enum class AnsiBaseColor {
-    BLACK, RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN, WHITE;
+    BLACK,
+    RED,
+    GREEN,
+    YELLOW,
+    BLUE,
+    MAGENTA,
+    CYAN,
+    WHITE,
+    ;
 
     /** Converts our representation of colors to the one used by the ANSI library. */
-    internal fun toAnsiColor(): Ansi.Color =
-        ansiColors[this.ordinal]
+    internal fun toAnsiColor(): Ansi.Color = ansiColors[this.ordinal]
 
     companion object {
         /** Caches the call to [values] since it creates a new [Array] each time. */
@@ -52,7 +59,11 @@ object DefaultStyle : Style
 /** Converts this style description into ANSI escape codes. */
 internal fun Style.toAnsi(): Ansi {
     /** Calls [normal] when color is a [NormalColor] and [bright] when it is a [BrightColor]. */
-    fun setColor(color: AnsiColor, normal: (Ansi.Color) -> Ansi, bright: (Ansi.Color) -> Ansi) {
+    fun setColor(
+        color: AnsiColor,
+        normal: (Ansi.Color) -> Ansi,
+        bright: (Ansi.Color) -> Ansi,
+    ) {
         when (color) {
             is DefaultColor ->
                 normal(Ansi.Color.DEFAULT)

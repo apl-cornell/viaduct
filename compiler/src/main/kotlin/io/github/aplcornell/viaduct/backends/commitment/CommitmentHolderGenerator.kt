@@ -28,18 +28,24 @@ internal class CommitmentHolderGenerator(
 ) : AbstractCodeGenerator(context) {
     private val typeAnalysis = context.program.analyses.get<TypeAnalysis>()
 
-    override fun kotlinType(protocol: Protocol, sourceType: ValueType): TypeName =
-        (Commitment::class).asTypeName().parameterizedBy(typeTranslator(sourceType))
+    override fun kotlinType(
+        protocol: Protocol,
+        sourceType: ValueType,
+    ): TypeName = (Commitment::class).asTypeName().parameterizedBy(typeTranslator(sourceType))
 
-    override fun exp(protocol: Protocol, expr: ExpressionNode): CodeBlock =
+    override fun exp(
+        protocol: Protocol,
+        expr: ExpressionNode,
+    ): CodeBlock =
         when (expr) {
-            is LiteralNode -> CodeBlock.of(
-                "%T.%N(%L).%M()",
-                Committed::class,
-                "fake",
-                value(expr.value),
-                MemberName(Committed.Companion::class.asClassName(), "commitment"),
-            )
+            is LiteralNode ->
+                CodeBlock.of(
+                    "%T.%N(%L).%M()",
+                    Committed::class,
+                    "fake",
+                    value(expr.value),
+                    MemberName(Committed.Companion::class.asClassName(), "commitment"),
+                )
 
             else -> super.exp(protocol, expr)
         }

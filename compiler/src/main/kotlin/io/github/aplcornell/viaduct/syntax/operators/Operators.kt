@@ -65,20 +65,23 @@ abstract class UnaryPrefixOperator : UnaryOperator, PrefixOperator {
     final override val precedence: Precedence
         get() = HighestPrecedence
 
-    override fun toDocument(argument: PrettyPrintable): Document =
-        Document(this.toString()) + argument
+    override fun toDocument(argument: PrettyPrintable): Document = Document(this.toString()) + argument
 }
 
 /** A binary prefix operator. */
 abstract class BinaryPrefixOperator : BinaryOperator, PrefixOperator {
-    final override fun toDocument(argument1: PrettyPrintable, argument2: PrettyPrintable): Document =
-        Document(this.toString()) + listOf(argument1, argument2).tupled().nested()
+    final override fun toDocument(
+        argument1: PrettyPrintable,
+        argument2: PrettyPrintable,
+    ): Document = Document(this.toString()) + listOf(argument1, argument2).tupled().nested()
 }
 
 /** A binary infix operator. */
 abstract class BinaryInfixOperator : BinaryOperator, InfixOperator {
-    final override fun toDocument(argument1: PrettyPrintable, argument2: PrettyPrintable): Document =
-        argument1 * this.toString() * argument2
+    final override fun toDocument(
+        argument1: PrettyPrintable,
+        argument2: PrettyPrintable,
+    ): Document = argument1 * this.toString() * argument2
 }
 
 /** An infix operator that takes two numbers and returns a number. */
@@ -89,13 +92,19 @@ abstract class ArithmeticOperator : BinaryInfixOperator() {
     final override val type: FunctionType
         get() = FunctionType(IntegerType, IntegerType, result = IntegerType)
 
-    final override fun apply(argument1: Value, argument2: Value): Value {
+    final override fun apply(
+        argument1: Value,
+        argument2: Value,
+    ): Value {
         val arg1 = argument1 as IntegerValue
         val arg2 = argument2 as IntegerValue
         return IntegerValue(apply(arg1.value, arg2.value))
     }
 
-    abstract fun apply(left: Int, right: Int): Int
+    abstract fun apply(
+        left: Int,
+        right: Int,
+    ): Int
 }
 
 /** An infix operator that takes two booleans and returns a boolean. */
@@ -109,13 +118,19 @@ abstract class LogicalOperator : BinaryInfixOperator() {
     final override val type: FunctionType
         get() = FunctionType(BooleanType, BooleanType, result = BooleanType)
 
-    final override fun apply(argument1: Value, argument2: Value): Value {
+    final override fun apply(
+        argument1: Value,
+        argument2: Value,
+    ): Value {
         val arg1 = argument1 as BooleanValue
         val arg2 = argument2 as BooleanValue
         return BooleanValue(apply(arg1.value, arg2.value))
     }
 
-    abstract fun apply(left: Boolean, right: Boolean): Boolean
+    abstract fun apply(
+        left: Boolean,
+        right: Boolean,
+    ): Boolean
 }
 
 /** An infix operator that takes two numbers and returns a boolean. */
@@ -129,13 +144,19 @@ abstract class ComparisonOperator : BinaryInfixOperator() {
     final override val type: FunctionType
         get() = FunctionType(IntegerType, IntegerType, result = BooleanType)
 
-    final override fun apply(argument1: Value, argument2: Value): Value {
+    final override fun apply(
+        argument1: Value,
+        argument2: Value,
+    ): Value {
         val arg1 = argument1 as IntegerValue
         val arg2 = argument2 as IntegerValue
         return BooleanValue(apply(arg1.value, arg2.value))
     }
 
-    abstract fun apply(left: Int, right: Int): Boolean
+    abstract fun apply(
+        left: Int,
+        right: Int,
+    ): Boolean
 }
 
 // Arithmetic Operators
@@ -157,7 +178,10 @@ object Addition : ArithmeticOperator() {
     override val precedence: Precedence
         get() = AdditiveOperatorPrecedence
 
-    override fun apply(left: Int, right: Int): Int {
+    override fun apply(
+        left: Int,
+        right: Int,
+    ): Int {
         return left + right
     }
 
@@ -170,7 +194,10 @@ object Subtraction : ArithmeticOperator() {
     override val precedence: Precedence
         get() = AdditiveOperatorPrecedence
 
-    override fun apply(left: Int, right: Int): Int {
+    override fun apply(
+        left: Int,
+        right: Int,
+    ): Int {
         return left - right
     }
 
@@ -183,7 +210,10 @@ object Multiplication : ArithmeticOperator() {
     override val precedence: Precedence
         get() = MultiplicativeOperatorPrecedence
 
-    override fun apply(left: Int, right: Int): Int {
+    override fun apply(
+        left: Int,
+        right: Int,
+    ): Int {
         return left * right
     }
 
@@ -196,7 +226,10 @@ object Division : ArithmeticOperator() {
     override val precedence: Precedence
         get() = MultiplicativeOperatorPrecedence
 
-    override fun apply(left: Int, right: Int): Int {
+    override fun apply(
+        left: Int,
+        right: Int,
+    ): Int {
         return left / right
     }
 
@@ -212,7 +245,10 @@ object Minimum : BinaryPrefixOperator() {
     override val type: FunctionType
         get() = FunctionType(IntegerType, IntegerType, result = IntegerType)
 
-    override fun apply(argument1: Value, argument2: Value): Value {
+    override fun apply(
+        argument1: Value,
+        argument2: Value,
+    ): Value {
         val arg1 = argument1 as IntegerValue
         val arg2 = argument2 as IntegerValue
         return IntegerValue(min(arg1.value, arg2.value))
@@ -230,7 +266,10 @@ object Maximum : BinaryPrefixOperator() {
     override val type: FunctionType
         get() = Minimum.type
 
-    override fun apply(argument1: Value, argument2: Value): Value {
+    override fun apply(
+        argument1: Value,
+        argument2: Value,
+    ): Value {
         val arg1 = argument1 as IntegerValue
         val arg2 = argument2 as IntegerValue
         return IntegerValue(max(arg1.value, arg2.value))
@@ -257,7 +296,10 @@ object Not : UnaryPrefixOperator() {
 }
 
 object And : LogicalOperator() {
-    override fun apply(left: Boolean, right: Boolean): Boolean {
+    override fun apply(
+        left: Boolean,
+        right: Boolean,
+    ): Boolean {
         return left && right
     }
 
@@ -267,7 +309,10 @@ object And : LogicalOperator() {
 }
 
 object Or : LogicalOperator() {
-    override fun apply(left: Boolean, right: Boolean): Boolean {
+    override fun apply(
+        left: Boolean,
+        right: Boolean,
+    ): Boolean {
         return left || right
     }
 
@@ -279,7 +324,10 @@ object Or : LogicalOperator() {
 // Comparison Operators
 
 object EqualTo : ComparisonOperator() {
-    override fun apply(left: Int, right: Int): Boolean {
+    override fun apply(
+        left: Int,
+        right: Int,
+    ): Boolean {
         return left == right
     }
 
@@ -289,7 +337,10 @@ object EqualTo : ComparisonOperator() {
 }
 
 object ExclusiveOr : ComparisonOperator() {
-    override fun apply(left: Int, right: Int): Boolean {
+    override fun apply(
+        left: Int,
+        right: Int,
+    ): Boolean {
         return left != right
     }
 
@@ -299,7 +350,10 @@ object ExclusiveOr : ComparisonOperator() {
 }
 
 object LessThan : ComparisonOperator() {
-    override fun apply(left: Int, right: Int): Boolean {
+    override fun apply(
+        left: Int,
+        right: Int,
+    ): Boolean {
         return left < right
     }
 
@@ -309,7 +363,10 @@ object LessThan : ComparisonOperator() {
 }
 
 object LessThanOrEqualTo : ComparisonOperator() {
-    override fun apply(left: Int, right: Int): Boolean {
+    override fun apply(
+        left: Int,
+        right: Int,
+    ): Boolean {
         return left <= right
     }
 
@@ -319,7 +376,10 @@ object LessThanOrEqualTo : ComparisonOperator() {
 }
 
 object GreaterThan : ComparisonOperator() {
-    override fun apply(left: Int, right: Int): Boolean {
+    override fun apply(
+        left: Int,
+        right: Int,
+    ): Boolean {
         return left > right
     }
 
@@ -329,7 +389,10 @@ object GreaterThan : ComparisonOperator() {
 }
 
 object GreaterThanOrEqualTo : ComparisonOperator() {
-    override fun apply(left: Int, right: Int): Boolean {
+    override fun apply(
+        left: Int,
+        right: Int,
+    ): Boolean {
         return left >= right
     }
 
@@ -352,8 +415,7 @@ object Mux : InfixOperator {
     override val type: FunctionType
         get() = FunctionType(BooleanType, IntegerType, IntegerType, result = IntegerType)
 
-    override fun alternativeTypes(): List<FunctionType> =
-        listOf(FunctionType(BooleanType, BooleanType, BooleanType, result = BooleanType))
+    override fun alternativeTypes(): List<FunctionType> = listOf(FunctionType(BooleanType, BooleanType, BooleanType, result = BooleanType))
 
     override fun apply(arguments: List<Value>): Value {
         return if ((arguments[0] as BooleanValue).value) arguments[1] else arguments[2]

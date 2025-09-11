@@ -13,6 +13,7 @@ import io.github.aplcornell.viaduct.syntax.values.Value
 
 /** A computation that produces a result. */
 sealed class ExpressionNode : Node()
+
 sealed class IndexExpressionNode : ExpressionNode()
 
 /** A literal constant. */

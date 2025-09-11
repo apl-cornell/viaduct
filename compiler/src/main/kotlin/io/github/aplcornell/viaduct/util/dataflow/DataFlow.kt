@@ -54,7 +54,10 @@ private class DataFlow<A : MeetSemiLattice<A>, NodeT : DataFlowNode<A>, EdgeT : 
      * @param value the new out value
      * @return `true` if the value is changed
      */
-    private fun setNodeOutValue(node: NodeT, value: A): Boolean {
+    private fun setNodeOutValue(
+        node: NodeT,
+        value: A,
+    ): Boolean {
         val oldValue = nodeOutValues[node]
         if (value == oldValue) {
             return false

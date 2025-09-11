@@ -51,8 +51,7 @@ class ParameterNode(
     override val children: Iterable<Node>
         get() = listOf(type)
 
-    override fun toDocument(): Document =
-        name + Document(":") * type.toDocument()
+    override fun toDocument(): Document = name + Document(":") * type.toDocument()
 }
 
 /** A simple block of statements with no control flow, all on one protocol */
@@ -69,7 +68,8 @@ class CircuitDeclarationNode(
         get() = sizes + inputs + outputs + listOf(body)
 
     override fun toDocument(): Document =
-        ((keyword("circuit fun") * "<" + sizes.joined() + ">") * name + "@" + protocol.value.toDocument() + inputs.tupled() * "->") * outputs.joined() * body
+        (keyword("circuit fun") * "<" + sizes.joined() + ">") * name + "@" + protocol.value.toDocument() +
+            inputs.tupled() * "->" * outputs.joined() * body
 }
 
 class FunctionDeclarationNode(

@@ -17,11 +17,12 @@ object ABYBackend : Backend {
         get() = setOf(ArithABY.protocolName, BoolABY.protocolName, YaoABY.protocolName)
 
     override val protocolParsers: Map<ProtocolName, ProtocolParser<Protocol>>
-        get() = mapOf(
-            ArithABY.protocolName to ArithABYProtocolParser,
-            BoolABY.protocolName to BoolABYProtocolParser,
-            YaoABY.protocolName to YaoABYProtocolParser,
-        )
+        get() =
+            mapOf(
+                ArithABY.protocolName to ArithABYProtocolParser,
+                BoolABY.protocolName to BoolABYProtocolParser,
+                YaoABY.protocolName to YaoABYProtocolParser,
+            )
 
     override fun protocolFactory(program: ProgramNode): ProtocolFactory = ABYProtocolFactory(program)
 
@@ -30,6 +31,5 @@ object ABYBackend : Backend {
 
     override fun codeGenerator(context: CodeGeneratorContext): CodeGenerator = ABYCodeGenerator(context)
 
-    override fun circuitCodeGenerator(context: CircuitCodeGeneratorContext): CircuitCodeGenerator =
-        ABYCircuitCodeGenerator(context)
+    override fun circuitCodeGenerator(context: CircuitCodeGeneratorContext): CircuitCodeGenerator = ABYCircuitCodeGenerator(context)
 }

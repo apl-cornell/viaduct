@@ -75,21 +75,30 @@ class ABYCodeGenerator(
         const val BIT_LENGTH: Int = 32
     }
 
-    private fun role(protocol: Protocol, host: Host): Role =
+    private fun role(
+        protocol: Protocol,
+        host: Host,
+    ): Role =
         if ((protocol as ABY).client == host) {
             Role.CLIENT
         } else {
             Role.SERVER
         }
 
-    private fun address(protocol: ABY, host: Host) =
-        if (role(protocol, host) == Role.SERVER) {
-            CodeBlock.of("%S", "")
-        } else {
-            CodeBlock.of("%L.hostName", context.url(protocol.server))
-        }
+    private fun address(
+        protocol: ABY,
+        host: Host,
+    ) = if (role(protocol, host) == Role.SERVER) {
+        CodeBlock.of("%S", "")
+    } else {
+        CodeBlock.of("%L.hostName", context.url(protocol.server))
+    }
 
-    private fun abyParty(protocol: ABY, role: Role, port: String): CodeBlock =
+    private fun abyParty(
+        protocol: ABY,
+        role: Role,
+        port: String,
+    ): CodeBlock =
         CodeBlock.of(
             "ABYParty(%L, %L, %L)",
             roleToCodeBlock(role),
@@ -97,7 +106,10 @@ class ABYCodeGenerator(
             port,
         )
 
-    private fun abyPartySetup(protocol: Protocol, role: Role): CodeBlock {
+    private fun abyPartySetup(
+        protocol: Protocol,
+        role: Role,
+    ): CodeBlock {
         val abyPartyBuilder = CodeBlock.builder()
         val portVarName = context.newTemporary("port")
         when (role) {
@@ -224,7 +236,10 @@ class ABYCodeGenerator(
         )
     }
 
-    private fun valueToShare(value: Value, protocol: Protocol): CodeBlock =
+    private fun valueToShare(
+        value: Value,
+        protocol: Protocol,
+    ): CodeBlock =
         when (value) {
             is BooleanValue ->
                 CodeBlock.of(
@@ -250,10 +265,13 @@ class ABYCodeGenerator(
         gateMethod: CodeBlock,
         arg1: CodeBlock,
         arg2: CodeBlock,
-    ): CodeBlock =
-        CodeBlock.of("%L.%L(%L, %L)", circuit, gateMethod, arg1, arg2)
+    ): CodeBlock = CodeBlock.of("%L.%L(%L, %L)", circuit, gateMethod, arg1, arg2)
 
-    private fun shareOfOperatorApplication(protocol: Protocol, op: Operator, args: List<CodeBlock>): CodeBlock =
+    private fun shareOfOperatorApplication(
+        protocol: Protocol,
+        op: Operator,
+        args: List<CodeBlock>,
+    ): CodeBlock =
         when (op) {
             Minimum ->
                 CodeBlock.of(
@@ -427,24 +445,33 @@ class ABYCodeGenerator(
                     protocolToAbyPartyCircuit(protocol),
                     args.last(),
                     args.first(),
-
                 )
 
             else -> throw UnsupportedOperationException("Unknown operator $op.")
         }
 
-    override fun kotlinType(protocol: Protocol, sourceType: ValueType): TypeName = (Share::class).asTypeName()
+    override fun kotlinType(
+        protocol: Protocol,
+        sourceType: ValueType,
+    ): TypeName = (Share::class).asTypeName()
 
-    override fun exp(protocol: Protocol, expr: ExpressionNode): CodeBlock =
+    override fun exp(
+        protocol: Protocol,
+        expr: ExpressionNode,
+    ): CodeBlock =
         when (expr) {
             is LiteralNode -> valueToShare(expr.value, protocol)
 
             is ReadNode -> {
-                val conversion = addConversionGates(
-                    protocol, // destination protocol
-                    protocolAnalysis.primaryProtocol(expr), // source protocol
-                    context.kotlinName(expr.temporary.value, protocolAnalysis.primaryProtocol(expr)), // share name
-                )
+                val conversion =
+                    addConversionGates(
+                        // destination protocol
+                        protocol,
+                        // source protocol
+                        protocolAnalysis.primaryProtocol(expr),
+                        // share name
+                        context.kotlinName(expr.temporary.value, protocolAnalysis.primaryProtocol(expr)),
+                    )
                 if (conversion != CodeBlock.of("")) {
                     CodeBlock.of(
                         "%L%L",
@@ -476,7 +503,6 @@ class ABYCodeGenerator(
                                             "secretIndexQuery",
                                             exp(protocol, expr.arguments.first()),
                                             context.kotlinName(expr.variable.value),
-
                                         )
 
                                     true ->
@@ -511,79 +537,85 @@ class ABYCodeGenerator(
     private fun clearArgument(arg: AtomicExpressionNode): Boolean =
         when (arg) {
             is LiteralNode -> true
-            is ReadNode -> protocolAnalysis.relevantCommunicationEvents(arg)
-                .all { event -> event.recv.id == ABY.CLEARTEXT_INPUT }
+            is ReadNode ->
+                protocolAnalysis.relevantCommunicationEvents(arg)
+                    .all { event -> event.recv.id == ABY.CLEARTEXT_INPUT }
         }
 
-    override fun update(protocol: Protocol, stmt: UpdateNode): CodeBlock =
+    override fun update(
+        protocol: Protocol,
+        stmt: UpdateNode,
+    ): CodeBlock =
         when (typeAnalysis.type(nameAnalysis.declaration(stmt))) {
             is VectorType -> {
                 when (clearArgument(stmt.arguments.first())) {
-                    false -> when (stmt.update.value) {
-                        is io.github.aplcornell.viaduct.syntax.datatypes.Set -> {
-                            CodeBlock.of(
-                                "%N.%N(%L, %L, %L)",
-                                context.kotlinName(stmt.variable.value),
-                                "secretUpdateSet",
-                                protocolToAbyPartyCircuit(protocol),
-                                exp(protocol, stmt.arguments.first()),
-                                exp(protocol, stmt.arguments.last()),
-                            )
-                        }
+                    false ->
+                        when (stmt.update.value) {
+                            is io.github.aplcornell.viaduct.syntax.datatypes.Set -> {
+                                CodeBlock.of(
+                                    "%N.%N(%L, %L, %L)",
+                                    context.kotlinName(stmt.variable.value),
+                                    "secretUpdateSet",
+                                    protocolToAbyPartyCircuit(protocol),
+                                    exp(protocol, stmt.arguments.first()),
+                                    exp(protocol, stmt.arguments.last()),
+                                )
+                            }
 
-                        is Modify -> {
-                            CodeBlock.of(
-                                "%N.%N(%N, %N, %L)",
-                                context.kotlinName(stmt.variable.value),
-                                "secretUpdateModify",
-                                protocolToAbyPartyCircuit(protocol),
-                                exp(protocol, stmt.arguments.first()),
-                                shareOfOperatorApplication(
-                                    protocol,
-                                    stmt.update.value.operator,
-                                    listOf(
-                                        CodeBlock.of("it"),
-                                        exp(protocol, stmt.arguments.last()),
-                                    ),
-                                ),
-                            )
-                        }
-
-                        else -> throw UnsupportedOperatorException(protocol, stmt)
-                    }
-
-                    true -> when (stmt.update.value) {
-                        is io.github.aplcornell.viaduct.syntax.datatypes.Set -> {
-                            CodeBlock.of(
-                                "%N[%L] = %L",
-                                context.kotlinName(stmt.variable.value),
-                                cleartextExp(protocol, stmt.arguments.first()),
-                                exp(protocol, stmt.arguments.last()),
-                            )
-                        }
-
-                        is Modify -> {
-                            CodeBlock.of(
-                                "%N[%L] = %L",
-                                context.kotlinName(stmt.variable.value),
-                                cleartextExp(protocol, stmt.arguments.first()),
-                                shareOfOperatorApplication(
-                                    protocol,
-                                    stmt.update.value.operator,
-                                    listOf(
-                                        CodeBlock.of(
-                                            "%N[%L]",
-                                            context.kotlinName(stmt.variable.value),
-                                            cleartextExp(protocol, stmt.arguments.first()),
+                            is Modify -> {
+                                CodeBlock.of(
+                                    "%N.%N(%N, %N, %L)",
+                                    context.kotlinName(stmt.variable.value),
+                                    "secretUpdateModify",
+                                    protocolToAbyPartyCircuit(protocol),
+                                    exp(protocol, stmt.arguments.first()),
+                                    shareOfOperatorApplication(
+                                        protocol,
+                                        stmt.update.value.operator,
+                                        listOf(
+                                            CodeBlock.of("it"),
+                                            exp(protocol, stmt.arguments.last()),
                                         ),
-                                        exp(protocol, stmt.arguments.last()),
                                     ),
-                                ),
-                            )
+                                )
+                            }
+
+                            else -> throw UnsupportedOperatorException(protocol, stmt)
                         }
 
-                        else -> throw UnsupportedOperatorException(protocol, stmt)
-                    }
+                    true ->
+                        when (stmt.update.value) {
+                            is io.github.aplcornell.viaduct.syntax.datatypes.Set -> {
+                                CodeBlock.of(
+                                    "%N[%L] = %L",
+                                    context.kotlinName(stmt.variable.value),
+                                    cleartextExp(protocol, stmt.arguments.first()),
+                                    exp(protocol, stmt.arguments.last()),
+                                )
+                            }
+
+                            is Modify -> {
+                                CodeBlock.of(
+                                    "%N[%L] = %L",
+                                    context.kotlinName(stmt.variable.value),
+                                    cleartextExp(protocol, stmt.arguments.first()),
+                                    shareOfOperatorApplication(
+                                        protocol,
+                                        stmt.update.value.operator,
+                                        listOf(
+                                            CodeBlock.of(
+                                                "%N[%L]",
+                                                context.kotlinName(stmt.variable.value),
+                                                cleartextExp(protocol, stmt.arguments.first()),
+                                            ),
+                                            exp(protocol, stmt.arguments.last()),
+                                        ),
+                                    ),
+                                )
+                            }
+
+                            else -> throw UnsupportedOperatorException(protocol, stmt)
+                        }
                 }
             }
 

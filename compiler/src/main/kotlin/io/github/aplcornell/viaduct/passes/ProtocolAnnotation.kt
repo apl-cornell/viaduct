@@ -17,8 +17,7 @@ import io.github.aplcornell.viaduct.syntax.intermediate.ProgramNode
 import io.github.aplcornell.viaduct.syntax.intermediate.StatementNode
 
 /** Annotate parameters, declarations, and let nodes with protocols. */
-fun ProgramNode.annotateWithProtocols(assignment: ProtocolAssignment): ProgramNode =
-    ProtocolAnnotator(this, assignment).run()
+fun ProgramNode.annotateWithProtocols(assignment: ProtocolAssignment): ProgramNode = ProtocolAnnotator(this, assignment).run()
 
 /** Annotate AST with protocol assignment. */
 private class ProtocolAnnotator(val program: ProgramNode, val selection: ProtocolAssignment) {

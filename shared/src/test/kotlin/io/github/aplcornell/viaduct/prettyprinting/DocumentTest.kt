@@ -169,8 +169,7 @@ internal class DocumentTest {
 
     @Nested
     inner class Unicode {
-        private fun String.shouldPrintToItself() =
-            Document(this).shouldPrintTo(this)
+        private fun String.shouldPrintToItself() = Document(this).shouldPrintTo(this)
 
         @Test
         fun `BMP Unicode characters (1 UTF-16 code unit)`() {
@@ -199,16 +198,20 @@ internal class DocumentTest {
     /** Note: unfortunately, all of these must be visually inspected. */
     inner class AnsiStyling {
         private fun Document.setForegroundColor(color: AnsiColor) =
-            this.styled(object : Style {
-                override val foregroundColor: AnsiColor
-                    get() = color
-            })
+            this.styled(
+                object : Style {
+                    override val foregroundColor: AnsiColor
+                        get() = color
+                },
+            )
 
         private fun Document.setBackgroundColor(color: AnsiColor) =
-            this.styled(object : Style {
-                override val backgroundColor: AnsiColor
-                    get() = color
-            })
+            this.styled(
+                object : Style {
+                    override val backgroundColor: AnsiColor
+                        get() = color
+                },
+            )
 
         @Test
         fun `default foreground color`() {
@@ -254,7 +257,7 @@ internal class DocumentTest {
                 Document("italic").styled(Italic) *
                     Document("bold").styled(Bold) *
                     Document("underline").styled(Underline)
-                ).show()
+            ).show()
         }
     }
 }
@@ -265,8 +268,7 @@ private fun Document.shouldPrintTo(expected: String) {
 }
 
 /** Prints [this] document for user inspection. */
-private fun Document.show() =
-    (this + Document.lineBreak).print(System.out, ansi = true)
+private fun Document.show() = (this + Document.lineBreak).print(System.out, ansi = true)
 
 private object Italic : Style {
     override val italic: Boolean

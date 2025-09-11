@@ -8,23 +8,38 @@ import io.github.aplcornell.viaduct.syntax.values.IntegerValue
 import io.github.aplcornell.viaduct.syntax.values.Value
 
 sealed class CleartextClassObject {
-    abstract fun query(query: QueryNameNode, arguments: List<Value>): Value
+    abstract fun query(
+        query: QueryNameNode,
+        arguments: List<Value>,
+    ): Value
 
-    abstract fun update(update: UpdateNameNode, arguments: List<Value>)
+    abstract fun update(
+        update: UpdateNameNode,
+        arguments: List<Value>,
+    )
 }
 
 object NullObject : CleartextClassObject() {
-    override fun query(query: QueryNameNode, arguments: List<Value>): Value {
+    override fun query(
+        query: QueryNameNode,
+        arguments: List<Value>,
+    ): Value {
         throw Exception("runtime error")
     }
 
-    override fun update(update: UpdateNameNode, arguments: List<Value>) {
+    override fun update(
+        update: UpdateNameNode,
+        arguments: List<Value>,
+    ) {
         throw Exception("runtime error")
     }
 }
 
 class ImmutableCellObject(val value: Value) : CleartextClassObject() {
-    override fun query(query: QueryNameNode, arguments: List<Value>): Value {
+    override fun query(
+        query: QueryNameNode,
+        arguments: List<Value>,
+    ): Value {
         return when (query.value) {
             is Get -> value
 
@@ -34,13 +49,19 @@ class ImmutableCellObject(val value: Value) : CleartextClassObject() {
         }
     }
 
-    override fun update(update: UpdateNameNode, arguments: List<Value>) {
+    override fun update(
+        update: UpdateNameNode,
+        arguments: List<Value>,
+    ) {
         throw Exception("runtime error")
     }
 }
 
 class MutableCellObject(var value: Value) : CleartextClassObject() {
-    override fun query(query: QueryNameNode, arguments: List<Value>): Value {
+    override fun query(
+        query: QueryNameNode,
+        arguments: List<Value>,
+    ): Value {
         return when (query.value) {
             is Get -> value
 
@@ -50,20 +71,24 @@ class MutableCellObject(var value: Value) : CleartextClassObject() {
         }
     }
 
-    override fun update(update: UpdateNameNode, arguments: List<Value>) {
-        value = when (val updateValue = update.value) {
-            is io.github.aplcornell.viaduct.syntax.datatypes.Set -> {
-                arguments[0]
-            }
+    override fun update(
+        update: UpdateNameNode,
+        arguments: List<Value>,
+    ) {
+        value =
+            when (val updateValue = update.value) {
+                is io.github.aplcornell.viaduct.syntax.datatypes.Set -> {
+                    arguments[0]
+                }
 
-            is Modify -> {
-                updateValue.operator.apply(value, arguments[0])
-            }
+                is Modify -> {
+                    updateValue.operator.apply(value, arguments[0])
+                }
 
-            else -> {
-                throw Exception("runtime error")
+                else -> {
+                    throw Exception("runtime error")
+                }
             }
-        }
     }
 }
 
@@ -76,7 +101,10 @@ class VectorObject(val size: Int, defaultValue: Value) : CleartextClassObject() 
         }
     }
 
-    override fun query(query: QueryNameNode, arguments: List<Value>): Value {
+    override fun query(
+        query: QueryNameNode,
+        arguments: List<Value>,
+    ): Value {
         return when (query.value) {
             // TODO: fail silently when index is out of bounds
             is Get -> {
@@ -90,21 +118,25 @@ class VectorObject(val size: Int, defaultValue: Value) : CleartextClassObject() 
         }
     }
 
-    override fun update(update: UpdateNameNode, arguments: List<Value>) {
+    override fun update(
+        update: UpdateNameNode,
+        arguments: List<Value>,
+    ) {
         val index = arguments[0] as IntegerValue
 
-        values[index.value] = when (val updateValue = update.value) {
-            is io.github.aplcornell.viaduct.syntax.datatypes.Set -> {
-                arguments[1]
-            }
+        values[index.value] =
+            when (val updateValue = update.value) {
+                is io.github.aplcornell.viaduct.syntax.datatypes.Set -> {
+                    arguments[1]
+                }
 
-            is Modify -> {
-                updateValue.operator.apply(values[index.value], arguments[1])
-            }
+                is Modify -> {
+                    updateValue.operator.apply(values[index.value], arguments[1])
+                }
 
-            else -> {
-                throw Exception("runtime error")
+                else -> {
+                    throw Exception("runtime error")
+                }
             }
-        }
     }
 }

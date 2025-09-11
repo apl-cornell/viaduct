@@ -65,7 +65,9 @@ import kotlin.system.measureTimeMillis
 private var logger = KotlinLogging.logger("ABY")
 
 sealed class ABYValue
+
 data class ABYCleartextValue(val value: Value) : ABYValue()
+
 data class ABYSecretValue(val value: ABYCircuitGate) : ABYValue()
 
 class ABYProtocolInterpreter(
@@ -193,7 +195,11 @@ class ABYProtocolInterpreter(
         return ABYNullObject
     }
 
-    private fun valueToCircuit(circuitType: ABYCircuitType, value: Value, isInput: Boolean = false): ABYCircuitGate {
+    private fun valueToCircuit(
+        circuitType: ABYCircuitType,
+        value: Value,
+        isInput: Boolean = false,
+    ): ABYCircuitGate {
         return when (value) {
             is BooleanValue ->
                 if (isInput) {
@@ -221,7 +227,10 @@ class ABYProtocolInterpreter(
         }
     }
 
-    private fun runSecretExpr(circuitType: ABYCircuitType, expr: PureExpressionNode): ABYCircuitGate {
+    private fun runSecretExpr(
+        circuitType: ABYCircuitType,
+        expr: PureExpressionNode,
+    ): ABYCircuitGate {
         return when (expr) {
             is LiteralNode -> valueToCircuit(circuitType, expr.value)
 
@@ -268,11 +277,13 @@ class ABYProtocolInterpreter(
     }
 
     private abstract class ScheduleNode
+
     private data class CircuitNode(val gate: ABYCircuitGate) : ScheduleNode()
+
     private data class ParentMarker(val parent: ABYCircuitGate?) : ScheduleNode()
 
     /* compute the order in which circuits for variables gates should be generated;
-    *  this has to be done in topological order */
+     *  this has to be done in topological order */
     private fun computeVariableSchedule(outGate: ABYCircuitGate): List<ABYCircuitGate> {
         // pre-order traversal of circuit
         val traverseStack = Stack<ScheduleNode>()
@@ -290,7 +301,10 @@ class ABYProtocolInterpreter(
                     // update parent map
                     if (parent != null && curGate.variableGate) {
                         childrenMap[parent] =
-                            childrenMap[parent]?.let { it.add(curGate); it } ?: mutableSetOf(curGate)
+                            childrenMap[parent]?.let {
+                                it.add(curGate)
+                                it
+                            } ?: mutableSetOf(curGate)
                     }
 
                     if (!visitedVariables.contains(curGate) || !curGate.variableGate) {
@@ -408,7 +422,10 @@ class ABYProtocolInterpreter(
         return variableCircuitMap
     }
 
-    private fun executeABYCircuit(letNode: LetNode, receivingHosts: Set<Host>): Value? {
+    private fun executeABYCircuit(
+        letNode: LetNode,
+        receivingHosts: Set<Host>,
+    ): Value? {
         val thisHostReceives = receivingHosts.contains(host)
         val otherHostReceives = receivingHosts.contains(otherHost)
         val outRole: Role =
@@ -478,11 +495,17 @@ class ABYProtocolInterpreter(
         }
     }
 
-    override suspend fun runGuard(protocol: Protocol, expr: AtomicExpressionNode): Value {
+    override suspend fun runGuard(
+        protocol: Protocol,
+        expr: AtomicExpressionNode,
+    ): Value {
         throw ViaductInterpreterError("ABY: Cannot execute conditional guard")
     }
 
-    override suspend fun runLet(protocol: Protocol, stmt: LetNode) {
+    override suspend fun runLet(
+        protocol: Protocol,
+        stmt: LetNode,
+    ) {
         when (val rhs = stmt.value) {
             is InputNode -> throw ViaductInterpreterError("cannot perform I/O in non-Local protocol")
 
@@ -494,12 +517,18 @@ class ABYProtocolInterpreter(
         }
     }
 
-    override suspend fun runUpdate(protocol: Protocol, stmt: UpdateNode) {
+    override suspend fun runUpdate(
+        protocol: Protocol,
+        stmt: UpdateNode,
+    ) {
         getObject(getObjectLocation(stmt.variable.value))
             .update(protocolCircuitType[protocol.protocolName]!!, stmt.update, stmt.arguments)
     }
 
-    override suspend fun runOutput(protocol: Protocol, stmt: OutputNode) {
+    override suspend fun runOutput(
+        protocol: Protocol,
+        stmt: OutputNode,
+    ) {
         throw ViaductInterpreterError("cannot perform I/O in non-Local protocol")
     }
 
@@ -648,19 +677,20 @@ class ABYProtocolInterpreter(
             update: UpdateNameNode,
             arguments: List<AtomicExpressionNode>,
         ) {
-            gate = when (val updateValue = update.value) {
-                is io.github.aplcornell.viaduct.syntax.datatypes.Set -> {
-                    this@ABYProtocolInterpreter.runSecretExpr(circuitType, arguments[0])
-                }
+            gate =
+                when (val updateValue = update.value) {
+                    is io.github.aplcornell.viaduct.syntax.datatypes.Set -> {
+                        this@ABYProtocolInterpreter.runSecretExpr(circuitType, arguments[0])
+                    }
 
-                is Modify -> {
-                    val circuitArg: ABYCircuitGate = runSecretExpr(circuitType, arguments[0])
-                    operatorToCircuit(updateValue.operator, listOf(gate, circuitArg), circuitType)
-                }
+                    is Modify -> {
+                        val circuitArg: ABYCircuitGate = runSecretExpr(circuitType, arguments[0])
+                        operatorToCircuit(updateValue.operator, listOf(gate, circuitArg), circuitType)
+                    }
 
-                else ->
-                    throw ViaductInterpreterError("ABY: unknown update for mutable cell", update)
-            }
+                    else ->
+                        throw ViaductInterpreterError("ABY: unknown update for mutable cell", update)
+                }
 
             gate.variableGate = true
         }
@@ -727,22 +757,23 @@ class ABYProtocolInterpreter(
             when (val index: ABYValue = runCleartextOrSecretExpr(circuitType, arguments[0])) {
                 is ABYCleartextValue -> {
                     val intIndex = (index.value as IntegerValue).value
-                    gates[intIndex] = when (val updateValue = update.value) {
-                        is io.github.aplcornell.viaduct.syntax.datatypes.Set -> {
-                            runSecretExpr(circuitType, arguments[1])
-                        }
+                    gates[intIndex] =
+                        when (val updateValue = update.value) {
+                            is io.github.aplcornell.viaduct.syntax.datatypes.Set -> {
+                                runSecretExpr(circuitType, arguments[1])
+                            }
 
-                        is Modify -> {
-                            val circuitArg: ABYCircuitGate = runSecretExpr(circuitType, arguments[1])
-                            operatorToCircuit(
-                                updateValue.operator,
-                                listOf(gates[intIndex], circuitArg),
-                                circuitType,
-                            )
-                        }
+                            is Modify -> {
+                                val circuitArg: ABYCircuitGate = runSecretExpr(circuitType, arguments[1])
+                                operatorToCircuit(
+                                    updateValue.operator,
+                                    listOf(gates[intIndex], circuitArg),
+                                    circuitType,
+                                )
+                            }
 
-                        else -> throw ViaductInterpreterError("ABY: unknown update ${update.value} for vector", update)
-                    }
+                            else -> throw ViaductInterpreterError("ABY: unknown update ${update.value} for vector", update)
+                        }
 
                     gates[intIndex].variableGate = true
                 }
@@ -751,22 +782,23 @@ class ABYProtocolInterpreter(
                 is ABYSecretValue -> {
                     val circuitArg: ABYCircuitGate = runSecretExpr(circuitType, arguments[1])
                     for (i in 0 until size) {
-                        val rhs = when (val updateValue = update.value) {
-                            is io.github.aplcornell.viaduct.syntax.datatypes.Set -> circuitArg
+                        val rhs =
+                            when (val updateValue = update.value) {
+                                is io.github.aplcornell.viaduct.syntax.datatypes.Set -> circuitArg
 
-                            is Modify -> {
-                                operatorToCircuit(
-                                    updateValue.operator,
-                                    listOf(gates[i], circuitArg),
-                                    circuitType,
+                                is Modify -> {
+                                    operatorToCircuit(
+                                        updateValue.operator,
+                                        listOf(gates[i], circuitArg),
+                                        circuitType,
+                                    )
+                                }
+
+                                else -> throw ViaductInterpreterError(
+                                    "ABY: unknown update ${update.value} for vector",
+                                    update,
                                 )
                             }
-
-                            else -> throw ViaductInterpreterError(
-                                "ABY: unknown update ${update.value} for vector",
-                                update,
-                            )
-                        }
 
                         val guard: ABYCircuitGate =
                             operatorToCircuit(

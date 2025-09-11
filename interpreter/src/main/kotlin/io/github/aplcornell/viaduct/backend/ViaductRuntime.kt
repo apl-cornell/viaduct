@@ -332,8 +332,7 @@ class ViaductRuntime(
         hostInfoMap = tempHostInfoMap
     }
 
-    fun getHostById(id: HostId): HostInfo =
-        hostInfoMap.values.first { hinfo -> hinfo.id == id }
+    fun getHostById(id: HostId): HostInfo = hostInfoMap.values.first { hinfo -> hinfo.id == id }
 
     fun getProcessById(id: ProcessId): ProcessInfo {
         val lst = processInfoMap.values.filter { pinfo -> pinfo.id == id }
@@ -344,7 +343,11 @@ class ViaductRuntime(
         }
     }
 
-    suspend fun send(value: Value, sender: Process, receiver: Process) {
+    suspend fun send(
+        value: Value,
+        sender: Process,
+        receiver: Process,
+    ) {
         if (receiver.host == host) { // local communication
             channelMap[sender]!![receiver]!!.send(value)
         } else { // remote communication
@@ -359,11 +362,17 @@ class ViaductRuntime(
         }
     }
 
-    suspend fun send(value: Value, event: CommunicationEvent) {
+    suspend fun send(
+        value: Value,
+        event: CommunicationEvent,
+    ) {
         send(value, event.send.asProjection(), event.recv.asProjection())
     }
 
-    suspend fun receive(sender: Process, receiver: Process): Value {
+    suspend fun receive(
+        sender: Process,
+        receiver: Process,
+    ): Value {
         if (sender.host != host) { // remote communication
             val msg = ReceiveMessage(processInfoMap[sender]!!.id, processInfoMap[receiver]!!.id)
             hostInfoMap[sender.host]!!.recvChannel.send(msg)
@@ -501,20 +510,21 @@ class ViaductRuntime(
             }
 
             // run interpreter
-            val job: Job = launch {
-                val interpreter =
-                    BackendInterpreter(
-                        host,
-                        program,
-                        protocolAnalysis,
-                        processInterpreters,
-                        ViaductProcessRuntime(
-                            this@ViaductRuntime,
-                            ProtocolProjection(syncProtocol, host),
-                        ),
-                    )
-                interpreter.run()
-            }
+            val job: Job =
+                launch {
+                    val interpreter =
+                        BackendInterpreter(
+                            host,
+                            program,
+                            protocolAnalysis,
+                            processInterpreters,
+                            ViaductProcessRuntime(
+                                this@ViaductRuntime,
+                                ProtocolProjection(syncProtocol, host),
+                            ),
+                        )
+                    interpreter.run()
+                }
 
             job.invokeOnCompletion {
                 launch {
@@ -545,11 +555,17 @@ class ViaductProcessRuntime(
     private val runtime: ViaductRuntime,
     val projection: ProtocolProjection,
 ) {
-    suspend fun send(value: Value, receiver: ProtocolProjection) {
+    suspend fun send(
+        value: Value,
+        receiver: ProtocolProjection,
+    ) {
         runtime.send(value, projection, receiver)
     }
 
-    suspend fun send(value: Value, event: CommunicationEvent) {
+    suspend fun send(
+        value: Value,
+        event: CommunicationEvent,
+    ) {
         assert(event.send.protocol == projection.protocol && event.send.host == projection.host)
         runtime.send(value, projection, ProtocolProjection(event.recv.protocol, event.recv.host))
     }

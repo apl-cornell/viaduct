@@ -83,21 +83,22 @@ class SelectionConstraintGenerator(
     }
 
     private fun viableProtocolsAndVariable(node: VariableDeclarationNode): Pair<FunctionVariable, Set<Protocol>> {
-        val functionVariable = when (node) {
-            is LetNode ->
-                FunctionVariable(nameAnalysis.enclosingFunctionName(node), node.name.value)
+        val functionVariable =
+            when (node) {
+                is LetNode ->
+                    FunctionVariable(nameAnalysis.enclosingFunctionName(node), node.name.value)
 
-            is DeclarationNode ->
-                FunctionVariable(nameAnalysis.enclosingFunctionName(node), node.name.value)
+                is DeclarationNode ->
+                    FunctionVariable(nameAnalysis.enclosingFunctionName(node), node.name.value)
 
-            is ParameterNode ->
-                FunctionVariable(nameAnalysis.functionDeclaration(node).name.value, node.name.value)
+                is ParameterNode ->
+                    FunctionVariable(nameAnalysis.functionDeclaration(node).name.value, node.name.value)
 
-            is ObjectDeclarationArgumentNode -> {
-                val param = nameAnalysis.parameter(node)
-                FunctionVariable(nameAnalysis.functionDeclaration(param).name.value, node.name.value)
+                is ObjectDeclarationArgumentNode -> {
+                    val param = nameAnalysis.parameter(node)
+                    FunctionVariable(nameAnalysis.functionDeclaration(param).name.value, node.name.value)
+                }
             }
-        }
         return functionVariable to viableProtocols(node)
     }
 
@@ -111,7 +112,11 @@ class SelectionConstraintGenerator(
 
     private val zeroSymbolicCost = costEstimator.zeroCost().map { CostLiteral(0) }
 
-    private fun addCostChoice(variable: CostVariable, guard: SelectionConstraint, cost: Cost<IntegerCost>) {
+    private fun addCostChoice(
+        variable: CostVariable,
+        guard: SelectionConstraint,
+        cost: Cost<IntegerCost>,
+    ) {
         if (!this.costChoiceMap.containsKey(variable)) {
             this.costChoiceMap[variable] = mutableListOf(Pair(guard, cost))
         } else {
@@ -367,8 +372,7 @@ class SelectionConstraintGenerator(
     private fun getArgumentViableProtocols(
         previous: PersistentMap<ReadNode, Protocol>,
         next: List<ReadNode>,
-    ):
-        Set<PersistentMap<ReadNode, Protocol>> {
+    ): Set<PersistentMap<ReadNode, Protocol>> {
         return if (next.isEmpty()) {
             setOf(previous)
         } else {
@@ -401,8 +405,7 @@ class SelectionConstraintGenerator(
         reads: List<ReadNode>,
         baseCostFunction: (Protocol) -> Cost<IntegerCost>,
         costVariable: CostVariable,
-    ):
-        Iterable<SelectionConstraint> {
+    ): Iterable<SelectionConstraint> {
         // cartesian product of all viable protocols for arguments
         val argProtocolMaps: Set<PersistentMap<ReadNode, Protocol>> =
             getArgumentViableProtocols(persistentMapOf(), reads)
@@ -434,33 +437,31 @@ class SelectionConstraintGenerator(
                             // estimate cost given a particular configuration of an executing protocol
                             // and protocols for arguments
                             // TODO: figure out why cost partitioned on participating hosts doesn't work
-                            /*
-                            val costMap: Map<Host, Cost<IntegerCost>> =
-                                protocol.hosts.map { host ->
-                                    val communicationCosts =
-                                        argProtocolMap.values.fold(baseCostFunction(protocol)) { acc, argProtocol ->
-                                            acc.concat(costEstimator.communicationCost(argProtocol, protocol, host))
-                                        }
-
-                                    host to communicationCosts
-                                }.toMap()
-
-                            val cost: Cost<SymbolicCost> =
-                                costMap.map { kv ->
-                                    kv.value.map { featureCost ->
-                                        // only induce the cost if the host is participating
-                                        CostMux(
-                                            stmt.participatingHosts[kv.key]!!,
-                                            CostLiteral(featureCost.cost),
-                                            CostLiteral(0)
-                                        )
-                                    }
-                                }.fold(baseCostFunction(protocol).toSymbolicCost()) { acc, hostCost ->
-                                    acc.concat(hostCost)
-                                }
-
-                            val costConstraint: SelectionConstraint = symbolicCostEqualsSym(symbolicCost, cost)
-                            */
+                            // val costMap: Map<Host, Cost<IntegerCost>> =
+                            //     protocol.hosts.map { host ->
+                            //         val communicationCosts =
+                            //             argProtocolMap.values.fold(baseCostFunction(protocol)) { acc, argProtocol ->
+                            //                 acc.concat(costEstimator.communicationCost(argProtocol, protocol, host))
+                            //             }
+                            //
+                            //         host to communicationCosts
+                            //     }.toMap()
+                            //
+                            // val cost: Cost<SymbolicCost> =
+                            //     costMap.map { kv ->
+                            //         kv.value.map { featureCost ->
+                            //             // only induce the cost if the host is participating
+                            //             CostMux(
+                            //                 stmt.participatingHosts[kv.key]!!,
+                            //                 CostLiteral(featureCost.cost),
+                            //                 CostLiteral(0)
+                            //             )
+                            //         }
+                            //     }.fold(baseCostFunction(protocol).toSymbolicCost()) { acc, hostCost ->
+                            //         acc.concat(hostCost)
+                            //     }
+                            //
+                            // val costConstraint: SelectionConstraint = symbolicCostEqualsSym(symbolicCost, cost)
 
                             val cost: Cost<IntegerCost> =
                                 baseCostFunction(protocol).concat(
@@ -536,8 +537,7 @@ class SelectionConstraintGenerator(
     }
 
     /** Generate cost constraints. */
-    private fun Node.costConstraints():
-        Iterable<SelectionConstraint> =
+    private fun Node.costConstraints(): Iterable<SelectionConstraint> =
         when (this) {
             /*
             is ParameterNode -> {
@@ -554,7 +554,7 @@ class SelectionConstraintGenerator(
                     )
                 }
             }
-            */
+             */
 
             // induce execution and communication costs
             is LetNode -> {
@@ -670,8 +670,7 @@ class SelectionConstraintGenerator(
         stmt: SimpleStatementNode,
         fv: FunctionVariable,
         protocols: Set<Protocol>,
-    ):
-        Iterable<SelectionConstraint> {
+    ): Iterable<SelectionConstraint> {
         return protocols.map { protocol ->
             val mandatoryHosts = protocolComposer.mandatoryParticipatingHosts(protocol, stmt)
             Implies(
@@ -693,8 +692,7 @@ class SelectionConstraintGenerator(
     }
 
     /** Describes the relationships between hosts participating in execution of statements. */
-    private fun Node.participatingHostConstraints():
-        Iterable<SelectionConstraint> =
+    private fun Node.participatingHostConstraints(): Iterable<SelectionConstraint> =
         when (this) {
             // a host participates in a block node if it participates in any of the children
             is BlockNode -> {

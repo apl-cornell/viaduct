@@ -52,9 +52,9 @@ class CommitmentProtocolCleartextInterpreter(
     private val protocolAnalysis: ProtocolAnalysis,
     private val runtime: ViaductProcessRuntime,
 ) : SingleProtocolInterpreter<CommitmentProtocolCleartextInterpreter.HashedObject>(
-    program,
-    runtime.projection.protocol,
-) {
+        program,
+        runtime.projection.protocol,
+    ) {
     private val hashHosts: Set<Host> = (runtime.projection.protocol as Commitment).hashHosts
 
     private val tempStoreStack: Stack<PersistentMap<Temporary, Hashed<Value>>> = Stack()
@@ -283,31 +283,50 @@ class CommitmentProtocolCleartextInterpreter(
     }
 
     abstract class HashedObject {
-        abstract fun query(query: QueryNameNode, arguments: List<AtomicExpressionNode>): Hashed<Value>
-        abstract fun update(update: UpdateNameNode, arguments: List<AtomicExpressionNode>)
+        abstract fun query(
+            query: QueryNameNode,
+            arguments: List<AtomicExpressionNode>,
+        ): Hashed<Value>
+
+        abstract fun update(
+            update: UpdateNameNode,
+            arguments: List<AtomicExpressionNode>,
+        )
     }
 
     object HashedNullObject : HashedObject() {
         val hashed: Hashed<Value> = Hashed(IntegerValue(0), Hashing.generateHash(IntegerValue(0)))
 
-        override fun query(query: QueryNameNode, arguments: List<AtomicExpressionNode>): Hashed<Value> {
+        override fun query(
+            query: QueryNameNode,
+            arguments: List<AtomicExpressionNode>,
+        ): Hashed<Value> {
             throw ViaductInterpreterError("Commitment: unknown query for null object", query)
         }
 
-        override fun update(update: UpdateNameNode, arguments: List<AtomicExpressionNode>) {
+        override fun update(
+            update: UpdateNameNode,
+            arguments: List<AtomicExpressionNode>,
+        ) {
             throw ViaductInterpreterError("Commitment: unknown update for null object", update)
         }
     }
 
     inner class HashedCellObject(var value: Hashed<Value>) : HashedObject() {
-        override fun query(query: QueryNameNode, arguments: List<AtomicExpressionNode>): Hashed<Value> {
+        override fun query(
+            query: QueryNameNode,
+            arguments: List<AtomicExpressionNode>,
+        ): Hashed<Value> {
             return when (query.value) {
                 is Get -> this.value
                 else -> throw ViaductInterpreterError("Commitment: unknown query for cell object", query)
             }
         }
 
-        override fun update(update: UpdateNameNode, arguments: List<AtomicExpressionNode>) {
+        override fun update(
+            update: UpdateNameNode,
+            arguments: List<AtomicExpressionNode>,
+        ) {
             when (update.value) {
                 is io.github.aplcornell.viaduct.syntax.datatypes.Set -> {
                     this.value = runExpr(arguments[0])
@@ -327,7 +346,10 @@ class CommitmentProtocolCleartextInterpreter(
             }
         }
 
-        override fun query(query: QueryNameNode, arguments: List<AtomicExpressionNode>): Hashed<Value> {
+        override fun query(
+            query: QueryNameNode,
+            arguments: List<AtomicExpressionNode>,
+        ): Hashed<Value> {
             return when (query.value) {
                 is Get -> {
                     val index = (runCleartextExpr(arguments[0]) as IntegerValue).value
@@ -337,7 +359,10 @@ class CommitmentProtocolCleartextInterpreter(
             }
         }
 
-        override fun update(update: UpdateNameNode, arguments: List<AtomicExpressionNode>) {
+        override fun update(
+            update: UpdateNameNode,
+            arguments: List<AtomicExpressionNode>,
+        ) {
             when (update.value) {
                 is io.github.aplcornell.viaduct.syntax.datatypes.Set -> {
                     val index = (runCleartextExpr(arguments[0]) as IntegerValue).value

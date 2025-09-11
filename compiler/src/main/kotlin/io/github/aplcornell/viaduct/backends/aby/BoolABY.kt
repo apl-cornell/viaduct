@@ -18,15 +18,19 @@ class BoolABY(server: Host, client: Host) : ABY(server, client) {
     override val protocolName: ProtocolName
         get() = Companion.protocolName
 
+    @Suppress("ktlint:standard:property-naming")
     val Y2BInputPorts: Map<Host, InputPort> =
         hosts.associateWith { h -> InputPort(this, h, Y2B_INPUT) }
 
+    @Suppress("ktlint:standard:property-naming")
     val A2BInputPorts: Map<Host, InputPort> =
         hosts.associateWith { h -> InputPort(this, h, A2B_INPUT) }
 
+    @Suppress("ktlint:standard:property-naming")
     val B2YOutputPorts: Map<Host, OutputPort> =
         hosts.associateWith { h -> OutputPort(this, h, B2Y_OUTPUT) }
 
+    @Suppress("ktlint:standard:property-naming")
     val B2AOutputPorts: Map<Host, OutputPort> =
         hosts.associateWith { h -> OutputPort(this, h, B2A_OUTPUT) }
 }

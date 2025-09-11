@@ -33,7 +33,6 @@ class HostDeclarationNode(
     val name: HostNode,
     override val sourceLocation: SourceLocation,
 ) : TopLevelDeclarationNode() {
-
     override val children: Iterable<Nothing>
         get() = listOf()
 
@@ -44,8 +43,7 @@ class HostDeclarationNode(
             comment = metadataAsComment(metadata),
         )
 
-    override fun copy(children: List<Node>): HostDeclarationNode =
-        HostDeclarationNode(name, sourceLocation)
+    override fun copy(children: List<Node>): HostDeclarationNode = HostDeclarationNode(name, sourceLocation)
 }
 
 /**
@@ -71,8 +69,7 @@ class ParameterNode(
             comment = metadataAsComment(metadata),
         )
 
-    override fun copy(children: List<Node>): Node =
-        ParameterNode(name, parameterDirection, objectType, protocol, sourceLocation)
+    override fun copy(children: List<Node>): Node = ParameterNode(name, parameterDirection, objectType, protocol, sourceLocation)
 
     val isInParameter: Boolean
         get() = parameterDirection == ParameterDirection.IN
@@ -134,11 +131,9 @@ class FunctionDeclarationNode(
         )
     }
 
-    fun getParameter(name: ObjectVariable): ParameterNode? =
-        parameters.firstOrNull { param -> param.name.value == name }
+    fun getParameter(name: ObjectVariable): ParameterNode? = parameters.firstOrNull { param -> param.name.value == name }
 
-    fun getParameterAtIndex(i: Int): ParameterNode? =
-        if (i >= 0 && i < parameters.size) parameters[i] else null
+    fun getParameterAtIndex(i: Int): ParameterNode? = if (i >= 0 && i < parameters.size) parameters[i] else null
 }
 
 abstract class DelegationDeclarationNode(
@@ -148,6 +143,7 @@ abstract class DelegationDeclarationNode(
     override val sourceLocation: SourceLocation,
 ) : TopLevelDeclarationNode() {
     abstract fun congruences(): List<FreeDistributiveLattice.LessThanOrEqualTo<PrincipalComponent>>
+
     abstract override fun toSurfaceNode(metadata: Metadata): io.github.aplcornell.viaduct.syntax.surface.DelegationDeclarationNode
 }
 
@@ -161,7 +157,6 @@ class AuthorityDelegationDeclarationNode(
     override val delegationProjection: DelegationProjection,
     override val sourceLocation: SourceLocation,
 ) : DelegationDeclarationNode(from, to, delegationProjection, sourceLocation) {
-
     override fun congruences(): List<FreeDistributiveLattice.LessThanOrEqualTo<PrincipalComponent>> {
         var fromConfidentiality: LabelComponent =
             from.value.interpret().confidentialityComponent
@@ -214,7 +209,6 @@ class IFCDelegationDeclarationNode(
     override val delegationProjection: DelegationProjection,
     override val sourceLocation: SourceLocation,
 ) : DelegationDeclarationNode(from, to, delegationProjection, sourceLocation) {
-
     override fun congruences(): List<FreeDistributiveLattice.LessThanOrEqualTo<PrincipalComponent>> {
         var fromConfidentiality: LabelComponent =
             from.value.interpret().confidentialityComponent

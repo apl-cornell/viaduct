@@ -45,12 +45,13 @@ private class BackendCodeGenerator(
     private val codeGenerator = codeGenerator(context)
 
     fun generateClass(): TypeSpec {
-        val classBuilder = TypeSpec.classBuilder(host.name.replaceFirstChar { it.uppercase() }).primaryConstructor(
-            FunSpec.constructorBuilder().addParameter("runtime", ViaductRuntime::class).build(),
-        ).addProperty(
-            PropertySpec.builder("runtime", ViaductRuntime::class).initializer("runtime")
-                .addModifiers(KModifier.PRIVATE).build(),
-        )
+        val classBuilder =
+            TypeSpec.classBuilder(host.name.replaceFirstChar { it.uppercase() }).primaryConstructor(
+                FunSpec.constructorBuilder().addParameter("runtime", ViaductRuntime::class).build(),
+            ).addProperty(
+                PropertySpec.builder("runtime", ViaductRuntime::class).initializer("runtime")
+                    .addModifiers(KModifier.PRIVATE).build(),
+            )
         for (protocol in program.protocols()) {
             if (context.host in protocol.hosts) {
                 for (property in codeGenerator.setup(protocol)) {
@@ -83,12 +84,14 @@ private class BackendCodeGenerator(
                             val circuitDecl: CircuitDeclarationNode = nameAnalysis.declaration(command)
                             val circuitHosts = circuitDecl.protocol.value.hosts
 
-                            val importingHosts = command.inputs.map {
-                                (nameAnalysis.declaration(it) as VariableBindingNode).protocol.value.hosts
-                            }.flatten().toSet() + circuitHosts
-                            val exportingHosts = stmt.bindings.map {
-                                it.protocol.value.hosts
-                            }.flatten().toSet() + circuitHosts
+                            val importingHosts =
+                                command.inputs.map {
+                                    (nameAnalysis.declaration(it) as VariableBindingNode).protocol.value.hosts
+                                }.flatten().toSet() + circuitHosts
+                            val exportingHosts =
+                                stmt.bindings.map {
+                                    it.protocol.value.hosts
+                                }.flatten().toSet() + circuitHosts
 
                             if (context.host !in importingHosts + exportingHosts) continue
 
@@ -117,55 +120,59 @@ private class BackendCodeGenerator(
                                 )
                             }
 
-                            val inputs = if (context.host in importingHosts) {
-                                val (importCode, inputs) = codeGenerator.import(
-                                    circuitDecl.protocol.value,
-                                    command.inputs.zip(circuitDecl.inputs).map { (arg, inParam) ->
-                                        Argument(
-                                            indexExpression(arg, context),
-                                            inParam.type,
-                                            (nameAnalysis.declaration(arg) as VariableBindingNode).protocol.value,
-                                            arg.sourceLocation,
+                            val inputs =
+                                if (context.host in importingHosts) {
+                                    val (importCode, inputs) =
+                                        codeGenerator.import(
+                                            circuitDecl.protocol.value,
+                                            command.inputs.zip(circuitDecl.inputs).map { (arg, inParam) ->
+                                                Argument(
+                                                    indexExpression(arg, context),
+                                                    inParam.type,
+                                                    (nameAnalysis.declaration(arg) as VariableBindingNode).protocol.value,
+                                                    arg.sourceLocation,
+                                                )
+                                            },
                                         )
-                                    },
-                                )
-                                builder.addCode(importCode)
-                                inputs
-                            } else {
-                                null
-                            }
+                                    builder.addCode(importCode)
+                                    inputs
+                                } else {
+                                    null
+                                }
 
-                            val outTmps = circuitDecl.outputs.map {
-                                val tmp = context.newTemporary(it.name.value.name)
-                                CodeBlock.of("%N", tmp)
-                            }
+                            val outTmps =
+                                circuitDecl.outputs.map {
+                                    val tmp = context.newTemporary(it.name.value.name)
+                                    CodeBlock.of("%N", tmp)
+                                }
 
                             if (context.host in circuitHosts) {
-                                val outNames = circuitDecl.outputs.associateWith { outParam ->
-                                    val outName =
-                                        context.newTemporary(context.kotlinName(outParam.name.value) + "_boxed")
-                                    builder.addStatement(
-                                        "val %L = %T()",
-                                        outName,
-                                        Out::class.asClassName().parameterizedBy(
-                                            kotlinType(
-                                                outParam.type.shape,
-                                                codeGenerator.paramType(
-                                                    circuitDecl.protocol.value,
-                                                    outParam.type.elementType.value,
+                                val outNames =
+                                    circuitDecl.outputs.associateWith { outParam ->
+                                        val outName =
+                                            context.newTemporary(context.kotlinName(outParam.name.value) + "_boxed")
+                                        builder.addStatement(
+                                            "val %L = %T()",
+                                            outName,
+                                            Out::class.asClassName().parameterizedBy(
+                                                kotlinType(
+                                                    outParam.type.shape,
+                                                    codeGenerator.paramType(
+                                                        circuitDecl.protocol.value,
+                                                        outParam.type.elementType.value,
+                                                    ),
                                                 ),
                                             ),
-                                        ),
-                                    )
-                                    outName
-                                }
+                                        )
+                                        outName
+                                    }
                                 builder.addStatement(
                                     "%N(%L)",
                                     command.name.value.name,
                                     (
                                         (command.bounds).map { indexExpression(it, context) } + inputs!! +
                                             circuitDecl.outputs.map { CodeBlock.of("%N", outNames[it]) }
-                                        ).joinToCode(),
+                                    ).joinToCode(),
                                 )
                                 circuitDecl.outputs.forEachIndexed { index, param ->
                                     builder.addStatement("val %L = %N.get()", outTmps[index], outNames[param]!!)
@@ -173,17 +180,18 @@ private class BackendCodeGenerator(
                             }
 
                             if (context.host in exportingHosts) {
-                                val (exportCode, outputs) = codeGenerator.export(
-                                    circuitDecl.protocol.value,
-                                    stmt.bindings.mapIndexed { index, binding ->
-                                        Argument(
-                                            outTmps[index],
-                                            circuitDecl.outputs[index].type,
-                                            binding.protocol.value,
-                                            binding.sourceLocation,
-                                        )
-                                    },
-                                )
+                                val (exportCode, outputs) =
+                                    codeGenerator.export(
+                                        circuitDecl.protocol.value,
+                                        stmt.bindings.mapIndexed { index, binding ->
+                                            Argument(
+                                                outTmps[index],
+                                                circuitDecl.outputs[index].type,
+                                                binding.protocol.value,
+                                                binding.sourceLocation,
+                                            )
+                                        },
+                                    )
                                 builder.addCode(exportCode)
                                 // Bind results
                                 stmt.bindings.zip(outputs).forEach { (binding, output) ->
@@ -246,16 +254,17 @@ private class BackendCodeGenerator(
                 kotlinType(param.type.shape, codeGenerator.paramType(protocol, param.type.elementType.value)),
             )
         }
-        val outParams = circuitDeclaration.outputs.map { param ->
-            val paramName = context.newTemporary(param.name.value.name + "Box")
-            builder.addParameter(
-                paramName,
-                Out::class.asClassName().parameterizedBy(
-                    kotlinType(param.type.shape, codeGenerator.paramType(protocol, param.type.elementType.value)),
-                ),
-            )
-            CodeBlock.of(paramName)
-        }
+        val outParams =
+            circuitDeclaration.outputs.map { param ->
+                val paramName = context.newTemporary(param.name.value.name + "Box")
+                builder.addParameter(
+                    paramName,
+                    Out::class.asClassName().parameterizedBy(
+                        kotlinType(param.type.shape, codeGenerator.paramType(protocol, param.type.elementType.value)),
+                    ),
+                )
+                CodeBlock.of(paramName)
+            }
         builder.addCode(codeGenerator.circuitBody(protocol, circuitDeclaration, outParams))
         return builder.build()
     }
@@ -266,9 +275,10 @@ private class BackendCodeGenerator(
         private val receiveMember = MemberName(ViaductRuntime::class.java.packageName, "receive")
         private val sendMember = MemberName(ViaductRuntime::class.java.packageName, "send")
 
-        private val freshNameGenerator: FreshNameGenerator = FreshNameGenerator().apply {
-            this.getFreshName("runtime")
-        }
+        private val freshNameGenerator: FreshNameGenerator =
+            FreshNameGenerator().apply {
+                this.getFreshName("runtime")
+            }
 
         override val program: ProgramNode
             get() = this@BackendCodeGenerator.program
@@ -279,11 +289,9 @@ private class BackendCodeGenerator(
         override fun kotlinName(sourceName: Variable): String =
             varMap.getOrPut(sourceName) { freshNameGenerator.getFreshName(sourceName.name) }
 
-        override fun newTemporary(baseName: String): String =
-            freshNameGenerator.getFreshName(baseName)
+        override fun newTemporary(baseName: String): String = freshNameGenerator.getFreshName(baseName)
 
-        override fun codeOf(host: Host) =
-            hostDeclarations.reference(host)
+        override fun codeOf(host: Host) = hostDeclarations.reference(host)
 
         fun input(type: ValueType): CodeBlock =
             CodeBlock.of(
@@ -293,7 +301,10 @@ private class BackendCodeGenerator(
                 type.valueClass,
             )
 
-        fun output(value: CodeBlock, type: ValueType): CodeBlock =
+        fun output(
+            value: CodeBlock,
+            type: ValueType,
+        ): CodeBlock =
             CodeBlock.of(
                 "%N.output(%T(%L))",
                 "runtime",
@@ -301,12 +312,18 @@ private class BackendCodeGenerator(
                 value,
             )
 
-        override fun receive(type: TypeName, sender: Host): CodeBlock {
+        override fun receive(
+            type: TypeName,
+            sender: Host,
+        ): CodeBlock {
             require(sender != context.host)
             return CodeBlock.of("%N.%M<%T>(%L)", "runtime", receiveMember, type, codeOf(sender))
         }
 
-        override fun send(value: CodeBlock, receiver: Host): CodeBlock {
+        override fun send(
+            value: CodeBlock,
+            receiver: Host,
+        ): CodeBlock {
             require(receiver != context.host)
             return CodeBlock.of("%N.%M(%L, %L)", "runtime", sendMember, value, codeOf(receiver))
         }
@@ -373,24 +390,26 @@ fun ProgramNode.compileToKotlin(
     )
 
     // Generate code for each host.
-    val hostSpecs = hosts.map { host ->
-        BackendCodeGenerator(this, host, codeGenerator, hostDeclarations).generateClass()
-    }
+    val hostSpecs =
+        hosts.map { host ->
+            BackendCodeGenerator(this, host, codeGenerator, hostDeclarations).generateClass()
+        }
     objectBuilder.addTypes(hostSpecs)
 
     // Add a main function that handles dispatch.
-    val main = with(FunSpec.builder("main")) {
-        addModifiers(KModifier.OVERRIDE)
-        addParameter("host", Host::class)
-        addParameter("runtime", ViaductRuntime::class)
+    val main =
+        with(FunSpec.builder("main")) {
+            addModifiers(KModifier.OVERRIDE)
+            addParameter("host", Host::class)
+            addParameter("runtime", ViaductRuntime::class)
 
-        // Dispatch to correct class based on host.
-        beginControlFlow("when (host)")
-        this@compileToKotlin.hosts.zip(hostSpecs) { host, spec ->
-            addStatement("%L -> %N(%L).main()", hostDeclarations.reference(host), spec, "runtime")
+            // Dispatch to correct class based on host.
+            beginControlFlow("when (host)")
+            this@compileToKotlin.hosts.zip(hostSpecs) { host, spec ->
+                addStatement("%L -> %N(%L).main()", hostDeclarations.reference(host), spec, "runtime")
+            }
+            endControlFlow()
         }
-        endControlFlow()
-    }
     objectBuilder.addFunction(main.build())
 
     fileBuilder.addType(objectBuilder.build())

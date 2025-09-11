@@ -20,34 +20,38 @@ internal class StructuralEqualityTest {
 
     @Test
     fun `differentiates when not equal`() {
-        val program1 = """
+        val program1 =
+            """
             fun main() {
                 val x: int = 2 + 2;
             }
-        """.trimIndent()
+            """.trimIndent()
 
-        val program2 = """
+        val program2 =
+            """
             fun main() {
                 val x: int = 4;
             }
-        """.trimIndent()
+            """.trimIndent()
 
         assertStructurallyNotEquals(program1.parse(), program2.parse())
     }
 
     @Test
     fun `differentiates when arguments are not equal`() {
-        val program1 = """
+        val program1 =
+            """
             fun main() {
                 val a = Array[int](2);
             }
-        """.trimIndent()
+            """.trimIndent()
 
-        val program2 = """
+        val program2 =
+            """
             fun main() {
                 val a = Array[int](3);
             }
-        """.trimIndent()
+            """.trimIndent()
 
         assertStructurallyNotEquals(program1.parse(), program2.parse())
     }
@@ -61,22 +65,23 @@ internal class StructuralEqualityTest {
 
     @Test
     fun `ignores source locations`() {
-        val program1 = """
+        val program1 =
+            """
             fun main() {
                 val x: int = 2 + 2;
             }
-        """.trimIndent()
+            """.trimIndent()
 
-        val program2 = """
+        val program2 =
+            """
             fun  main ()  {
 
                 val   x :  int   =    2  +  2 ;
              }
-        """.trimIndent()
+            """.trimIndent()
 
         assertStructurallyEquals(program1.parse(), program2.parse())
     }
 
-    private fun parse(source: SourceFile): ProgramNode =
-        source.parse(DefaultCombinedBackend.protocolParsers)
+    private fun parse(source: SourceFile): ProgramNode = source.parse(DefaultCombinedBackend.protocolParsers)
 }

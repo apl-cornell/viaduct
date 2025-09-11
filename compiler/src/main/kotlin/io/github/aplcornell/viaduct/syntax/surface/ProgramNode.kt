@@ -14,19 +14,17 @@ import kotlinx.collections.immutable.toPersistentList
  * Instances are usually created by [parse].
  */
 class ProgramNode
-private constructor(
-    val declarations: PersistentList<TopLevelDeclarationNode>,
-    override val sourceLocation: SourceLocation,
-) : Node(), List<TopLevelDeclarationNode> by declarations {
-    constructor(declarations: List<TopLevelDeclarationNode>, sourceLocation: SourceLocation) :
-        this(declarations.toPersistentList(), sourceLocation)
+    private constructor(
+        val declarations: PersistentList<TopLevelDeclarationNode>,
+        override val sourceLocation: SourceLocation,
+    ) : Node(), List<TopLevelDeclarationNode> by declarations {
+        constructor(declarations: List<TopLevelDeclarationNode>, sourceLocation: SourceLocation) :
+            this(declarations.toPersistentList(), sourceLocation)
 
-    override val comment: String?
-        get() = null
+        override val comment: String?
+            get() = null
 
-    override fun toDocumentWithoutComment(): Document =
-        declarations.concatenated(Document.forcedLineBreak + Document.forcedLineBreak)
+        override fun toDocumentWithoutComment(): Document = declarations.concatenated(Document.forcedLineBreak + Document.forcedLineBreak)
 
-    override fun toString(): String =
-        "Program (" + sourceLocation.sourcePath + ")"
-}
+        override fun toString(): String = "Program (" + sourceLocation.sourcePath + ")"
+    }

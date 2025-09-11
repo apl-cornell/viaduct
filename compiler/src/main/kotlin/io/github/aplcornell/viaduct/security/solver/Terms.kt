@@ -48,9 +48,9 @@ internal data class IntegrityVariable<V>(override val baseVariable: V) : Compone
  *
  * @throws IllegalTermException if [this] or [that] is not allowed to appear in constraints.
  */
-// TODO: it would be nicer if this didn't need bounds...
 fun <C : HeytingAlgebra<C>, V, T> Term<C, V>.flowsTo(
     that: Term<C, V>,
+    // TODO: it would be nicer if this didn't need bounds...
     bounds: BoundedLattice<C>,
     failWith: (SecurityLattice<C>, SecurityLattice<C>) -> T,
 ): Iterable<Constraint<C, V, T>> =

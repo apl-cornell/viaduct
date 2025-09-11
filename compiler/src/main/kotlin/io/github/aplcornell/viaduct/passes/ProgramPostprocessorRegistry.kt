@@ -5,7 +5,6 @@ import io.github.aplcornell.viaduct.syntax.intermediate.ProgramNode
 class ProgramPostprocessorRegistry(
     private val postprocessors: List<ProgramPostprocessor>,
 ) : ProgramPostprocessor {
-
     constructor(vararg postprocessors: ProgramPostprocessor) :
         this(listOf(*postprocessors))
 

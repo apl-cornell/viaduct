@@ -18,10 +18,11 @@ object CleartextBackend : Backend {
         get() = setOf(Local.protocolName, Replication.protocolName)
 
     override val protocolParsers: Map<ProtocolName, ProtocolParser<Protocol>>
-        get() = mapOf(
-            Local.protocolName to LocalProtocolParser,
-            Replication.protocolName to ReplicationProtocolParser,
-        )
+        get() =
+            mapOf(
+                Local.protocolName to LocalProtocolParser,
+                Replication.protocolName to ReplicationProtocolParser,
+            )
 
     override fun protocolFactory(program: ProgramNode): ProtocolFactory =
         listOf(LocalProtocolFactory(program), ReplicationProtocolFactory(program)).unions()
@@ -31,6 +32,5 @@ object CleartextBackend : Backend {
 
     override fun codeGenerator(context: CodeGeneratorContext): CodeGenerator = CleartextCodeGenerator(context)
 
-    override fun circuitCodeGenerator(context: CircuitCodeGeneratorContext): CircuitCodeGenerator =
-        CleartextCircuitCodeGenerator(context)
+    override fun circuitCodeGenerator(context: CircuitCodeGeneratorContext): CircuitCodeGenerator = CleartextCircuitCodeGenerator(context)
 }

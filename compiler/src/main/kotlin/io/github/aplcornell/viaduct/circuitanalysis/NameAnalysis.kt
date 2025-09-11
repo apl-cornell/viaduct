@@ -148,24 +148,22 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
             definesAfter(this).fold(contextIn) { acc, pair -> acc.put(pair.first, pair.second) }
         }
 
-        override fun getValue(thisRef: Node, property: KProperty<*>): NameMap<N, Data> =
-            thisRef.contextIn
+        override fun getValue(
+            thisRef: Node,
+            property: KProperty<*>,
+        ): NameMap<N, Data> = thisRef.contextIn
     }
 
     /** Returns the statement that defines the [Variable] in [node]. */
-    fun declaration(node: ReferenceNode): VariableDeclarationNode =
-        node.variableDeclarations[node.name]
+    fun declaration(node: ReferenceNode): VariableDeclarationNode = node.variableDeclarations[node.name]
 
-    fun declaration(node: LookupNode): VariableDeclarationNode =
-        node.variableDeclarations[node.variable]
+    fun declaration(node: LookupNode): VariableDeclarationNode = node.variableDeclarations[node.variable]
 
     /** Returns the declaration of the circuit being called in [node]. */
-    fun declaration(node: CircuitCallNode): CircuitDeclarationNode =
-        (node as Node).circuitDeclarations[node.name]
+    fun declaration(node: CircuitCallNode): CircuitDeclarationNode = (node as Node).circuitDeclarations[node.name]
 
     /** Returns the circuit declaration that contains [parameter]. */
-    fun circuitDeclaration(parameter: ParameterNode): CircuitDeclarationNode =
-        tree.parent(parameter) as CircuitDeclarationNode
+    fun circuitDeclaration(parameter: ParameterNode): CircuitDeclarationNode = tree.parent(parameter) as CircuitDeclarationNode
 
     /** The innermost function that contains this node.*/
     private val Node.enclosingFunction: FunctionDeclarationNode? by attribute {
@@ -179,8 +177,7 @@ class NameAnalysis private constructor(private val tree: Tree<Node, ProgramNode>
     }
 
     /** Returns the function declaration enclosing [node]. */
-    fun enclosingFunction(node: Node): FunctionDeclarationNode? =
-        node.enclosingFunction
+    fun enclosingFunction(node: Node): FunctionDeclarationNode? = node.enclosingFunction
 
     /**
      * Asserts that every referenced [Name] has a declaration, and that no [Name] is declared

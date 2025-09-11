@@ -32,8 +32,7 @@ class Replication(hosts: Set<Host>) : Cleartext() {
     override val arguments: Map<String, Value>
         get() = mapOf("hosts" to participants)
 
-    override fun authority(): Label =
-        hosts.map { it.label }.reduce(Label::meet)
+    override fun authority(): Label = hosts.map { it.label }.reduce(Label::meet)
 
     val hostInputPorts: Map<Host, InputPort> =
         hosts.associateWith { h -> InputPort(this, h, INPUT) }

@@ -76,7 +76,10 @@ private data class ConstantAndVariable<C, V>(val constant: Constant<C, V>?, val 
     constructor(term: AtomicTerm<C, V>) : this(term as? Constant, term as? Variable)
 
     /** @throws IllegalArgumentException if the result cannot be represented as a [ConstantAndVariable]. */
-    fun combine(that: ConstantAndVariable<C, V>, operation: (lhs: C, rhs: C) -> C): ConstantAndVariable<C, V> {
+    fun combine(
+        that: ConstantAndVariable<C, V>,
+        operation: (lhs: C, rhs: C) -> C,
+    ): ConstantAndVariable<C, V> {
         val c = merge(this.constant, that.constant) { c1, c2 -> Constant(operation(c1.value, c2.value)) }
         val v = merge(this.variable, that.variable, ::merge)
         return ConstantAndVariable(c, v)
@@ -87,7 +90,11 @@ private data class ConstantAndVariable<C, V>(val constant: Constant<C, V>?, val 
          * Returns whichever of [a1] and [a2] that is not `null`. Returns `null` if both are,
          * and combines the values with [both] if neither is.
          */
-        private fun <A : Any> merge(a1: A?, a2: A?, both: (a1: A, a2: A) -> A): A? =
+        private fun <A : Any> merge(
+            a1: A?,
+            a2: A?,
+            both: (a1: A, a2: A) -> A,
+        ): A? =
             when {
                 a1 == null ->
                     a2
@@ -104,8 +111,10 @@ private data class ConstantAndVariable<C, V>(val constant: Constant<C, V>?, val 
          *
          * @throws IllegalArgumentException if the result cannot be represented as a [Variable].
          */
-        private fun <C, V> merge(v1: Variable<C, V>, v2: Variable<C, V>): Variable<C, V> =
-            if (v1 == v2) v1 else throw IllegalArgumentException("Cannot merge ${v1.value} and ${v2.value}.")
+        private fun <C, V> merge(
+            v1: Variable<C, V>,
+            v2: Variable<C, V>,
+        ): Variable<C, V> = if (v1 == v2) v1 else throw IllegalArgumentException("Cannot merge ${v1.value} and ${v2.value}.")
     }
 }
 
@@ -162,8 +171,7 @@ fun <C : HeytingAlgebra<C>, V, T> Term<C, V>.flowsTo(
     that: Term<C, V>,
     failWith: (C, C) -> T,
 ): Constraint<C, V, T> {
-    fun node(term: ConstantAndVariable<C, V>): AtomicTerm<C, V> =
-        term.variable ?: term.constant!!
+    fun node(term: ConstantAndVariable<C, V>): AtomicTerm<C, V> = term.variable ?: term.constant!!
 
     fun leftHandEdge(term: ConstantAndVariable<C, V>): LeftHandEdge<C> =
         if (term.constant != null && term.variable != null) {

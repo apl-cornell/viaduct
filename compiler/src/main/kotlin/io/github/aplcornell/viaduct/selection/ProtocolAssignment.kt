@@ -10,11 +10,12 @@ data class ProtocolAssignment(
     val propModel: Map<String, Boolean>,
     val problem: SelectionProblem,
 ) {
-    fun getAssignment(fv: FunctionVariable): Protocol =
-        assignment.getValue(fv)
+    fun getAssignment(fv: FunctionVariable): Protocol = assignment.getValue(fv)
 
-    fun getAssignment(f: FunctionName, v: Variable): Protocol =
-        getAssignment(FunctionVariable(f, v))
+    fun getAssignment(
+        f: FunctionName,
+        v: Variable,
+    ): Protocol = getAssignment(FunctionVariable(f, v))
 
     /** Given a protocol selection, evaluate the constraints. **/
     fun evaluate(c: SelectionConstraint): Boolean =

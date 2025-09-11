@@ -66,8 +66,7 @@ abstract class Protocol : Name, Comparable<Protocol> {
     final override fun equals(other: Any?): Boolean =
         other is Protocol && this.protocolName == other.protocolName && this.arguments == other.arguments
 
-    final override fun hashCode(): Int =
-        Pair(protocolName, arguments).hashCode()
+    final override fun hashCode(): Int = Pair(protocolName, arguments).hashCode()
 
     final override fun compareTo(other: Protocol): Int {
         if (protocolName != other.protocolName) {

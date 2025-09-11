@@ -47,9 +47,10 @@ class LetNode(
     override val comment: String? = null,
 ) : SimpleStatementNode() {
     override fun toDocumentWithoutComment(): Document {
-        val protocolDoc = protocol?.let {
-            Document("@") + it.value.toDocument()
-        } ?: Document("")
+        val protocolDoc =
+            protocol?.let {
+                Document("@") + it.value.toDocument()
+            } ?: Document("")
 
         return keyword("let") * temporary + protocolDoc * "=" * value
     }
@@ -210,8 +211,7 @@ class IfNode(
     override val sourceLocation: SourceLocation,
     override val comment: String? = null,
 ) : StatementNode() {
-    override fun toDocumentWithoutComment(): Document =
-        (keyword("if") * "(" + guard + ")") * thenBranch * keyword("else") * elseBranch
+    override fun toDocumentWithoutComment(): Document = (keyword("if") * "(" + guard + ")") * thenBranch * keyword("else") * elseBranch
 }
 
 /** A loop statement. */
@@ -295,27 +295,28 @@ class AssertionNode(
 
 /** A sequence of statements. */
 class BlockNode
-private constructor(
-    val statements: PersistentList<StatementNode>,
-    override val sourceLocation: SourceLocation,
-    override val comment: String? = null,
-) : StatementNode(), List<StatementNode> by statements {
-    constructor(statements: List<StatementNode>, sourceLocation: SourceLocation, comment: String? = null) :
-        this(statements.toPersistentList(), sourceLocation, comment)
+    private constructor(
+        val statements: PersistentList<StatementNode>,
+        override val sourceLocation: SourceLocation,
+        override val comment: String? = null,
+    ) : StatementNode(), List<StatementNode> by statements {
+        constructor(statements: List<StatementNode>, sourceLocation: SourceLocation, comment: String? = null) :
+            this(statements.toPersistentList(), sourceLocation, comment)
 
-    constructor(vararg statements: StatementNode, sourceLocation: SourceLocation, comment: String? = null) :
-        this(persistentListOf(*statements), sourceLocation, comment)
+        constructor(vararg statements: StatementNode, sourceLocation: SourceLocation, comment: String? = null) :
+            this(persistentListOf(*statements), sourceLocation, comment)
 
-    override fun toDocumentWithoutComment(): Document {
-        val statements: List<Document> = statements.map {
-            if (it is SimpleStatementNode || it is BreakNode || it is AssertionNode) {
-                it.toDocument() + ";"
-            } else {
-                it.toDocument()
-            }
+        override fun toDocumentWithoutComment(): Document {
+            val statements: List<Document> =
+                statements.map {
+                    if (it is SimpleStatementNode || it is BreakNode || it is AssertionNode) {
+                        it.toDocument() + ";"
+                    } else {
+                        it.toDocument()
+                    }
+                }
+            val body: Document = statements.concatenated(separator = Document.forcedLineBreak)
+            return Document("{") +
+                (Document.forcedLineBreak + body).nested() + Document.forcedLineBreak + "}"
         }
-        val body: Document = statements.concatenated(separator = Document.forcedLineBreak)
-        return Document("{") +
-            (Document.forcedLineBreak + body).nested() + Document.forcedLineBreak + "}"
     }
-}

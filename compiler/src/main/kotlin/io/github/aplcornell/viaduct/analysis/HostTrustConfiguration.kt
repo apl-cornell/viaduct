@@ -28,7 +28,13 @@ class HostTrustConfiguration internal constructor(val program: ProgramNode) : An
                 },
         )
 
-    fun actsFor(from: Label, to: Label) = actsFor(from, to, congruence)
+    fun actsFor(
+        from: Label,
+        to: Label,
+    ) = actsFor(from, to, congruence)
 
-    fun equals(from: Label, to: Label) = actsFor(from, to) && actsFor(to, from)
+    fun equals(
+        from: Label,
+        to: Label,
+    ) = actsFor(from, to) && actsFor(to, from)
 }

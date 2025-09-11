@@ -15,26 +15,31 @@ import java.util.concurrent.ConcurrentHashMap
  * @see attribute
  * @see Attribute
  */
-fun <Node, T> circularAttribute(initial: T, f: Node.() -> T): Attribute<Node, T> =
-    CircularAttribute(initial, f)
+fun <Node, T> circularAttribute(
+    initial: T,
+    f: Node.() -> T,
+): Attribute<Node, T> = CircularAttribute(initial, f)
 
-/** Global state for the circular attribute evaluation algorithm. */
-// TODO: global state is horrible, but there are no other algorithms...
+/**
+ * Global state for the circular attribute evaluation algorithm.
+ *
+ * TODO: global state is horrible, but there are no other algorithms...
+ */
 private object EvaluationState {
     /** Are we currently evaluating a circle of attributes? */
-    var IN_CIRCLE = false
+    var inCircle = false
 
     /** Has an attribute on the current circle changed value since the last time it was computed? */
-    var CHANGE = false
+    var change = false
 
     /** Are we in the final clean-up pass around the circle? */
-    var READY = false
+    var ready = false
 
     /** Sets the state to the initial default. */
     fun reset() {
-        IN_CIRCLE = false
-        CHANGE = false
-        READY = false
+        inCircle = false
+        change = false
+        ready = false
     }
 }
 
@@ -71,12 +76,12 @@ private class CircularAttribute<in Node, out T>(
 
         synchronized(EvaluationState) {
             when {
-                !EvaluationState.IN_CIRCLE -> {
+                !EvaluationState.inCircle -> {
                     // This is the first evaluation of a circular attribute occurrence, so enter
                     // a fixed-point computation that computes it and all dependent attribute
                     // occurrences until they stabilise.
 
-                    EvaluationState.IN_CIRCLE = true
+                    EvaluationState.inCircle = true
                     attributeValue.isVisited = true
 
                     do {
@@ -85,13 +90,13 @@ private class CircularAttribute<in Node, out T>(
                         // we are done, since it and all dependent occurrences have stabilised.
                         // If the values are different, cache the new one and repeat.
 
-                        EvaluationState.CHANGE = false
+                        EvaluationState.change = false
                         val newValue = safeF(node)
                         if (attributeValue.currentValue != newValue) {
-                            EvaluationState.CHANGE = true
+                            EvaluationState.change = true
                             attributeValue.currentValue = newValue
                         }
-                    } while (EvaluationState.CHANGE)
+                    } while (EvaluationState.change)
 
                     // The value of this attribute at this node has been fully computed.
                     attributeValue.finalize()
@@ -100,19 +105,19 @@ private class CircularAttribute<in Node, out T>(
                     // not yet been marked as such. Enter READY mode and go around the circle one more
                     // time to finalize them.
 
-                    EvaluationState.READY = true
+                    EvaluationState.ready = true
                     val newValue = safeF(node)
                     assert(attributeValue.value == newValue)
-                    EvaluationState.READY = false
+                    EvaluationState.ready = false
 
                     // Now we have computed and cached all attribute occurrences on the circle,
                     // so we are done with this one.
 
                     attributeValue.isVisited = false
-                    EvaluationState.IN_CIRCLE = false
+                    EvaluationState.inCircle = false
                 }
 
-                !attributeValue.isVisited && !EvaluationState.READY -> {
+                !attributeValue.isVisited && !EvaluationState.ready -> {
                     // We are in a circle but not at the beginning of it. In other words, we are
                     // evaluating a circular attribute occurrence on which the initial circular
                     // attribute occurrence depends. We reach here if we have not previously
@@ -125,12 +130,12 @@ private class CircularAttribute<in Node, out T>(
                     val newValue = safeF(node)
                     attributeValue.isVisited = false
                     if (attributeValue.currentValue != newValue) {
-                        EvaluationState.CHANGE = true
+                        EvaluationState.change = true
                         attributeValue.currentValue = newValue
                     }
                 }
 
-                !attributeValue.isVisited && EvaluationState.READY -> {
+                !attributeValue.isVisited && EvaluationState.ready -> {
                     // We get to this point if a fixed-point iteration has ended with no changes.
                     // The value of the initial attribute occurrence of the circle has stabilised,
                     // been cached and marked as computed. Since a fixed-point has been reached,

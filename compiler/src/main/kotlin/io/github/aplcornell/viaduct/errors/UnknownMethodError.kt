@@ -38,7 +38,8 @@ class UnknownMethodError(
                     Document("The object's type is:").withData(objectType) /
                     Document("And the method's signature is:").withData(methodName + argumentTypes.tupled())
             } else {
-                Document("This object does not have a method named") * methodName + Document(":")
-                    .withSource(objectName.sourceLocation)
+                Document("This object does not have a method named") * methodName +
+                    Document(":")
+                        .withSource(objectName.sourceLocation)
             }
 }

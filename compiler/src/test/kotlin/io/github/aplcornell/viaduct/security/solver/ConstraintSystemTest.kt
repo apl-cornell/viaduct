@@ -46,17 +46,21 @@ private val Term<Constant, Variable>.i
 /** Shorthand for creating flows to constraints. */
 private infix fun Term<Constant, Variable>.flowsTo(
     that: Term<Constant, Variable>,
-): Iterable<Constraint<Constant, Variable, IllegalFlowException>> =
-    this.flowsTo(that, ConstantBounds, ::IllegalFlowException)
+): Iterable<Constraint<Constant, Variable, IllegalFlowException>> = this.flowsTo(that, ConstantBounds, ::IllegalFlowException)
 
 private fun solve(
     vararg constraint: Iterable<Constraint<Constant, Variable, IllegalFlowException>>,
 ): ConstraintSolution<Constant, Variable> =
     ConstraintSystem(constraint.flatMap { it }, ConstantBounds, FreeDistributiveLatticeCongruence(listOf())).solution()
 
-private fun assertEquals(expected: SecurityLattice<Constant>, actual: SecurityLattice<Constant>) {
-    fun equals(expected: Constant, actual: Constant): Boolean =
-        expected.lessThanOrEqualTo(actual, listOf()) && actual.lessThanOrEqualTo(expected, listOf())
+private fun assertEquals(
+    expected: SecurityLattice<Constant>,
+    actual: SecurityLattice<Constant>,
+) {
+    fun equals(
+        expected: Constant,
+        actual: Constant,
+    ): Boolean = expected.lessThanOrEqualTo(actual, listOf()) && actual.lessThanOrEqualTo(expected, listOf())
 
     val confidentiality = equals(expected.confidentialityComponent, actual.confidentialityComponent)
     val integrity = equals(expected.integrityComponent, actual.integrityComponent)
@@ -86,17 +90,19 @@ internal class ConstraintSystemTest {
 
         @Test
         fun `constant flows to variable`() {
-            val solution = solve(
-                t(c("A")) flowsTo t("x"),
-            )
+            val solution =
+                solve(
+                    t(c("A")) flowsTo t("x"),
+                )
             assertEquals(c("A").c(), solution("x"))
         }
 
         @Test
         fun `variable flows to constant`() {
-            val solution = solve(
-                t("x") flowsTo t(c("A")),
-            )
+            val solution =
+                solve(
+                    t("x") flowsTo t(c("A")),
+                )
             assertEquals(c("A").i(), solution("x"))
         }
 
@@ -112,19 +118,21 @@ internal class ConstraintSystemTest {
 
         @Test
         fun `variable flows to self`() {
-            val solution = solve(
-                t("x") flowsTo t("x"),
-            )
+            val solution =
+                solve(
+                    t("x") flowsTo t("x"),
+                )
             assertEquals(SecurityBounds.weakest, solution("x"))
         }
 
         @Test
         fun `variable flows to variable`() {
-            val solution = solve(
-                t("x") flowsTo t(c("A")),
-                t("x") flowsTo t("y"),
-                t("y") flowsTo t(c("B")),
-            )
+            val solution =
+                solve(
+                    t("x") flowsTo t(c("A")),
+                    t("x") flowsTo t("y"),
+                    t("y") flowsTo t(c("B")),
+                )
             assertEquals((c("A") meet c("B")).i(), solution("x"))
             assertEquals(c("B").i(), solution("y"))
         }

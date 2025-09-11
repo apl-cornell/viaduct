@@ -23,19 +23,19 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 
 internal class RewriteTest {
-    private fun h(s: String) = Host(s)
-    private fun p(s: String) = LabelVariable(s)
-    private fun hp(s: String) = HostPrincipal(h(s))
-    private fun pp(s: String) = PolymorphicPrincipal(p(s))
-    private fun hpi(s: String) = IntegrityComponent(hp(s) as Principal) as PrincipalComponent
-    private fun hpc(s: String) = ConfidentialityComponent(hp(s) as Principal) as PrincipalComponent
-    private fun ppi(s: String) = IntegrityComponent(pp(s) as Principal) as PrincipalComponent
-    private fun ppc(s: String) = ConfidentialityComponent(pp(s) as Principal) as PrincipalComponent
+    private fun h(s: String): Host = Host(s)
+    private fun p(s: String): LabelVariable = LabelVariable(s)
+    private fun hp(s: String): Principal = HostPrincipal(h(s))
+    private fun pp(s: String): Principal = PolymorphicPrincipal(p(s))
+    private fun hpi(s: String): PrincipalComponent = IntegrityComponent(hp(s))
+    private fun hpc(s: String): PrincipalComponent = ConfidentialityComponent(hp(s))
+    private fun ppi(s: String): PrincipalComponent = IntegrityComponent(pp(s))
+    private fun ppc(s: String): PrincipalComponent = ConfidentialityComponent<Principal>(pp(s))
 
-    private fun fhpi(s: String) = FreeDistributiveLattice(hpi(s))
-    private fun fhpc(s: String) = FreeDistributiveLattice(hpc(s))
-    private fun fppi(s: String) = FreeDistributiveLattice(ppi(s))
-    private fun fppc(s: String) = FreeDistributiveLattice(ppc(s))
+    private fun fhpi(s: String): LabelConstant = FreeDistributiveLattice(hpi(s))
+    private fun fhpc(s: String): LabelConstant = FreeDistributiveLattice(hpc(s))
+    private fun fppi(s: String): LabelConstant = FreeDistributiveLattice(ppi(s))
+    private fun fppc(s: String): LabelConstant = FreeDistributiveLattice(ppc(s))
 
     private fun hl(s: String) = LabelLiteral(h(s))
     private fun pl(s: String) = LabelParameter(p(s))

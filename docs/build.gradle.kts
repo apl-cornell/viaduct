@@ -43,10 +43,9 @@ val mkdocsPublish by tasks.registering {
 
 /** Executes `pipenv` with [arguments]. */
 fun pipenv(vararg arguments: String) {
-    exec {
-        executable("pipenv")
-        args(*arguments)
-    }
+    providers.exec {
+        commandLine("pipenv", *arguments)
+    }.result
 }
 
 /** Runs [command] using `pipenv`. */

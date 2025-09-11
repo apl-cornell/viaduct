@@ -31,5 +31,17 @@ class EquivocationException private constructor(
                 throw EquivocationException(expectedValue, expectedValueProvider, actualValue, actualValueProvider)
             }
         }
+
+        /** Throws [EquivocationException] if [expectedValue] does not match [actualValue]. */
+        fun assertEquals(
+            expectedValue: ByteArray,
+            expectedValueProvider: Host,
+            actualValue: ByteArray,
+            actualValueProvider: Host,
+        ) {
+            if (!expectedValue.contentEquals(actualValue)) {
+                throw EquivocationException(expectedValue, expectedValueProvider, actualValue, actualValueProvider)
+            }
+        }
     }
 }

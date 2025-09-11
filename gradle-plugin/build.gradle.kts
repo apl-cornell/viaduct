@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
+
 plugins {
     `kotlin-dsl`
 }
@@ -22,15 +24,15 @@ gradlePlugin {
 
 // TODO: remove this after Gradle 7.5 comes out.
 tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
-    kotlinOptions.allWarningsAsErrors = false
+    compilerOptions.allWarningsAsErrors = true
 }
 
 // TODO: remove this after Gradle 7.5 comes out.
 afterEvaluate {
     tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
-        kotlinOptions {
-            apiVersion = "1.5"
-            languageVersion = "1.5"
+        compilerOptions {
+            apiVersion.set(KotlinVersion.KOTLIN_2_0)
+            languageVersion.set(KotlinVersion.KOTLIN_2_0)
         }
     }
 }
